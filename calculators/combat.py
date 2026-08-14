@@ -22,8 +22,8 @@ Referências de páginas do Basic Set Revised:
 - Critical Hits: p. 381
 - Active Defenses: p. 374-376
 """
-from typing import Dict, Any
-from utils.dice_roller import roll_3d6, get_damage_dice
+from typing import Dict, Any, Tuple
+from utils.dice_roller import evaluate_success_roll, roll_3d6, get_damage_dice
 import math
 
 
@@ -51,9 +51,8 @@ class CombatCalculator:
         Baseado na Damage Table do Basic Set Revised, p. 16.
         Cada entrada retorna (thrust_damage, swing_damage).
         
-        Para ST > 25, usa a fórmula:
-        - Thrust: (ST-25)/2 + 4 dados
-        - Swing: (ST-25)/2 + 5 dados
+        Para ST acima de 100, acrescenta 1d a thrust e swing por
+        10 pontos completos de ST, conforme a regra da p. 15.
         
         Returns:
             Dict mapeando ST para (thrust, swing)
@@ -105,23 +104,17 @@ class CombatCalculator:
             "message": ""
         }
         
-        # Verifica acerto/erro crítico (Basic Set, p. 381)
-        if roll_result <= 4:
-            result["critical_hit"] = True
-            result["success"] = True
-            result["message"] = "Acerto Crítico!"
-        elif roll_result >= 17:
-            result["critical_miss"] = True
-            result["success"] = False
-            result["message"] = "Erro Crítico!"
-        elif roll_result <= effective_skill:
-            result["success"] = True
-            result["margin"] = effective_skill - roll_result
-            result["message"] = f"Acertou! Margem: {result['margin']}"
-        else:
-            result["success"] = False
-            result["margin"] = roll_result - effective_skill
-            result["message"] = f"Errou! Margem: {result['margin']}"
+        outcome = evaluate_success_roll(effective_skill, roll_result)
+        result["success"] = outcome["success"]
+        result["critical_hit"] = outcome["critical_success"]
+        result["critical_miss"] = outcome["critical_failure"]
+        result["margin"] = outcome["margin"]
+        result["outcome"] = (
+            "critical_hit" if outcome["critical_success"] else
+            "critical_miss" if outcome["critical_failure"] else
+            "hit" if outcome["success"] else "miss"
+        )
+        result["message"] = result["outcome"]
         
         return result
     
@@ -162,23 +155,17 @@ class CombatCalculator:
             "message": ""
         }
         
-        # Verifica sucesso/fracasso crítico (Basic Set, p. 374)
-        if roll_result <= 4:
-            result["critical_success"] = True
-            result["success"] = True
-            result["message"] = "Sucesso Crítico!"
-        elif roll_result >= 17:
-            result["critical_fail"] = True
-            result["success"] = False
-            result["message"] = "Fracasso Crítico!"
-        elif roll_result <= effective_defense:
-            result["success"] = True
-            result["margin"] = effective_defense - roll_result
-            result["message"] = f"Defendeu! Margem: {result['margin']}"
-        else:
-            result["success"] = False
-            result["margin"] = roll_result - effective_defense
-            result["message"] = f"Não defendeu! Margem: {result['margin']}"
+        outcome = evaluate_success_roll(effective_defense, roll_result)
+        result["success"] = outcome["success"]
+        result["critical_success"] = outcome["critical_success"]
+        result["critical_fail"] = outcome["critical_failure"]
+        result["margin"] = outcome["margin"]
+        result["outcome"] = (
+            "critical_defense" if outcome["critical_success"] else
+            "critical_defense_failure" if outcome["critical_failure"] else
+            "defended" if outcome["success"] else "defense_failed"
+        )
+        result["message"] = result["outcome"]
         
         return result
     
@@ -239,7 +226,7 @@ class CombatCalculator:
             Dict com valor do Block
         """
         # Block = 3 + Shield/2, arredondado para baixo (p. 375)
-        block = 3 + (shield_skill // 2)
+        block = 3 + (shield_skill // 2) + shield_db
         
         return {
             "shield_skill": shield_skill,
@@ -252,7 +239,9 @@ class CombatCalculator:
         self,
         weapon_skill: int,
         weapon_parry: int = 0,
-        is_fencing: bool = False
+        is_fencing: bool = False,
+        retreat: bool = False,
+        shield_db: int = 0,
     ) -> Dict[str, Any]:
         """
         Calcula defesa Parry.
@@ -270,19 +259,16 @@ class CombatCalculator:
             Dict com valor do Parry
         """
         # Parry padrão = Weapon Skill/2 + 3 (p. 376)
-        if weapon_parry > 0:
-            parry = weapon_parry
-        else:
-            parry = (weapon_skill // 2) + 3
-        
-        # Armas de esgrima: +3 ao Parry quando recua (p. 405)
-        if is_fencing:
-            parry += 3
+        parry = (weapon_skill // 2) + 3 + weapon_parry + shield_db
+        if retreat:
+            parry += 3 if is_fencing else 1
         
         return {
             "weapon_skill": weapon_skill,
             "weapon_parry": weapon_parry,
             "is_fencing": is_fencing,
+            "retreat": retreat,
+            "shield_db": shield_db,
             "parry": parry,
             "message": f"Parry: {parry}"
         }
@@ -300,7 +286,7 @@ class CombatCalculator:
         Returns:
             Dict com st, thrust e swing
         """
-        thrust, swing = self.damage_table.get(st, ("1d", "1d+1"))
+        thrust, swing = get_damage_dice(st)
         return {
             "st": st,
             "thrust": thrust,
@@ -362,4 +348,6 @@ class CombatCalculator:
             Lesão em HP (inteiro)
         """
         wounding_mod = self.calculate_wounding_modifier(damage_type)
-        return math.ceil(penetrating_damage * wounding_mod)
+        if penetrating_damage <= 0:
+            return 0
+        return max(1, math.floor(penetrating_damage * wounding_mod))

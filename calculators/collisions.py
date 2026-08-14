@@ -1,23 +1,13 @@
-"""
-Calculadora de Colisões - GURPS 4e
+"""Collision rules from GURPS Basic Set Revised, pp. 430-432."""
 
-Regras do Basic Set Revised (p. 430-431):
-- Fórmula: (HP × velocidade) / 100
-- Colisão frontal: soma das velocidades
-- Colisão pelas costas: velocidade do mais rápido - mais lento
-- Colisão de lado: velocidade do objeto em movimento
-- Objetos imóveis: usar 2× HP para superfícies duras
-- Superfícies macias: dano normal
-- Objetos elásticos: DR 2-10
-- Velocidade em jardas/segundo (2 mph = 1 jarda/seg)
-"""
-from typing import Dict, Any
-from utils.dice_roller import calculate_collision_damage, roll_dice
+from typing import Any, Dict, Tuple
+
+from utils.dice_roller import collision_damage_expression, roll_dice
 
 
 class CollisionsCalculator:
-    """Calculadora de Colisões do GURPS 4e."""
-    
+    """Calculate mutual crushing damage for collisions."""
+
     def calculate_collision(
         self,
         object1_hp: int,
@@ -26,136 +16,139 @@ class CollisionsCalculator:
         object2_velocity: int,
         collision_type: str = "head_on",
         surface_type: str = "normal",
-        immovable_object: bool = False
+        immovable_object: bool = False,
+        object2_dr: int = 0,
+        elastic_dr: int = 5,
+        obstacle_breakable: bool = False,
     ) -> Dict[str, Any]:
-        """
-        Calcula dano de colisão.
-        
-        Args:
-            object1_hp: HP do objeto 1
-            object1_velocity: Velocidade do objeto 1
-            object2_hp: HP do objeto 2
-            object2_velocity: Velocidade do objeto 2
-            collision_type: "head_on", "rear_end", ou "side_on"
-            surface_type: "hard", "soft", "elastic"
-            immovable_object: O objeto 2 é imóvel?
-            
-        Returns:
-            Dict com resultados da colisão
-        """
-        result = {
+        if object1_hp < 1 or object2_hp < 0 or (not immovable_object and object2_hp < 1):
+            raise ValueError("Moving objects need positive HP; obstacle HP cannot be negative.")
+        if min(object1_velocity, object2_velocity, object2_dr, elastic_dr) < 0:
+            raise ValueError("Velocities and DR cannot be negative.")
+        if surface_type not in {"normal", "hard", "soft", "elastic"}:
+            raise ValueError(f"Unknown surface type: {surface_type}")
+
+        collision_velocity = self._calculate_collision_velocity(
+            object1_velocity, object2_velocity, collision_type, immovable_object
+        )
+        result: Dict[str, Any] = {
             "object1_hp": object1_hp,
             "object1_velocity": object1_velocity,
             "object2_hp": object2_hp,
             "object2_velocity": object2_velocity,
+            "object2_dr": object2_dr,
             "collision_type": collision_type,
             "surface_type": surface_type,
             "immovable_object": immovable_object,
-            "collision_velocity": 0,
-            "object1_damage_dice": "",
-            "object2_damage_dice": "",
+            "obstacle_breakable": obstacle_breakable,
+            "collision_velocity": collision_velocity,
+            "object1_damage_dice": "0d",
+            "object2_damage_dice": "0d",
             "object1_damage_total": 0,
             "object2_damage_total": 0,
             "object1_roll": 0,
             "object2_roll": 0,
-            "valid": True,
-            "message": ""
+            "elastic_dr": elastic_dr if surface_type == "elastic" else 0,
+            "damage_cap": None,
+            "valid": collision_velocity > 0,
+            "outcome": "collision" if collision_velocity > 0 else "no_collision",
+            "message": "",
         }
-        
-        # Calcula velocidade de colisão
-        collision_velocity = self._calculate_collision_velocity(
-            object1_velocity, object2_velocity, collision_type, immovable_object
-        )
-        result["collision_velocity"] = collision_velocity
-        
         if collision_velocity <= 0:
-            result["valid"] = False
-            result["message"] = "Velocidade de colisão inválida."
+            result["message"] = "No collision: relative velocity is zero."
             return result
-        
-        # Calcula HP efetivos baseado no tipo de superfície
-        effective_hp1 = object1_hp
-        effective_hp2 = object2_hp
-        
-        if immovable_object:
-            if surface_type == "hard":
-                # Superfícies duras: 2× HP do objeto em movimento
-                effective_hp2 = object2_hp * 2
-            elif surface_type == "elastic":
-                # Objetos elásticos: DR 2-10 (usamos 5 como padrão)
-                effective_hp2 = max(0, object2_hp - 5)
-        
-        # Calcula dano do objeto 1 no objeto 2
-        dice_count1, dice1 = calculate_collision_damage(effective_hp1, collision_velocity)
-        roll1, _ = roll_dice(dice1)
-        result["object1_damage_dice"] = dice1
-        result["object1_damage_total"] = roll1
-        
-        # Calcula dano do objeto 2 no objeto 1
-        dice_count2, dice2 = calculate_collision_damage(effective_hp2, collision_velocity)
-        roll2, _ = roll_dice(dice2)
-        result["object2_damage_dice"] = dice2
-        result["object2_damage_total"] = roll2
-        
-        result["object1_roll"] = roll1
-        result["object2_roll"] = roll2
-        
-        # Gera mensagem
-        message_parts = [
-            f"Tipo de colisão: {self._get_collision_type_name(collision_type)}",
-            f"Velocidade de colisão: {collision_velocity} jardas/seg",
-            f"Objeto 1 causa {roll1} de dano ({dice1})",
-            f"Objeto 2 causa {roll2} de dano ({dice2})",
-        ]
-        
-        if immovable_object:
-            message_parts.append("Objeto 2 é imóvel!")
-        
-        result["message"] = "\n".join(message_parts)
-        
+
+        raw1, raw2 = self._raw_damage_dice(
+            object1_hp,
+            object2_hp,
+            object1_velocity,
+            object2_velocity,
+            collision_velocity,
+            collision_type,
+            surface_type,
+            immovable_object,
+        )
+        _, expression1 = collision_damage_expression(raw1)
+        _, expression2 = collision_damage_expression(raw2)
+        damage1, _ = roll_dice(expression1)
+        damage2, _ = roll_dice(expression2)
+
+        # A breakable immovable obstacle caps both damage rolls at HP + DR.
+        if immovable_object and obstacle_breakable and object2_hp > 0:
+            cap = object2_hp + object2_dr
+            result["damage_cap"] = cap
+            damage1 = min(damage1, cap)
+            damage2 = min(damage2, cap)
+
+        # Elastic surfaces give extra DR against the damage taken by the mover.
+        if immovable_object and surface_type == "elastic":
+            damage2 = max(0, damage2 - elastic_dr)
+
+        result.update({
+            "object1_damage_dice": expression1,
+            "object2_damage_dice": expression2,
+            "object1_damage_total": damage1,
+            "object2_damage_total": damage2,
+            "object1_roll": damage1,
+            "object2_roll": damage2,
+            "message": (
+                f"Collision velocity: {collision_velocity} yd/s\n"
+                f"Object 1 inflicts {damage1} ({expression1})\n"
+                f"Object 2 inflicts {damage2} ({expression2})"
+            ),
+        })
         return result
-    
+
+    def _raw_damage_dice(
+        self,
+        hp1: int,
+        hp2: int,
+        velocity1: int,
+        velocity2: int,
+        collision_velocity: int,
+        collision_type: str,
+        surface_type: str,
+        immovable: bool,
+    ) -> Tuple[float, float]:
+        raw1 = hp1 * collision_velocity / 100
+        if immovable:
+            effective_hp = hp1 * 2 if surface_type == "hard" else hp1
+            return raw1, effective_hp * collision_velocity / 100
+
+        raw2 = hp2 * collision_velocity / 100
+        if collision_type == "head_on":
+            if velocity1 < velocity2:
+                raw1 = min(raw1, raw2)
+            elif velocity2 < velocity1:
+                raw2 = min(raw2, raw1)
+        elif collision_type in {"rear_end", "side_on"}:
+            raw2 = min(raw2, raw1)
+        return raw1, raw2
+
     def _calculate_collision_velocity(
         self,
         velocity1: int,
         velocity2: int,
         collision_type: str,
-        immovable_object: bool
+        immovable_object: bool,
     ) -> int:
-        """
-        Calcula velocidade de colisão.
-        
-        Args:
-            velocity1: Velocidade do objeto 1
-            velocity2: Velocidade do objeto 2
-            collision_type: Tipo de colisão
-            immovable_object: Objeto 2 é imóvel?
-            
-        Returns:
-            Velocidade de colisão
-        """
         if immovable_object:
-            # Objeto imóvel: velocidade do objeto em movimento
             return velocity1
-        
         if collision_type == "head_on":
             return velocity1 + velocity2
-        elif collision_type == "rear_end":
-            return abs(velocity1 - velocity2)
-        elif collision_type == "side_on":
+        if collision_type == "rear_end":
+            return max(0, velocity1 - velocity2)
+        if collision_type == "side_on":
             return velocity1
-        else:
-            return velocity1
-    
+        raise ValueError(f"Unknown collision type: {collision_type}")
+
     def _get_collision_type_name(self, collision_type: str) -> str:
-        """Retorna nome do tipo de colisão."""
-        names = {
-            "head_on": "Cabeça a Cabeça",
-            "rear_end": "Pela Costas",
-            "side_on": "De Lado"
-        }
-        return names.get(collision_type, "Desconhecido")
-    
+        return {
+            "head_on": "Head-On",
+            "rear_end": "Rear-End",
+            "side_on": "Side-On",
+        }.get(collision_type, "Unknown")
+
     def calculate_immovable_object(
         self,
         moving_hp: int,
@@ -165,72 +158,30 @@ class CollisionsCalculator:
         is_hard: bool = True,
         is_soft: bool = False,
         is_elastic: bool = False,
-        elastic_dr: int = 5
+        elastic_dr: int = 5,
     ) -> Dict[str, Any]:
-        """
-        Calcula colisão com objeto imóvel.
-        
-        Args:
-            moving_hp: HP do objeto em movimento
-            moving_velocity: Velocidade do objeto em movimento
-            obstacle_hp: HP do obstáculo
-            obstacle_dr: DR do obstáculo
-            is_hard: É superfície dura?
-            is_soft: É superfície macia?
-            is_elastic: É elástico?
-            elastic_dr: DR de objetos elásticos
-            
-        Returns:
-            Dict com resultados
-        """
-        result = {
+        """Compatibility wrapper for an immovable-object collision."""
+        surface = "elastic" if is_elastic else "soft" if is_soft else "hard" if is_hard else "normal"
+        collision = self.calculate_collision(
+            moving_hp,
+            moving_velocity,
+            obstacle_hp,
+            0,
+            collision_type="side_on",
+            surface_type=surface,
+            immovable_object=True,
+            object2_dr=obstacle_dr,
+            elastic_dr=elastic_dr,
+            obstacle_breakable=obstacle_hp > 0,
+        )
+        return {
+            **collision,
             "moving_hp": moving_hp,
             "moving_velocity": moving_velocity,
             "obstacle_hp": obstacle_hp,
             "obstacle_dr": obstacle_dr,
-            "is_hard": is_hard,
-            "is_soft": is_soft,
-            "is_elastic": is_elastic,
-            "collision_velocity": moving_velocity,
-            "moving_damage_dice": "",
-            "obstacle_damage_dice": "",
-            "moving_damage_total": 0,
-            "obstacle_damage_total": 0,
-            "valid": True,
-            "message": ""
+            "moving_damage_dice": collision["object2_damage_dice"],
+            "moving_damage_total": collision["object2_damage_total"],
+            "obstacle_damage_dice": collision["object1_damage_dice"],
+            "obstacle_damage_total": collision["object1_damage_total"],
         }
-        
-        # Calcula dano no objeto em movimento
-        if is_hard:
-            effective_hp = moving_hp * 2
-        else:
-            effective_hp = moving_hp
-        
-        damage, dice = calculate_collision_damage(effective_hp, moving_velocity)
-        result["moving_damage_dice"] = dice
-        result["moving_damage_total"] = damage
-        
-        # Dano no obstáculo (se quebrável)
-        obstacle_damage = 0
-        if obstacle_hp > 0:
-            obstacle_damage, obstacle_dice = calculate_collision_damage(
-                obstacle_hp, moving_velocity
-            )
-            result["obstacle_damage_dice"] = obstacle_dice
-            result["obstacle_damage_total"] = obstacle_damage
-        
-        # Gera mensagem
-        message_parts = [
-            f"Velocidade: {moving_velocity} jardas/seg",
-            f"Dano no objeto em movimento: {dice} = {damage}",
-        ]
-        
-        if obstacle_damage > 0:
-            message_parts.append(f"Dano no obstáculo: {obstacle_damage}")
-        
-        if is_hard:
-            message_parts.append("Superfície dura: 2× HP aplicado")
-        
-        result["message"] = "\n".join(message_parts)
-        
-        return result

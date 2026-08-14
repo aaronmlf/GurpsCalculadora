@@ -1,0 +1,14 @@
+GURPS 4e Calculadora — Linux 64 bits
+====================================
+
+Como abrir:
+1. Extraia todo o conteudo do arquivo ZIP.
+2. Clique duas vezes em "GurpsCalculadora".
+
+O programa e independente: nao requer Python nem uso do terminal.
+
+Se o gerenciador de arquivos impedir a abertura, clique com o botao direito
+no executavel, abra Propriedades > Permissoes e permita executar o arquivo
+como programa.
+
+O PDF do Basic Set nao esta incluido.

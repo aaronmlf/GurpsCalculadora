@@ -1,0 +1,14 @@
+GURPS 4e Calculadora — Windows 64 bits
+======================================
+
+Como abrir:
+1. Extraia todo o conteudo do arquivo ZIP.
+2. Clique duas vezes em "GurpsCalculadora.exe".
+
+O programa e independente: nao requer Python nem uso do Prompt de Comando.
+
+Como o executavel nao possui assinatura digital comercial, o Windows pode
+mostrar um aviso do SmartScreen. Nesse caso, confira que o arquivo veio da
+pagina oficial do projeto e use "Mais informacoes" > "Executar assim mesmo".
+
+O PDF do Basic Set nao esta incluido.

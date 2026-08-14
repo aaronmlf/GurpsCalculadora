@@ -1,168 +1,101 @@
-"""
-Calculadora de Quedas - GURPS 4e
+"""Falling rules from GURPS Basic Set Revised, pp. 430-431."""
 
-Regras do Basic Set Revised (p. 430-431):
-- Queda é uma colisão com objeto imóvel: o chão
-- Velocidade ao impacto da tabela de velocidade de queda
-- Dano: (HP × velocidade) / 100
-- Superfícies duras: usar 2× HP
-- Superfícies macias: dano normal
-- Objetos elásticos: DR 2-10
-- Água: rolagem de Swimming ou dano normal
-- Toda armadura conta como "flexível" para trauma blunt
-- Trauma blunt: 1 HP por 5 pontos de dano
-- Acrobatics pode reduzir distância em 5 jardas
-"""
-from typing import Dict, Any
-from utils.dice_roller import get_falling_velocity, calculate_collision_damage
+from typing import Any, Dict
+
+from utils.dice_roller import (
+    calculate_collision_damage,
+    get_falling_velocity,
+    get_range_modifier,
+    roll_dice,
+)
 
 
 class FallsCalculator:
-    """Calculadora de Quedas do GURPS 4e."""
-    
+    """Calculate impact damage, armor penetration, and falling blunt trauma."""
+
     def calculate_fall(
         self,
         distance_yards: int,
         target_hp: int,
         surface_type: str = "hard",
         acrobatics_success: bool = False,
-        swimming_success: bool = False
+        swimming_success: bool = False,
+        armor_dr: int = 0,
+        elastic_dr: int = 5,
+        gravity: float = 1.0,
     ) -> Dict[str, Any]:
-        """
-        Calcula dano de uma queda.
-        
-        Args:
-            distance_yards: Distância da queda em jardas
-            target_hp: HP do alvo
-            surface_type: "hard", "soft", "elastic", ou "water"
-            acrobatics_success: Rolagem de Acrobatics teve sucesso?
-            swimming_success: Rolagem de Swimming teve sucesso? (para água)
-            
-        Returns:
-            Dict com resultados da queda
-        """
-        result = {
-            "distance_yards": distance_yards,
+        if distance_yards < 0 or target_hp < 1 or armor_dr < 0 or elastic_dr < 0:
+            raise ValueError("Distance and DR cannot be negative, and HP must be positive.")
+        if surface_type not in {"hard", "soft", "elastic", "water"}:
+            raise ValueError(f"Unknown surface type: {surface_type}")
+
+        effective_distance = max(0, distance_yards - 5) if acrobatics_success else distance_yards
+        velocity = get_falling_velocity(effective_distance, gravity)
+        result: Dict[str, Any] = {
+            "distance_yards": effective_distance,
             "original_distance": distance_yards,
             "target_hp": target_hp,
             "surface_type": surface_type,
             "acrobatics_used": acrobatics_success,
             "swimming_used": swimming_success,
-            "velocity": 0,
-            "effective_hp": target_hp,
-            "damage_dice": "",
+            "swimming_modifier": get_range_modifier(velocity) if surface_type == "water" else 0,
+            "armor_dr": armor_dr,
+            "surface_dr": elastic_dr if surface_type == "elastic" else 0,
+            "velocity": velocity,
+            "effective_hp": target_hp * 2 if surface_type == "hard" else target_hp,
+            "damage_dice": "0d",
             "damage_total": 0,
+            "penetrating_damage": 0,
             "blunt_trauma": 0,
             "total_injury": 0,
-            "dodge_drop_possible": True,
             "valid": True,
-            "message": ""
+            "outcome": "no_damage",
+            "message": "",
         }
-        
-        # Aplica redução de Acrobatics
-        if acrobatics_success and distance_yards > 5:
-            distance_yards -= 5
-            result["distance_yards"] = distance_yards
-        
-        # Calcula velocidade
-        velocity = get_falling_velocity(distance_yards)
-        result["velocity"] = velocity
-        
-        # Calcula HP efetivo baseado no tipo de superfície
-        effective_hp = target_hp
-        surface_dr = 0
-        if surface_type == "hard":
-            # Superfícies duras: 2× HP
-            effective_hp = target_hp * 2
-        elif surface_type == "elastic":
-            # Superfícies elásticas: DR 5 (reduz dano)
-            surface_dr = 5
-        elif surface_type == "water":
-            if swimming_success:
-                # Sucesso em Swimming: sem dano
-                result["damage_dice"] = "0d"
-                result["damage_total"] = 0
-                result["blunt_trauma"] = 0
-                result["total_injury"] = 0
-                result["message"] = "Mergulho limpo! Sem dano."
-                return result
-        
-        result["effective_hp"] = effective_hp
-        
-        # Calcula dano
-        damage, dice_expr = calculate_collision_damage(effective_hp, velocity)
-        result["damage_dice"] = dice_expr
-        result["damage_total"] = damage
-        
-        # Aplica DR da superfície elástica
-        if surface_dr > 0:
-            damage = max(0, damage - surface_dr)
-        
-        # Calcula trauma blunt (1 HP por 5 pontos de dano)
-        blunt_trauma = damage // 5
-        result["blunt_trauma"] = blunt_trauma
-        
-        # Lesão total
-        total_injury = damage + blunt_trauma
-        result["total_injury"] = total_injury
-        
-        # Gera mensagem
-        message_parts = [
-            f"Distância: {result['original_distance']} jardas",
-            f"Velocidade: {velocity} jardas/seg",
-            f"Dano: {dice_expr} = {damage}",
-        ]
-        
-        if blunt_trauma > 0:
-            message_parts.append(f"Trauma Blunt: {blunt_trauma} HP")
-        
-        message_parts.append(f"Lesão Total: {total_injury} HP")
-        
-        if surface_type == "water" and not swimming_success:
-            message_parts.append("Rolagem de Swimming falhou! Dano normal.")
-        
-        result["message"] = "\n".join(message_parts)
-        
+
+        if surface_type == "water" and swimming_success:
+            result["outcome"] = "clean_dive"
+            result["message"] = "Clean dive: no damage."
+            return result
+        if velocity == 0:
+            result["message"] = "No effective falling distance."
+            return result
+
+        _, expression = calculate_collision_damage(result["effective_hp"], velocity)
+        basic_damage, _ = roll_dice(expression)
+        after_surface = max(0, basic_damage - result["surface_dr"])
+        penetrating = max(0, after_surface - armor_dr)
+
+        # For falls all worn armor counts as flexible. Blunt trauma applies
+        # only when DR stops the crushing damage completely; it is not added
+        # when any damage penetrates.
+        blunt_trauma = 0
+        if armor_dr > 0 and after_surface > 0 and penetrating == 0:
+            blunt_trauma = after_surface // 5
+
+        injury = penetrating if penetrating > 0 else blunt_trauma
+        result.update({
+            "damage_dice": expression,
+            "damage_total": basic_damage,
+            "penetrating_damage": penetrating,
+            "blunt_trauma": blunt_trauma,
+            "total_injury": injury,
+            "outcome": "injury" if injury else "stopped",
+            "message": (
+                f"Impact velocity: {velocity} yd/s\n"
+                f"Basic damage: {expression} = {basic_damage}\n"
+                f"Injury: {injury} HP"
+            ),
+        })
         return result
-    
+
     def get_falling_velocity_table(self) -> Dict[int, int]:
-        """
-        Retorna a tabela completa de velocidade de queda.
-        
-        Returns:
-            Dict comdistância: velocidade
-        """
-        return {
-            1: 5, 2: 7, 3: 8, 4: 9, 5: 10,
-            6: 11, 7: 12, 8: 13, 9: 14, 10: 15,
-            11: 15, 12: 16, 13: 17, 14: 17, 15: 18,
-            16: 19, 17: 19, 18: 20, 19: 20, 20: 21,
-            21: 21, 22: 22, 23: 22, 24: 23, 25: 23,
-            26: 24, 27: 24, 28: 25, 29: 25, 30: 26,
-            31: 26, 32: 26, 33: 27, 34: 27, 35: 28,
-            36: 28, 37: 28, 38: 29, 39: 29, 40: 30,
-            41: 30, 42: 30, 43: 31, 44: 31, 45: 31,
-            46: 32, 47: 32, 48: 32, 49: 33, 50: 33,
-        }
-    
+        """Return every printed one-yard lookup from 1 through 112 yards."""
+        return {distance: get_falling_velocity(distance) for distance in range(1, 113)}
+
     def calculate_blunt_trauma(
-        self,
-        damage: int,
-        is_flexible_armor: bool = True
+        self, damage_stopped: int, is_flexible_armor: bool = True
     ) -> int:
-        """
-        Calcula trauma blunt de armadura flexível.
-        
-        Args:
-            damage: Dano que atingiu a armadura
-            is_flexible_armor: É armadura flexível?
-            
-        Returns:
-            HP de trauma blunt
-        """
-        if not is_flexible_armor:
+        if not is_flexible_armor or damage_stopped <= 0:
             return 0
-        
-        # 1 HP por 5 pontos de dano (crushing)
-        # 1 HP por 10 pontos de dano (cutting/impaling/piercing)
-        return damage // 5
+        return damage_stopped // 5

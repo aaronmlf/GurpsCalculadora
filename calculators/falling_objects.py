@@ -1,23 +1,20 @@
-"""
-Calculadora de Queda de Objetos - GURPS 4e
+"""Falling-object and Dropping rules (Basic Set Revised, pp. 189 and 431)."""
 
-Regras do Basic Set Revised (p. 431):
-- Usar mesma tabela de velocidade de queda
-- Dano: (HP × velocidade) / 100
-- Para acertar: Dropping skill (Habilidade 15 padrão)
-- Alvo não pode esquivar se não souber que vem
-- Se souber, pode fazer Dodge
-- Objeto com SM ≥ SM do alvo: impede movimento
-- Penalidade: -3 a defesas, Move 1 no próximo turno
-- Penalidades resultam de volume, não massa (ST irrelevante)
-"""
-from typing import Dict, Any
-from utils.dice_roller import get_falling_velocity, calculate_collision_damage
+from typing import Any, Dict, Optional
+
+from utils.dice_roller import (
+    calculate_collision_damage,
+    evaluate_success_roll,
+    get_falling_velocity,
+    get_range_modifier,
+    roll_3d6,
+    roll_dice,
+)
 
 
 class FallingObjectsCalculator:
-    """Calculadora de Queda de Objetos do GURPS 4e."""
-    
+    """Resolve a ranged Dropping attack from above and its collision damage."""
+
     def calculate_falling_object(
         self,
         distance_yards: int,
@@ -26,24 +23,38 @@ class FallingObjectsCalculator:
         target_sm: int = 0,
         object_sm: int = 0,
         target_aware: bool = False,
-        dropping_skill: int = 15
+        dropping_skill: int = 15,
+        target_dodge: int = 8,
+        aimed: bool = False,
+        attack_roll: Optional[int] = None,
+        dodge_roll: Optional[int] = None,
     ) -> Dict[str, Any]:
-        """
-        Calcula dano de objeto caindo.
-        
-        Args:
-            distance_yards: Distância da queda em jardas
-            object_hp: HP do objeto
-            target_hp: HP do alvo
-            target_sm: Size Modifier do alvo
-            object_sm: Size Modifier do objeto
-            target_aware: Alvo sabe que o objeto vem?
-            dropping_skill: Habilidade Dropping (padrão: 15)
-            
-        Returns:
-            Dict com resultados
-        """
-        result = {
+        if distance_yards < 0 or object_hp < 1 or target_hp < 1:
+            raise ValueError("Distance cannot be negative and HP must be positive.")
+
+        velocity = get_falling_velocity(distance_yards)
+        _, expression = calculate_collision_damage(object_hp, velocity)
+        range_modifier = get_range_modifier(distance_yards)
+        effective_skill = dropping_skill + range_modifier + (1 if aimed else 0)
+        attack_roll = attack_roll if attack_roll is not None else roll_3d6()[0]
+        attack = (
+            evaluate_success_roll(effective_skill, attack_roll)
+            if effective_skill >= 3
+            else {"success": False, "critical_success": False,
+                  "critical_failure": False, "margin": attack_roll - effective_skill}
+        )
+
+        hit = bool(attack["success"])
+        target_can_dodge = bool(target_aware and hit)
+        dodge_success = False
+        if target_can_dodge:
+            dodge_roll = dodge_roll if dodge_roll is not None else roll_3d6()[0]
+            dodge_success = bool(evaluate_success_roll(target_dodge, dodge_roll)["success"])
+            hit = not dodge_success
+
+        damage = roll_dice(expression)[0] if hit and expression != "0d" else 0
+        impedes = hit and object_sm >= target_sm
+        result: Dict[str, Any] = {
             "distance_yards": distance_yards,
             "object_hp": object_hp,
             "target_hp": target_hp,
@@ -51,72 +62,33 @@ class FallingObjectsCalculator:
             "object_sm": object_sm,
             "target_aware": target_aware,
             "dropping_skill": dropping_skill,
-            "velocity": 0,
-            "damage_dice": "",
-            "damage_total": 0,
+            "range_modifier": range_modifier,
+            "effective_skill": effective_skill,
+            "attack_roll": attack_roll,
+            "attack_success": attack["success"],
+            "critical_hit": attack["critical_success"],
+            "critical_miss": attack["critical_failure"],
+            "velocity": velocity,
+            "damage_dice": expression,
+            "damage_total": damage,
+            "hit": hit,
             "hit_automatically": False,
-            "target_can_dodge": False,
-            "move_penalty": 0,
-            "defense_penalty": 0,
+            "target_can_dodge": target_can_dodge,
+            "target_dodge": target_dodge,
+            "dodge_roll": dodge_roll,
+            "dodge_success": dodge_success,
+            "next_turn_move": 1 if impedes else None,
+            "move_penalty": 1 if impedes else 0,
+            "defense_penalty": 3 if impedes else 0,
             "valid": True,
-            "message": ""
+            "outcome": "hit" if hit else "dodged" if dodge_success else "miss",
+            "message": (
+                f"Dropping roll: {attack_roll} vs. {effective_skill}\n"
+                f"Impact damage: {expression} = {damage}"
+            ),
         }
-        
-        # Calcula velocidade
-        velocity = get_falling_velocity(distance_yards)
-        result["velocity"] = velocity
-        
-        # Calcula dano
-        damage, dice_expr = calculate_collision_damage(object_hp, velocity)
-        result["damage_dice"] = dice_expr
-        result["damage_total"] = damage
-        
-        # Verifica se atinge automaticamente
-        # Acerto automático se o objeto atinge o alvo diretamente
-        hit_automatically = True  # Simplificação
-        result["hit_automatically"] = hit_automatically
-        
-        # Verifica se o alvo pode esquivar
-        target_can_dodge = target_aware
-        result["target_can_dodge"] = target_can_dodge
-        
-        # Verifica penalidades de movimento e defesa
-        move_penalty = 0
-        defense_penalty = 0
-        
-        if object_sm >= target_sm:
-            # Objeto com SM ≥ SM do alvo impede movimento
-            move_penalty = 1  # Move 1 no próximo turno
-            defense_penalty = 3  # -3 a defesas
-        
-        result["move_penalty"] = move_penalty
-        result["defense_penalty"] = defense_penalty
-        
-        # Gera mensagem
-        message_parts = [
-            f"Distância: {distance_yards} jardas",
-            f"Velocidade: {velocity} jardas/seg",
-            f"Dano: {dice_expr} = {damage}",
-        ]
-        
-        if hit_automatically:
-            message_parts.append("Acerto automático!")
-        
-        if target_can_dodge:
-            message_parts.append("Alvo pode fazer Dodge!")
-        else:
-            message_parts.append("Alvo não sabe que o objeto vem!")
-        
-        if move_penalty > 0:
-            message_parts.append(f"Penalidade de movimento: -{move_penalty} (Move 1)")
-        
-        if defense_penalty > 0:
-            message_parts.append(f"Penalidade de defesa: -{defense_penalty}")
-        
-        result["message"] = "\n".join(message_parts)
-        
         return result
-    
+
     def calculate_drop_attack(
         self,
         distance_yards: int,
@@ -124,67 +96,21 @@ class FallingObjectsCalculator:
         object_sm: int,
         target_sm: int,
         dropping_skill: int = 15,
-        target_dodge: int = 10
+        target_dodge: int = 10,
+        target_aware: bool = True,
+        attack_roll: Optional[int] = None,
+        dodge_roll: Optional[int] = None,
     ) -> Dict[str, Any]:
-        """
-        Calcula ataque de objeto caindo (regras completas).
-        
-        Args:
-            distance_yards: Distância da queda
-            object_hp: HP do objeto
-            object_sm: Size Modifier do objeto
-            target_sm: Size Modifier do alvo
-            dropping_skill: Habilidade Dropping
-            target_dodge: Esquiva do alvo
-            
-        Returns:
-            Dict com resultados
-        """
-        result = {
-            "distance_yards": distance_yards,
-            "object_hp": object_hp,
-            "object_sm": object_sm,
-            "target_sm": target_sm,
-            "dropping_skill": dropping_skill,
-            "target_dodge": target_dodge,
-            "velocity": 0,
-            "damage_dice": "",
-            "damage_total": 0,
-            "effective_skill": 0,
-            "target_dodge_modified": 0,
-            "valid": True,
-            "message": ""
-        }
-        
-        # Calcula velocidade e dano
-        velocity = get_falling_velocity(distance_yards)
-        result["velocity"] = velocity
-        
-        damage, dice_expr = calculate_collision_damage(object_hp, velocity)
-        result["damage_dice"] = dice_expr
-        result["damage_total"] = damage
-        
-        # Habilidade efetiva (Dropping + modificador de alcance)
-        # Simplificação: assume alcance curto
-        effective_skill = dropping_skill
-        result["effective_skill"] = effective_skill
-        
-        # Modificador de defesa do alvo
-        # Penalidade baseada no SM do objeto
-        target_dodge_modified = target_dodge
-        if object_sm >= target_sm:
-            target_dodge_modified -= 3
-        
-        result["target_dodge_modified"] = target_dodge_modified
-        
-        # Gera mensagem
-        result["message"] = (
-            f"Ataque de objeto caindo!\n"
-            f"Distância: {distance_yards} jardas\n"
-            f"Velocidade: {velocity} jardas/seg\n"
-            f"Dano: {dice_expr} = {damage}\n"
-            f"Habilidade de ataque: {effective_skill}\n"
-            f"Esquiva do alvo: {target_dodge_modified}"
+        """Compatibility wrapper returning a fully resolved Dropping attack."""
+        return self.calculate_falling_object(
+            distance_yards=distance_yards,
+            object_hp=object_hp,
+            target_hp=1,
+            target_sm=target_sm,
+            object_sm=object_sm,
+            target_aware=target_aware,
+            dropping_skill=dropping_skill,
+            target_dodge=target_dodge,
+            attack_roll=attack_roll,
+            dodge_roll=dodge_roll,
         )
-        
-        return result

@@ -13,7 +13,7 @@ Regras do Basic Set Revised (p. 378):
 - Penalidade: -1 por jarda após a primeira
 - Equilíbrio Perfeito: +4 na rolagem
 """
-from typing import Dict, Any
+from typing import Any, Dict, Optional
 
 
 class KnockbackCalculator:
@@ -23,7 +23,7 @@ class KnockbackCalculator:
         self,
         damage_type: str,
         basic_damage: int,
-        target_st: int,
+        target_st: Optional[int],
         target_dr: int = 0,
         target_hp: int = None,
         perfect_balance: bool = False
@@ -55,12 +55,14 @@ class KnockbackCalculator:
             "fall_down": False,
             "collision": False,
             "valid": True,
+            "outcome": "none",
             "message": ""
         }
         
         # Verifica tipo de dano válido
         if damage_type not in ["crushing", "cutting"]:
             result["valid"] = False
+            result["outcome"] = "invalid_damage_type"
             result["message"] = "Tipo de dano inválido. Use 'crushing' ou 'cutting'."
             return result
         
@@ -90,12 +92,18 @@ class KnockbackCalculator:
             return result
         
         # Calcula quantas jardas para trás
-        # Usar HP se ST ≤ 3 ou se target_hp é fornecido e ST ≤ 3
-        effective_st = target_st
-        if target_st <= 3 and target_hp is not None:
+        # HP substitutes for ST only when the target has no ST score at all.
+        if target_st is None:
+            if target_hp is None or target_hp < 1:
+                result["valid"] = False
+                result["outcome"] = "missing_hp"
+                result["message"] = "A target without ST must have HP."
+                return result
             effective_st = target_hp
-        
-        if effective_st <= 3:
+        else:
+            effective_st = target_st
+
+        if target_st is not None and target_st <= 3:
             # ST 3 ou menos: 1 jarda por ponto de dano
             yards_back = knockback_damage
         else:
@@ -121,6 +129,7 @@ class KnockbackCalculator:
         
         # Mensagem informativa
         if yards_back > 0:
+            result["outcome"] = "knockback"
             result["message"] = f"Knockback: {yards_back} jarda(s) para trás."
             if roll_modifier < 0:
                 result["message"] += f" Modificador de rolagem: {roll_modifier}"
@@ -155,6 +164,7 @@ class KnockbackCalculator:
             "roll_result": roll_result,
             "success": False,
             "fall_down": False,
+            "outcome": "success",
             "margin": 0,
             "message": ""
         }
@@ -178,6 +188,7 @@ class KnockbackCalculator:
         else:
             result["success"] = False
             result["fall_down"] = True
+            result["outcome"] = "fall"
             result["margin"] = roll_result - effective
             result["message"] = f"Falhou! Cai no chão. Margem: {result['margin']}"
         

@@ -105,10 +105,12 @@ class GURPSCalculator:
         self.slam_defender_hp = tk.IntVar(value=10)
         self.slam_defender_velocity = tk.IntVar(value=0)  # m/s
         self.slam_collision_type = tk.StringVar(value="head_on")
+        self.slam_attacker_damage_bonus = tk.IntVar(value=0)
 
         # ─── Quedas (p. 430-431) ────────────────────────────────────
         self.falls_distance = tk.IntVar(value=9)   # metros (~10 jardas)
         self.falls_hp = tk.IntVar(value=10)
+        self.falls_dr = tk.IntVar(value=0)
         self.falls_surface = tk.StringVar(value="hard")
         self.falls_acrobatics = tk.BooleanVar(value=False)
         self.falls_swimming = tk.BooleanVar(value=False)
@@ -117,16 +119,21 @@ class GURPSCalculator:
         self.coll_obj1_hp = tk.IntVar(value=60)
         self.coll_obj1_velocity = tk.IntVar(value=23)  # m/s (~25 yd/s)
         self.coll_obj2_hp = tk.IntVar(value=10)
+        self.coll_obj2_dr = tk.IntVar(value=0)
         self.coll_obj2_velocity = tk.IntVar(value=5)
         self.coll_type = tk.StringVar(value="head_on")
         self.coll_surface = tk.StringVar(value="normal")
         self.coll_immovable = tk.BooleanVar(value=False)
+        self.coll_breakable = tk.BooleanVar(value=False)
 
         # ─── Explosões (p. 414-415) ─────────────────────────────────
         self.exp_basic_damage = tk.IntVar(value=6)
         self.exp_fragmentation = tk.IntVar(value=0)
         self.exp_distance = tk.IntVar(value=9)   # metros (~10 jardas)
         self.exp_dr = tk.IntVar(value=0)
+        self.exp_direct_hit = tk.BooleanVar(value=False)
+        self.exp_target_sm = tk.IntVar(value=0)
+        self.exp_posture_modifier = tk.IntVar(value=0)
 
         # ─── Queda de Objetos (p. 431) ──────────────────────────────
         self.fo_distance = tk.IntVar(value=9)
@@ -134,6 +141,10 @@ class GURPSCalculator:
         self.fo_target_hp = tk.IntVar(value=10)
         self.fo_target_sm = tk.IntVar(value=0)
         self.fo_object_sm = tk.IntVar(value=0)
+        self.fo_dropping_skill = tk.IntVar(value=15)
+        self.fo_target_aware = tk.BooleanVar(value=False)
+        self.fo_target_dodge = tk.IntVar(value=8)
+        self.fo_aimed = tk.BooleanVar(value=False)
 
         # ─── Combate (p. 368-376) ───────────────────────────────────
         # Attack Skill: Habilidade usada para acertar (ex: Sword-15)
@@ -346,8 +357,12 @@ class GURPSCalculator:
         ttk.Radiobutton(input_frame, text=t("slam_side_on"),
                          variable=self.slam_collision_type, value="side_on").grid(row=8, column=1, sticky=tk.W, pady=5)
 
+        ttk.Label(input_frame, text=t("slam_attacker_damage_bonus")).grid(row=9, column=0, sticky=tk.W, pady=5)
+        ttk.Spinbox(input_frame, from_=-100, to=100,
+                     textvariable=self.slam_attacker_damage_bonus, width=10).grid(row=9, column=1, sticky=tk.W, pady=5)
+
         ttk.Button(input_frame, text=t("slam_calculate"),
-                    command=self._calculate_slam).grid(row=9, column=0, columnspan=2, pady=10)
+                    command=self._calculate_slam).grid(row=10, column=0, columnspan=2, pady=10)
 
         result_frame = ttk.Frame(frame)
         result_frame.pack(fill=tk.BOTH, expand=True, padx=20, pady=10)
@@ -384,23 +399,27 @@ class GURPSCalculator:
         ttk.Spinbox(input_frame, from_=1, to=10000,
                      textvariable=self.falls_hp, width=10).grid(row=1, column=1, sticky=tk.W, pady=5)
 
-        ttk.Label(input_frame, text=t("falls_surface_type")).grid(row=2, column=0, sticky=tk.W, pady=5)
+        ttk.Label(input_frame, text=t("falls_dr")).grid(row=2, column=0, sticky=tk.W, pady=5)
+        ttk.Spinbox(input_frame, from_=0, to=10000,
+                     textvariable=self.falls_dr, width=10).grid(row=2, column=1, sticky=tk.W, pady=5)
+
+        ttk.Label(input_frame, text=t("falls_surface_type")).grid(row=3, column=0, sticky=tk.W, pady=5)
         ttk.Radiobutton(input_frame, text=t("falls_hard"),
-                         variable=self.falls_surface, value="hard").grid(row=2, column=1, sticky=tk.W, pady=5)
+                         variable=self.falls_surface, value="hard").grid(row=3, column=1, sticky=tk.W, pady=5)
         ttk.Radiobutton(input_frame, text=t("falls_soft"),
-                         variable=self.falls_surface, value="soft").grid(row=3, column=1, sticky=tk.W, pady=5)
+                         variable=self.falls_surface, value="soft").grid(row=4, column=1, sticky=tk.W, pady=5)
         ttk.Radiobutton(input_frame, text=t("falls_elastic"),
-                         variable=self.falls_surface, value="elastic").grid(row=4, column=1, sticky=tk.W, pady=5)
+                         variable=self.falls_surface, value="elastic").grid(row=5, column=1, sticky=tk.W, pady=5)
         ttk.Radiobutton(input_frame, text=t("falls_water"),
-                         variable=self.falls_surface, value="water").grid(row=5, column=1, sticky=tk.W, pady=5)
+                         variable=self.falls_surface, value="water").grid(row=6, column=1, sticky=tk.W, pady=5)
 
         ttk.Checkbutton(input_frame, text=t("falls_acrobatics"),
-                         variable=self.falls_acrobatics).grid(row=6, column=0, columnspan=2, sticky=tk.W, pady=5)
+                         variable=self.falls_acrobatics).grid(row=7, column=0, columnspan=2, sticky=tk.W, pady=5)
         ttk.Checkbutton(input_frame, text=t("falls_swimming"),
-                         variable=self.falls_swimming).grid(row=7, column=0, columnspan=2, sticky=tk.W, pady=5)
+                         variable=self.falls_swimming).grid(row=8, column=0, columnspan=2, sticky=tk.W, pady=5)
 
         ttk.Button(input_frame, text=t("falls_calculate"),
-                    command=self._calculate_falls).grid(row=8, column=0, columnspan=2, pady=10)
+                    command=self._calculate_falls).grid(row=9, column=0, columnspan=2, pady=10)
 
         result_frame = ttk.Frame(frame)
         result_frame.pack(fill=tk.BOTH, expand=True, padx=20, pady=10)
@@ -441,38 +460,45 @@ class GURPSCalculator:
 
         # Objeto 2
         ttk.Label(input_frame, text=t("collisions_object2"),
-                   style="Subtitle.TLabel").grid(row=3, column=0, columnspan=2, pady=5)
-        ttk.Label(input_frame, text=t("collisions_hp")).grid(row=4, column=0, sticky=tk.W, pady=5)
+                   style="Subtitle.TLabel").grid(row=0, column=2, columnspan=2, pady=5, padx=(30, 0))
+        ttk.Label(input_frame, text=t("collisions_hp")).grid(row=1, column=2, sticky=tk.W, pady=5, padx=(30, 0))
         ttk.Spinbox(input_frame, from_=1, to=10000,
-                     textvariable=self.coll_obj2_hp, width=10).grid(row=4, column=1, sticky=tk.W, pady=5)
-        ttk.Label(input_frame, text=t("collisions_velocity")).grid(row=5, column=0, sticky=tk.W, pady=5)
+                     textvariable=self.coll_obj2_hp, width=10).grid(row=1, column=3, sticky=tk.W, pady=5)
+        ttk.Label(input_frame, text=t("collisions_velocity")).grid(row=2, column=2, sticky=tk.W, pady=5, padx=(30, 0))
         ttk.Spinbox(input_frame, from_=0, to=10000,
-                     textvariable=self.coll_obj2_velocity, width=10).grid(row=5, column=1, sticky=tk.W, pady=5)
+                     textvariable=self.coll_obj2_velocity, width=10).grid(row=2, column=3, sticky=tk.W, pady=5)
+
+        ttk.Label(input_frame, text=t("collisions_dr")).grid(row=3, column=2, sticky=tk.W, pady=5, padx=(30, 0))
+        ttk.Spinbox(input_frame, from_=0, to=10000,
+                     textvariable=self.coll_obj2_dr, width=10).grid(row=3, column=3, sticky=tk.W, pady=5)
 
         # Tipo de colisão
-        ttk.Label(input_frame, text=t("collisions_type")).grid(row=6, column=0, sticky=tk.W, pady=5)
+        ttk.Label(input_frame, text=t("collisions_type")).grid(row=4, column=0, sticky=tk.W, pady=5)
         ttk.Radiobutton(input_frame, text=t("collisions_head_on"),
-                         variable=self.coll_type, value="head_on").grid(row=6, column=1, sticky=tk.W, pady=5)
+                         variable=self.coll_type, value="head_on").grid(row=4, column=1, sticky=tk.W, pady=5)
         ttk.Radiobutton(input_frame, text=t("collisions_rear_end"),
-                         variable=self.coll_type, value="rear_end").grid(row=7, column=1, sticky=tk.W, pady=5)
+                         variable=self.coll_type, value="rear_end").grid(row=4, column=2, sticky=tk.W, pady=5, padx=(30, 0))
         ttk.Radiobutton(input_frame, text=t("collisions_side_on"),
-                         variable=self.coll_type, value="side_on").grid(row=8, column=1, sticky=tk.W, pady=5)
+                         variable=self.coll_type, value="side_on").grid(row=4, column=3, sticky=tk.W, pady=5)
 
         # Tipo de superfície
-        ttk.Label(input_frame, text=t("collisions_surface")).grid(row=9, column=0, sticky=tk.W, pady=5)
+        ttk.Label(input_frame, text=t("collisions_surface")).grid(row=5, column=0, sticky=tk.W, pady=5)
         ttk.Radiobutton(input_frame, text=t("collisions_surface_normal"),
-                         variable=self.coll_surface, value="normal").grid(row=9, column=1, sticky=tk.W, pady=5)
+                         variable=self.coll_surface, value="normal").grid(row=5, column=1, sticky=tk.W, pady=5)
         ttk.Radiobutton(input_frame, text=t("collisions_surface_hard"),
-                         variable=self.coll_surface, value="hard").grid(row=10, column=1, sticky=tk.W, pady=5)
+                         variable=self.coll_surface, value="hard").grid(row=5, column=2, sticky=tk.W, pady=5, padx=(30, 0))
         ttk.Radiobutton(input_frame, text=t("collisions_surface_elastic"),
-                         variable=self.coll_surface, value="elastic").grid(row=11, column=1, sticky=tk.W, pady=5)
+                         variable=self.coll_surface, value="elastic").grid(row=5, column=3, sticky=tk.W, pady=5)
 
         # Objeto imóvel
         ttk.Checkbutton(input_frame, text=t("collisions_immovable"),
-                         variable=self.coll_immovable).grid(row=12, column=0, columnspan=2, sticky=tk.W, pady=5)
+                         variable=self.coll_immovable).grid(row=6, column=0, columnspan=2, sticky=tk.W, pady=5)
+
+        ttk.Checkbutton(input_frame, text=t("collisions_breakable"),
+                         variable=self.coll_breakable).grid(row=6, column=2, columnspan=2, sticky=tk.W, pady=5, padx=(30, 0))
 
         ttk.Button(input_frame, text=t("collisions_calculate"),
-                    command=self._calculate_collisions).grid(row=13, column=0, columnspan=2, pady=10)
+                    command=self._calculate_collisions).grid(row=7, column=0, columnspan=4, pady=10)
 
         result_frame = ttk.Frame(frame)
         result_frame.pack(fill=tk.BOTH, expand=True, padx=20, pady=10)
@@ -517,8 +543,19 @@ class GURPSCalculator:
         ttk.Spinbox(input_frame, from_=0, to=10000,
                      textvariable=self.exp_dr, width=10).grid(row=3, column=1, sticky=tk.W, pady=5)
 
+        ttk.Checkbutton(input_frame, text=t("explosions_direct_hit"),
+                         variable=self.exp_direct_hit).grid(row=4, column=0, columnspan=2, sticky=tk.W, pady=5)
+
+        ttk.Label(input_frame, text=t("explosions_target_sm")).grid(row=5, column=0, sticky=tk.W, pady=5)
+        ttk.Spinbox(input_frame, from_=-100, to=100,
+                     textvariable=self.exp_target_sm, width=10).grid(row=5, column=1, sticky=tk.W, pady=5)
+
+        ttk.Label(input_frame, text=t("explosions_posture_modifier")).grid(row=6, column=0, sticky=tk.W, pady=5)
+        ttk.Spinbox(input_frame, from_=-10, to=10,
+                     textvariable=self.exp_posture_modifier, width=10).grid(row=6, column=1, sticky=tk.W, pady=5)
+
         ttk.Button(input_frame, text=t("explosions_calculate"),
-                    command=self._calculate_explosions).grid(row=4, column=0, columnspan=2, pady=10)
+                    command=self._calculate_explosions).grid(row=7, column=0, columnspan=2, pady=10)
 
         result_frame = ttk.Frame(frame)
         result_frame.pack(fill=tk.BOTH, expand=True, padx=20, pady=10)
@@ -567,8 +604,22 @@ class GURPSCalculator:
         ttk.Spinbox(input_frame, from_=-100, to=100,
                      textvariable=self.fo_object_sm, width=10).grid(row=4, column=1, sticky=tk.W, pady=5)
 
+        ttk.Label(input_frame, text=t("falling_objects_dropping_skill")).grid(row=5, column=0, sticky=tk.W, pady=5)
+        ttk.Spinbox(input_frame, from_=1, to=100,
+                     textvariable=self.fo_dropping_skill, width=10).grid(row=5, column=1, sticky=tk.W, pady=5)
+
+        ttk.Checkbutton(input_frame, text=t("falling_objects_target_aware"),
+                         variable=self.fo_target_aware).grid(row=6, column=0, columnspan=2, sticky=tk.W, pady=5)
+
+        ttk.Label(input_frame, text=t("falling_objects_target_dodge")).grid(row=7, column=0, sticky=tk.W, pady=5)
+        ttk.Spinbox(input_frame, from_=1, to=100,
+                     textvariable=self.fo_target_dodge, width=10).grid(row=7, column=1, sticky=tk.W, pady=5)
+
+        ttk.Checkbutton(input_frame, text=t("falling_objects_aimed"),
+                         variable=self.fo_aimed).grid(row=8, column=0, columnspan=2, sticky=tk.W, pady=5)
+
         ttk.Button(input_frame, text=t("falling_objects_calculate"),
-                    command=self._calculate_falling_objects).grid(row=5, column=0, columnspan=2, pady=10)
+                    command=self._calculate_falling_objects).grid(row=9, column=0, columnspan=2, pady=10)
 
         result_frame = ttk.Frame(frame)
         result_frame.pack(fill=tk.BOTH, expand=True, padx=20, pady=10)
@@ -686,7 +737,16 @@ class GURPSCalculator:
             )
 
             self.kb_result_text.delete(1.0, tk.END)
-            self.kb_result_text.insert(tk.END, result["message"])
+            if not result["valid"]:
+                self.kb_result_text.insert(tk.END, t("knockback_invalid"))
+            elif result["yards_back"] == 0:
+                self.kb_result_text.insert(tk.END, t("knockback_none"))
+            else:
+                self.kb_result_text.insert(tk.END, t(
+                    "knockback_summary",
+                    yards=result["yards_back"],
+                    meters=self._format_meters(result["yards_back"]),
+                ))
 
             if result["yards_back"] > 0:
                 self.kb_result_text.insert(tk.END, f"\n\n{t('knockback_details')}")
@@ -698,7 +758,7 @@ class GURPSCalculator:
                     f"\n{t('knockback_roll_modifier', value=result['roll_modifier'])}")
 
         except Exception as e:
-            messagebox.showerror("Error", str(e))
+            messagebox.showerror(t("common_error_title"), str(e))
 
     def _roll_knockback(self):
         """Rola 3d6 para verificação de knockback."""
@@ -719,7 +779,7 @@ class GURPSCalculator:
 
             if kb_result["yards_back"] == 0:
                 self.kb_result_text.delete(1.0, tk.END)
-                self.kb_result_text.insert(tk.END, kb_result["message"])
+                self.kb_result_text.insert(tk.END, t("knockback_none"))
                 return
 
             roll_result = self.kb_roll_result.get()
@@ -731,22 +791,30 @@ class GURPSCalculator:
             )
 
             self.kb_result_text.delete(1.0, tk.END)
-            self.kb_result_text.insert(tk.END, kb_result["message"])
+            self.kb_result_text.insert(tk.END, t(
+                "knockback_summary",
+                yards=kb_result["yards_back"],
+                meters=self._format_meters(kb_result["yards_back"]),
+            ))
             self.kb_result_text.insert(tk.END,
                 f"\n\n{t('knockback_verification')}")
             self.kb_result_text.insert(tk.END,
                 f"\n{t('knockback_roll_result', value=roll_result)}")
             self.kb_result_text.insert(tk.END,
                 f"\n{t('knockback_effective_skill', value=roll_check['effective_skill'])}")
+            roll_message = t(
+                "roll_success" if roll_check["success"] else "roll_failure",
+                margin=roll_check["margin"],
+            )
             self.kb_result_text.insert(tk.END,
-                f"\n{t('combat_result_label', value=roll_check['message'])}")
+                f"\n{t('combat_result_label', value=roll_message)}")
 
             if roll_check["fall_down"]:
                 self.kb_result_text.insert(tk.END,
                     f"\n\n{t('knockback_fall_warning')}")
 
         except Exception as e:
-            messagebox.showerror("Error", str(e))
+            messagebox.showerror(t("common_error_title"), str(e))
 
     # ─── Slam/Investida ──────────────────────────────────────────
     def _calculate_slam(self):
@@ -761,30 +829,25 @@ class GURPSCalculator:
                 attacker_velocity=att_vel_yd,
                 defender_hp=self.slam_defender_hp.get(),
                 defender_velocity=def_vel_yd,
-                collision_type=self.slam_collision_type.get()
+                collision_type=self.slam_collision_type.get(),
+                attacker_skill_bonus=self.slam_attacker_damage_bonus.get(),
             )
 
             self.slam_result_text.delete(1.0, tk.END)
             # Converter resultado de volta para metros
             collision_vel_m = round(result["collision_velocity"] * YARDS_TO_METERS, 1)
             self.slam_result_text.insert(tk.END,
-                f"Collision velocity: {collision_vel_m} m/s\n")
+                f"{t('result_collision_velocity', value=collision_vel_m)}\n")
             self.slam_result_text.insert(tk.END,
-                f"Attacker damage: {result['attacker_damage_total']}\n")
+                f"{t('slam_attacker_damage', expression=result['attacker_damage_dice'], value=result['attacker_damage_total'])}\n")
             self.slam_result_text.insert(tk.END,
-                f"Defender damage: {result['defender_damage_total']}\n")
-
-            if result["attacker_fall"] or result["defender_fall"]:
-                self.slam_result_text.insert(tk.END, "\n--- Result ---\n")
-                if result["attacker_fall"]:
-                    self.slam_result_text.insert(tk.END,
-                        f"{t('slam_attacker_fall')}\n")
-                if result["defender_fall"]:
-                    self.slam_result_text.insert(tk.END,
-                        f"{t('slam_defender_fall')}\n")
+                f"{t('slam_defender_damage', expression=result['defender_damage_dice'], value=result['defender_damage_total'])}\n")
+            self.slam_result_text.insert(
+                tk.END, f"\n{t('slam_' + result['outcome'])}\n"
+            )
 
         except Exception as e:
-            messagebox.showerror("Error", str(e))
+            messagebox.showerror(t("common_error_title"), str(e))
 
     # ─── Quedas ──────────────────────────────────────────────────
     def _calculate_falls(self):
@@ -798,24 +861,30 @@ class GURPSCalculator:
                 target_hp=self.falls_hp.get(),
                 surface_type=self.falls_surface.get(),
                 acrobatics_success=self.falls_acrobatics.get(),
-                swimming_success=self.falls_swimming.get()
+                swimming_success=self.falls_swimming.get(),
+                armor_dr=self.falls_dr.get(),
             )
 
             self.falls_result_text.delete(1.0, tk.END)
             velocity_m = round(result["velocity"] * YARDS_TO_METERS, 1)
             self.falls_result_text.insert(tk.END,
-                f"Distance: {self.falls_distance.get()}m ({distance_yards} yards)\n")
+                f"{t('result_distance', meters=self.falls_distance.get(), yards=distance_yards)}\n")
             self.falls_result_text.insert(tk.END,
-                f"Impact velocity: {velocity_m} m/s ({result['velocity']} yd/s)\n")
+                f"{t('result_impact_velocity', mps=velocity_m, yps=result['velocity'])}\n")
             self.falls_result_text.insert(tk.END,
-                f"Damage: {result['damage_dice']} = {result['damage_total']}\n")
+                f"{t('result_basic_damage', expression=result['damage_dice'], value=result['damage_total'])}\n")
             self.falls_result_text.insert(tk.END,
-                f"Blunt trauma: {result['blunt_trauma']} HP\n")
+                f"{t('result_penetrating_damage', value=result['penetrating_damage'])}\n")
             self.falls_result_text.insert(tk.END,
-                f"Total injury: {result['total_injury']} HP\n")
+                f"{t('result_blunt_trauma', value=result['blunt_trauma'])}\n")
+            self.falls_result_text.insert(tk.END,
+                f"{t('result_total_injury', value=result['total_injury'])}\n")
+            if result["surface_type"] == "water":
+                self.falls_result_text.insert(tk.END,
+                    f"{t('falls_swimming_modifier', value=result['swimming_modifier'])}\n")
 
         except Exception as e:
-            messagebox.showerror("Error", str(e))
+            messagebox.showerror(t("common_error_title"), str(e))
 
     # ─── Colisões ────────────────────────────────────────────────
     def _calculate_collisions(self):
@@ -832,20 +901,25 @@ class GURPSCalculator:
                 object2_velocity=vel2_yd,
                 collision_type=self.coll_type.get(),
                 surface_type=self.coll_surface.get(),
-                immovable_object=self.coll_immovable.get()
+                immovable_object=self.coll_immovable.get(),
+                object2_dr=self.coll_obj2_dr.get(),
+                obstacle_breakable=self.coll_breakable.get(),
             )
 
             self.coll_result_text.delete(1.0, tk.END)
             collision_vel_m = round(result["collision_velocity"] * YARDS_TO_METERS, 1)
             self.coll_result_text.insert(tk.END,
-                f"Collision velocity: {collision_vel_m} m/s\n")
+                f"{t('result_collision_velocity', value=collision_vel_m)}\n")
             self.coll_result_text.insert(tk.END,
-                f"Object 1 damage: {result['object1_damage_dice']} = {result['object1_damage_total']}\n")
+                f"{t('collisions_object1_damage', expression=result['object1_damage_dice'], value=result['object1_damage_total'])}\n")
             self.coll_result_text.insert(tk.END,
-                f"Object 2 damage: {result['object2_damage_dice']} = {result['object2_damage_total']}\n")
+                f"{t('collisions_object2_damage', expression=result['object2_damage_dice'], value=result['object2_damage_total'])}\n")
+            if result["damage_cap"] is not None:
+                self.coll_result_text.insert(tk.END,
+                    f"{t('collisions_damage_cap', value=result['damage_cap'])}\n")
 
         except Exception as e:
-            messagebox.showerror("Error", str(e))
+            messagebox.showerror(t("common_error_title"), str(e))
 
     # ─── Explosões ───────────────────────────────────────────────
     def _calculate_explosions(self):
@@ -858,24 +932,29 @@ class GURPSCalculator:
                 basic_damage_dice=self.exp_basic_damage.get(),
                 fragmentation_dice=self.exp_fragmentation.get(),
                 distance_yards=distance_yards,
-                target_dr=self.exp_dr.get()
+                target_dr=self.exp_dr.get(),
+                direct_hit=self.exp_direct_hit.get(),
+                target_sm=self.exp_target_sm.get(),
+                posture_modifier=self.exp_posture_modifier.get(),
             )
 
             self.exp_result_text.delete(1.0, tk.END)
             blast_radius_m = round(result["blast_radius"] * YARDS_TO_METERS, 1)
             self.exp_result_text.insert(tk.END,
-                f"Blast radius: {blast_radius_m}m ({result['blast_radius']} yards)\n")
+                f"{t('explosions_blast_radius', meters=blast_radius_m, yards=result['blast_radius'])}\n")
             self.exp_result_text.insert(tk.END,
-                f"Collateral damage: {result['collateral_damage_total']}\n")
+                f"{t('explosions_blast_damage', expression=result['collateral_damage_dice'], value=result['collateral_damage_total'])}\n")
             self.exp_result_text.insert(tk.END,
-                f"Fragment damage: {result['fragment_damage_total']}\n")
+                f"{t('explosions_blast_injury', value=result['blast_injury'])}\n")
             self.exp_result_text.insert(tk.END,
-                f"Total damage: {result['total_damage']}\n")
+                f"{t('explosions_fragment_hits', value=result['fragment_hits'])}\n")
             self.exp_result_text.insert(tk.END,
-                f"Injury (after DR): {result['injury']}\n")
+                f"{t('explosions_fragment_injury', value=result['fragment_injury_total'])}\n")
+            self.exp_result_text.insert(tk.END,
+                f"{t('result_total_injury', value=result['injury'])}\n")
 
         except Exception as e:
-            messagebox.showerror("Error", str(e))
+            messagebox.showerror(t("common_error_title"), str(e))
 
     # ─── Queda de Objetos ────────────────────────────────────────
     def _calculate_falling_objects(self):
@@ -889,26 +968,37 @@ class GURPSCalculator:
                 object_hp=self.fo_object_hp.get(),
                 target_hp=self.fo_target_hp.get(),
                 target_sm=self.fo_target_sm.get(),
-                object_sm=self.fo_object_sm.get()
+                object_sm=self.fo_object_sm.get(),
+                target_aware=self.fo_target_aware.get(),
+                dropping_skill=self.fo_dropping_skill.get(),
+                target_dodge=self.fo_target_dodge.get(),
+                aimed=self.fo_aimed.get(),
             )
 
             self.fo_result_text.delete(1.0, tk.END)
             velocity_m = round(result["velocity"] * YARDS_TO_METERS, 1)
             self.fo_result_text.insert(tk.END,
-                f"Distance: {self.fo_distance.get()}m ({distance_yards} yards)\n")
+                f"{t('result_distance', meters=self.fo_distance.get(), yards=distance_yards)}\n")
             self.fo_result_text.insert(tk.END,
-                f"Impact velocity: {velocity_m} m/s ({result['velocity']} yd/s)\n")
+                f"{t('result_impact_velocity', mps=velocity_m, yps=result['velocity'])}\n")
             self.fo_result_text.insert(tk.END,
-                f"Damage: {result['damage_dice']} = {result['damage_total']}\n")
+                f"{t('falling_objects_attack_roll', roll=result['attack_roll'], skill=result['effective_skill'])}\n")
+            if result["target_can_dodge"]:
+                self.fo_result_text.insert(tk.END,
+                    f"{t('falling_objects_dodge_roll', roll=result['dodge_roll'], defense=result['target_dodge'])}\n")
+            self.fo_result_text.insert(tk.END,
+                f"{t('falling_objects_outcome_' + result['outcome'])}\n")
+            self.fo_result_text.insert(tk.END,
+                f"{t('result_basic_damage', expression=result['damage_dice'], value=result['damage_total'])}\n")
             if result["move_penalty"] > 0:
                 self.fo_result_text.insert(tk.END,
-                    f"Movement penalty: Move 1 next turn\n")
+                    f"{t('falling_objects_move_limit')}\n")
             if result["defense_penalty"] > 0:
                 self.fo_result_text.insert(tk.END,
-                    f"Defense penalty: -{result['defense_penalty']}\n")
+                    f"{t('falling_objects_defense_penalty', value=result['defense_penalty'])}\n")
 
         except Exception as e:
-            messagebox.showerror("Error", str(e))
+            messagebox.showerror(t("common_error_title"), str(e))
 
     # ─── Combate ─────────────────────────────────────────────────
     def _roll_combat_attack(self):
@@ -930,9 +1020,9 @@ class GURPSCalculator:
             self.combat_result_text.insert(tk.END,
                 f"{t('combat_roll_label', value=result['roll_result'])}\n")
             self.combat_result_text.insert(tk.END,
-                f"{t('combat_result_label', value=result['message'])}\n")
+                f"{t('combat_result_label', value=t('combat_outcome_' + result['outcome'], margin=result['margin']))}\n")
         except Exception as e:
-            messagebox.showerror("Error", str(e))
+            messagebox.showerror(t("common_error_title"), str(e))
 
     def _roll_combat_defense(self):
         """Rola defesa usando Effective Defense."""
@@ -948,9 +1038,9 @@ class GURPSCalculator:
             self.combat_result_text.insert(tk.END,
                 f"{t('combat_roll_label', value=result['roll_result'])}\n")
             self.combat_result_text.insert(tk.END,
-                f"{t('combat_result_label', value=result['message'])}\n")
+                f"{t('combat_result_label', value=t('combat_outcome_' + result['outcome'], margin=result['margin']))}\n")
         except Exception as e:
-            messagebox.showerror("Error", str(e))
+            messagebox.showerror(t("common_error_title"), str(e))
 
     def _roll_combat_damage(self):
         """
@@ -971,11 +1061,11 @@ class GURPSCalculator:
             self.combat_result_text.insert(tk.END,
                 f"{t('combat_damage_header', st=st)}\n")
             self.combat_result_text.insert(tk.END,
-                f"Thrust: {entry['thrust']} = {thrust_result}\n")
+                f"{t('combat_thrust_damage', expression=entry['thrust'], value=thrust_result)}\n")
             self.combat_result_text.insert(tk.END,
-                f"Swing: {entry['swing']} = {swing_result}\n")
+                f"{t('combat_swing_damage', expression=entry['swing'], value=swing_result)}\n")
         except Exception as e:
-            messagebox.showerror("Error", str(e))
+            messagebox.showerror(t("common_error_title"), str(e))
 
     # ═════════════════════════════════════════════════════════════════
     # IDIOMA

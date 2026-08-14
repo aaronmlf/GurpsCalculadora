@@ -91,9 +91,11 @@ GurpsCalculadora/
 ## Requisitos
 
 - **Python 3.8+**
-- **Tkinter** (incluído no Python padrão, mas pode precisar de instalação separada)
+- **Tkinter** (incluído no Python padrão, mas pode precisar de instalação separada no Linux)
 
 ### Instalação do Tkinter
+
+No **Windows** e **macOS**, o Tkinter já vem com o Python. Só é necessário instalar manualmente no Linux:
 
 **Ubuntu/Debian:**
 ```bash
@@ -110,18 +112,30 @@ sudo pacman -S tk
 sudo dnf install python3-tkinter
 ```
 
-**macOS** (com Homebrew):
-```bash
-brew install python-tk
-```
-
 ---
 
 ## Como Executar
 
+### Windows
+
+```powershell
+# 1. Instalar Python (se não tiver)
+# Baixe em https://python.org/downloads
+# MARQUE "Add Python to PATH" durante a instalação
+
+# 2. Clonar o repositório
+git clone https://github.com/aaronmlf/GurpsCalculadora
+cd GurpsCalculadora
+
+# 3. Rodar
+python main.py
+```
+
+### Linux / macOS
+
 ```bash
 # Clone o repositório
-git clone https://github.com/SEU_USUARIO/GurpsCalculadora.git
+git clone https://github.com/aaronmlf/GurpsCalculadora
 cd GurpsCalculadora
 
 # Execute

@@ -1,14 +1,33 @@
-GURPS 4e Calculadora — Linux 64 bits
+GURPS 4e Calculadora v1.6.0 — Linux 64 bits
 ====================================
+
+Compilacao de desenvolvimento revisada. O plano v1.3-v1.6 ainda nao esta
+completo; os catalogos novos de magia/poderes/veiculos sao parciais.
+Inclui escolha de unidades e revisao PT/EN. Testes: 176 aprovados.
+Catalogos expandidos preservados e falha de inicializacao corrigida.
+Magias com custo/tempo variavel pedem parametros; entradas psi incompletas
+permanecem referencias, sem converter custo em pontos para FP.
+Construida no Linux atual do projeto; compatibilidade com distribuicoes
+mais antigas ainda nao foi validada.
 
 Como abrir:
 1. Extraia todo o conteudo do arquivo ZIP.
 2. Clique duas vezes em "GurpsCalculadora".
 
 O programa e independente: nao requer Python nem uso do terminal.
+Os catalogos de armas, armaduras, tecnicas, estilos, magia, poderes e veiculos ja estao incorporados ao executavel. Presets pessoais sao
+salvos na pasta de dados do usuario.
 
 Se o gerenciador de arquivos impedir a abertura, clique com o botao direito
 no executavel, abra Propriedades > Permissoes e permita executar o arquivo
 como programa.
 
-O PDF do Basic Set nao esta incluido.
+Nenhum PDF, mapa ou imagem dos livros esta incluido.
+
+Interface atualizada:
+- Inicio e menu lateral com favoritos e ferramentas recentes.
+- Exibir: tema claro/escuro, fonte, navegacao recolhivel e consulta da sessao.
+- Resultados: historico temporario, comparacao e exportacao.
+- Trocar idioma/unidades preserva o texto anterior sem rolar novamente.
+- Aplicar combate/trauma a sessao exige confirmacao da previa.
+- A revisao completa dos catalogos e das regras ainda nao esta certificada.

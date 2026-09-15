@@ -8,15 +8,26 @@ a = Analysis(
     [str(project_root / "main.py")],
     pathex=[str(project_root)],
     binaries=[],
-    datas=[(str(project_root / "i18n"), "i18n")],
+    datas=[
+        (str(path), str(path.parent.relative_to(project_root)))
+        for folder in ("i18n", "data")
+        for path in sorted((project_root / folder).rglob("*.json"))
+        if path.is_file() and not path.is_symlink()
+    ],
     hiddenimports=[],
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],
-    excludes=[],
+    excludes=[
+        "graphviz",
+    ],
     noarchive=False,
     optimize=0,
 )
+
+# Filter out graphviz tcl data that causes extraction errors
+a.datas = [item for item in a.datas if "graphviz" not in str(item[0]).lower()]
+
 pyz = PYZ(a.pure)
 
 exe = EXE(

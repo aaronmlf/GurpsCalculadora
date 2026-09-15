@@ -10,6 +10,7 @@ from utils.dice_roller import (
     roll_3d6,
     roll_dice,
 )
+from calculators.injury import calculate_simple_injury
 
 
 class FallingObjectsCalculator:
@@ -71,6 +72,9 @@ class FallingObjectsCalculator:
             "velocity": velocity,
             "damage_dice": expression,
             "damage_total": damage,
+            "injury_result": calculate_simple_injury(
+                damage, "cr", target_hp, source="Basic Set", page="431"
+            ).to_dict(),
             "hit": hit,
             "hit_automatically": False,
             "target_can_dodge": target_can_dodge,

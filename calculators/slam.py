@@ -7,6 +7,7 @@ from utils.dice_roller import (
     evaluate_success_roll,
     roll_dice,
 )
+from calculators.injury import calculate_simple_injury
 
 
 class SlamCalculator:
@@ -77,6 +78,12 @@ class SlamCalculator:
             "defender_damage_total": defender_damage,
             "attacker_roll": attacker_roll,
             "defender_roll": defender_roll,
+            "attacker_injury_result": calculate_simple_injury(
+                defender_damage, "cr", attacker_hp, source="Basic Set", page="371"
+            ).to_dict(),
+            "defender_injury_result": calculate_simple_injury(
+                attacker_damage, "cr", defender_hp, source="Basic Set", page="371"
+            ).to_dict(),
         })
 
         if attacker_damage == 0 and defender_damage == 0:

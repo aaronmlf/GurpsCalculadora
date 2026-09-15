@@ -8,6 +8,7 @@ from utils.dice_roller import (
     get_range_modifier,
     roll_dice,
 )
+from calculators.injury import calculate_simple_injury
 
 
 class FallsCalculator:
@@ -74,12 +75,18 @@ class FallsCalculator:
             blunt_trauma = after_surface // 5
 
         injury = penetrating if penetrating > 0 else blunt_trauma
+        injury_result = calculate_simple_injury(
+            after_surface, "cr", target_hp, armor_dr,
+            flexible=True, source="Basic Set", page="430-431",
+        )
         result.update({
             "damage_dice": expression,
             "damage_total": basic_damage,
             "penetrating_damage": penetrating,
             "blunt_trauma": blunt_trauma,
             "total_injury": injury,
+            "injury_result": injury_result.to_dict(),
+            "state_delta": injury_result.state_delta.to_dict(),
             "outcome": "injury" if injury else "stopped",
             "message": (
                 f"Impact velocity: {velocity} yd/s\n"

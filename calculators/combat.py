@@ -24,6 +24,7 @@ Referências de páginas do Basic Set Revised:
 """
 from typing import Dict, Any, Tuple
 from utils.dice_roller import evaluate_success_roll, roll_3d6, get_damage_dice
+from calculators.injury import calculate_simple_injury
 import math
 
 
@@ -347,7 +348,8 @@ class CombatCalculator:
         Returns:
             Lesão em HP (inteiro)
         """
-        wounding_mod = self.calculate_wounding_modifier(damage_type)
-        if penetrating_damage <= 0:
-            return 0
-        return max(1, math.floor(penetrating_damage * wounding_mod))
+        result = calculate_simple_injury(
+            penetrating_damage, damage_type, target_hp=10, target_dr=0,
+            source="Basic Set", page="377-381",
+        )
+        return result.injury

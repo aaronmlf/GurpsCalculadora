@@ -9,6 +9,7 @@ from utils.dice_roller import (
     roll_3d6,
     roll_dice,
 )
+from calculators.injury import calculate_simple_injury
 
 
 REF_TABLE = {
@@ -45,6 +46,9 @@ class ExplosionsCalculator:
         posture_modifier: int = 0,
         fragment_attack_roll: Optional[int] = None,
         dodge_and_drop_success: bool = False,
+        blast_roll: Optional[int] = None,
+        fragment_damage_rolls: Optional[List[int]] = None,
+        target_hp: int = 10,
     ) -> Dict[str, Any]:
         if min(basic_damage_dice, fragmentation_dice, distance_yards, target_dr) < 0:
             raise ValueError("Damage dice, distance, and DR cannot be negative.")
@@ -84,7 +88,7 @@ class ExplosionsCalculator:
         }
 
         if in_blast:
-            rolled_blast, _ = roll_dice(f"{basic_damage_dice}d")
+            rolled_blast = blast_roll if blast_roll is not None else roll_dice(f"{basic_damage_dice}d")[0]
             if direct_hit:
                 blast_damage = rolled_blast
                 blast_expression = f"{basic_damage_dice}d"
@@ -114,8 +118,10 @@ class ExplosionsCalculator:
 
             damage_rolls: List[int] = []
             injury_total = 0
-            for _ in range(hits):
-                damage, _ = roll_dice(f"{fragmentation_dice}d", minimum=1)
+            supplied_fragments = fragment_damage_rolls or []
+            for index in range(hits):
+                damage = (supplied_fragments[index] if index < len(supplied_fragments)
+                          else roll_dice(f"{fragmentation_dice}d", minimum=1)[0])
                 damage_rolls.append(damage)
                 penetrating = max(0, damage - target_dr)
                 if penetrating:
@@ -129,6 +135,17 @@ class ExplosionsCalculator:
             result["collateral_damage_total"] + result["fragment_damage_total"]
         )
         result["injury"] = result["blast_injury"] + result["fragment_injury_total"]
+        result["blast_injury_result"] = calculate_simple_injury(
+            result["collateral_damage_total"], "cr", target_hp, target_dr,
+            source="Basic Set", page="414-415",
+        ).to_dict()
+        result["fragment_injury_results"] = [
+            calculate_simple_injury(
+                damage, "cut", target_hp, target_dr,
+                source="Basic Set", page="414-415",
+            ).to_dict()
+            for damage in result["fragment_damage_rolls"]
+        ]
         if result["injury"]:
             result["outcome"] = "injury"
         elif in_blast or in_fragment_zone:

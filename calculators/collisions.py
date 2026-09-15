@@ -3,6 +3,7 @@
 from typing import Any, Dict, Tuple
 
 from utils.dice_roller import collision_damage_expression, roll_dice
+from calculators.injury import calculate_simple_injury
 
 
 class CollisionsCalculator:
@@ -91,6 +92,13 @@ class CollisionsCalculator:
             "object2_damage_total": damage2,
             "object1_roll": damage1,
             "object2_roll": damage2,
+            "object1_injury_result": calculate_simple_injury(
+                damage2, "cr", object1_hp, 0, source="Basic Set", page="430-432"
+            ).to_dict(),
+            "object2_injury_result": calculate_simple_injury(
+                damage1, "cr", max(1, object2_hp), object2_dr,
+                source="Basic Set", page="430-432"
+            ).to_dict(),
             "message": (
                 f"Collision velocity: {collision_velocity} yd/s\n"
                 f"Object 1 inflicts {damage1} ({expression1})\n"

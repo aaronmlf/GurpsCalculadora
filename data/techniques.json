@@ -1,0 +1,4500 @@
+{
+  "schema": "gurps-calculadora.technique-catalog.v1",
+  "techniques": [
+    {
+      "identifier": "martial-arts.65.acrobatic-stand",
+      "source": "Martial Arts",
+      "page": "65",
+      "name": "Acrobatic Stand",
+      "difficulty": "A",
+      "prerequisites": [
+        "Acrobatics"
+      ],
+      "defaults": [
+        "Acrobatics-6"
+      ],
+      "maximum": "Acrobatics",
+      "profile": "realistic",
+      "silly": false,
+      "automatable": false,
+      "attack_modifier": 0,
+      "defense_modifier": 0,
+      "damage_modifier": 0,
+      "damage_per_die": 0,
+      "effects": {
+        "summary": "N/A"
+      },
+      "style_ids": [
+        "martial-arts.149.aikido",
+        "martial-arts.202.taijutsu",
+        "martial-arts.208.dragon-man-kung-fu"
+      ],
+      "tags": [
+        "realistic",
+        "technique"
+      ],
+      "original": {
+        "name": "Acrobatic Stand",
+        "damage": "N/A"
+      }
+    },
+    {
+      "identifier": "martial-arts.65.aggressive-parry",
+      "source": "Martial Arts",
+      "page": "65",
+      "name": "Aggressive Parry",
+      "difficulty": "H",
+      "prerequisites": [
+        "Any SS"
+      ],
+      "defaults": [
+        "Parry-1"
+      ],
+      "maximum": "Parry",
+      "profile": "realistic",
+      "silly": false,
+      "automatable": false,
+      "attack_modifier": -1,
+      "defense_modifier": 0,
+      "damage_modifier": 0,
+      "damage_per_die": 0,
+      "effects": {
+        "summary": "Worse of thr-4 or thr-2 at -1/d cr‡"
+      },
+      "style_ids": [
+        "martial-arts.151.aba-bando",
+        "martial-arts.152.kachin-bando",
+        "martial-arts.155.escrima",
+        "martial-arts.163.tiger-crane-style",
+        "martial-arts.169.te",
+        "martial-arts.170.goju-ryu",
+        "martial-arts.171.isshinryu",
+        "martial-arts.171.kyokushin",
+        "martial-arts.190.kumango-silat",
+        "martial-arts.210.smasha"
+      ],
+      "tags": [
+        "realistic",
+        "technique"
+      ],
+      "original": {
+        "name": "Aggressive Parry",
+        "damage": "Worse of thr-4 or thr-2 at -1/d cr‡"
+      }
+    },
+    {
+      "identifier": "martial-arts.65.arm-or-wrist-lock",
+      "source": "Martial Arts",
+      "page": "65",
+      "name": "Arm or Wrist Lock",
+      "difficulty": "A",
+      "prerequisites": [
+        "Judo, Wrestling, or app. MWS"
+      ],
+      "defaults": [
+        "PS"
+      ],
+      "maximum": "PS+4",
+      "profile": "realistic",
+      "silly": false,
+      "automatable": false,
+      "attack_modifier": 0,
+      "defense_modifier": 0,
+      "damage_modifier": 0,
+      "damage_per_die": 0,
+      "effects": {
+        "summary": "QC"
+      },
+      "style_ids": [],
+      "tags": [
+        "realistic",
+        "technique"
+      ],
+      "original": {
+        "name": "Arm or Wrist Lock",
+        "damage": "QC"
+      }
+    },
+    {
+      "identifier": "martial-arts.67.armed-grapple",
+      "source": "Martial Arts",
+      "page": "67",
+      "name": "Armed Grapple",
+      "difficulty": "H",
+      "prerequisites": [
+        "Cloak or app. MWS"
+      ],
+      "defaults": [
+        "PS-2"
+      ],
+      "maximum": "PS",
+      "profile": "realistic",
+      "silly": false,
+      "automatable": false,
+      "attack_modifier": -2,
+      "defense_modifier": 0,
+      "damage_modifier": 0,
+      "damage_per_die": 0,
+      "effects": {
+        "summary": "Grapple"
+      },
+      "style_ids": [
+        "martial-arts.155.escrima",
+        "martial-arts.182.weapon-training",
+        "martial-arts.194.shaolin-kung-fu",
+        "martial-arts.195.shortsword-fighting",
+        "martial-arts.199.sword-and-buckler-play"
+      ],
+      "tags": [
+        "realistic",
+        "technique"
+      ],
+      "original": {
+        "name": "Armed Grapple",
+        "damage": "Grapple"
+      }
+    },
+    {
+      "identifier": "martial-arts.67.attack-from-above",
+      "source": "Martial Arts",
+      "page": "67",
+      "name": "Attack from Above",
+      "difficulty": "A",
+      "prerequisites": [
+        "Any MWS or UCS"
+      ],
+      "defaults": [
+        "PS-2"
+      ],
+      "maximum": "PS",
+      "profile": "realistic",
+      "silly": false,
+      "automatable": true,
+      "attack_modifier": -2,
+      "defense_modifier": 0,
+      "damage_modifier": 0,
+      "damage_per_die": 0,
+      "effects": {
+        "summary": "Per attack"
+      },
+      "style_ids": [],
+      "tags": [
+        "realistic",
+        "technique"
+      ],
+      "original": {
+        "name": "Attack from Above",
+        "damage": "Per attack"
+      }
+    },
+    {
+      "identifier": "martial-arts.67.axe-kick",
+      "source": "Martial Arts",
+      "page": "67",
+      "name": "Axe Kick",
+      "difficulty": "H",
+      "prerequisites": [
+        "Karate"
+      ],
+      "defaults": [
+        "Karate-4"
+      ],
+      "maximum": "Karate",
+      "profile": "realistic",
+      "silly": false,
+      "automatable": false,
+      "attack_modifier": -4,
+      "defense_modifier": 0,
+      "damage_modifier": 0,
+      "damage_per_die": 0,
+      "effects": {
+        "summary": "Better of thr+1 or thr at +1/2d cr‡"
+      },
+      "style_ids": [
+        "martial-arts.171.kyokushin",
+        "martial-arts.200.tae-kwon-do",
+        "martial-arts.208.dragon-man-kung-fu"
+      ],
+      "tags": [
+        "realistic",
+        "technique"
+      ],
+      "original": {
+        "name": "Axe Kick",
+        "damage": "Better of thr+1 or thr at +1/2d cr‡"
+      }
+    },
+    {
+      "identifier": "martial-arts.67.back-kick",
+      "source": "Martial Arts",
+      "page": "67",
+      "name": "Back Kick",
+      "difficulty": "H",
+      "prerequisites": [
+        "Karate"
+      ],
+      "defaults": [
+        "Karate-4"
+      ],
+      "maximum": "Karate",
+      "profile": "realistic",
+      "silly": false,
+      "automatable": true,
+      "attack_modifier": -4,
+      "defense_modifier": 0,
+      "damage_modifier": 0,
+      "damage_per_die": 0,
+      "effects": {
+        "summary": "Kick"
+      },
+      "style_ids": [
+        "martial-arts.161.hapkido",
+        "martial-arts.163.hwa-rang-do",
+        "martial-arts.166.jujutsu",
+        "martial-arts.169.te",
+        "martial-arts.170.goju-ryu",
+        "martial-arts.170.shotokan",
+        "martial-arts.171.isshinryu",
+        "martial-arts.171.kyokushin",
+        "martial-arts.172.kempo",
+        "martial-arts.176.krabi-krabong",
+        "martial-arts.178.kuntao",
+        "martial-arts.194.shaolin-kung-fu",
+        "martial-arts.200.tae-kwon-do",
+        "martial-arts.208.dragon-man-kung-fu"
+      ],
+      "tags": [
+        "realistic",
+        "technique"
+      ],
+      "original": {
+        "name": "Back Kick",
+        "damage": "Kick"
+      }
+    },
+    {
+      "identifier": "martial-arts.67.back-strike",
+      "source": "Martial Arts",
+      "page": "67",
+      "name": "Back Strike",
+      "difficulty": "H",
+      "prerequisites": [
+        "Any MWS"
+      ],
+      "defaults": [
+        "PS-2"
+      ],
+      "maximum": "PS",
+      "profile": "realistic",
+      "silly": false,
+      "automatable": true,
+      "attack_modifier": -2,
+      "defense_modifier": 0,
+      "damage_modifier": 0,
+      "damage_per_die": 0,
+      "effects": {
+        "summary": "Per attack at worse of -2 or -1/d with swung"
+      },
+      "style_ids": [
+        "martial-arts.155.dagger-fighting",
+        "martial-arts.173.kenjutsu",
+        "martial-arts.174.iaijutsu",
+        "martial-arts.179.kusarijutsu",
+        "martial-arts.186.naginatajutsu"
+      ],
+      "tags": [
+        "realistic",
+        "technique"
+      ],
+      "original": {
+        "name": "Back Strike",
+        "damage": "Per attack at worse of -2 or -1/d with swung"
+      }
+    },
+    {
+      "identifier": "martial-arts.82.backbreaker",
+      "source": "Martial Arts",
+      "page": "82",
+      "name": "Backbreaker",
+      "difficulty": "H",
+      "prerequisites": [
+        "None"
+      ],
+      "defaults": [
+        "ST-3 or Wrestling-3"
+      ],
+      "maximum": "ST+3 or Wrestling+3",
+      "profile": "cinematic",
+      "silly": false,
+      "automatable": false,
+      "attack_modifier": -3,
+      "defense_modifier": 0,
+      "damage_modifier": 0,
+      "damage_per_die": 0,
+      "effects": {
+        "summary": "sw cr"
+      },
+      "style_ids": [
+        "martial-arts.182.fairbairn-close-combat-training",
+        "martial-arts.185.sambo",
+        "martial-arts.188.pankration",
+        "martial-arts.204.combat-wrestling",
+        "martial-arts.206.professional-wrestling"
+      ],
+      "tags": [
+        "cinematic",
+        "technique"
+      ],
+      "original": {
+        "name": "Backbreaker*",
+        "damage": "sw cr"
+      }
+    },
+    {
+      "identifier": "martial-arts.67.bind-weapon",
+      "source": "Martial Arts",
+      "page": "67",
+      "name": "Bind Weapon",
+      "difficulty": "H",
+      "prerequisites": [
+        "Jitte/Sai or any fencing"
+      ],
+      "defaults": [
+        "PS-3"
+      ],
+      "maximum": "PS",
+      "profile": "realistic",
+      "silly": false,
+      "automatable": false,
+      "attack_modifier": -3,
+      "defense_modifier": 0,
+      "damage_modifier": 0,
+      "damage_per_die": 0,
+      "effects": {
+        "summary": "Bind"
+      },
+      "style_ids": [
+        "martial-arts.156.italian-school",
+        "martial-arts.158.la-verdadera-destreza",
+        "martial-arts.158.transitional-french-school",
+        "martial-arts.159.french-smallsword",
+        "martial-arts.195.shortsword-fighting",
+        "martial-arts.199.sword-and-buckler-play"
+      ],
+      "tags": [
+        "realistic",
+        "technique"
+      ],
+      "original": {
+        "name": "Bind Weapon",
+        "damage": "Bind"
+      }
+    },
+    {
+      "identifier": "martial-arts.82.binding",
+      "source": "Martial Arts",
+      "page": "82",
+      "name": "Binding",
+      "difficulty": "H",
+      "prerequisites": [
+        "Judo or Knot-Tying"
+      ],
+      "defaults": [
+        "PS"
+      ],
+      "maximum": "PS+4",
+      "profile": "cinematic",
+      "silly": false,
+      "automatable": false,
+      "attack_modifier": 0,
+      "defense_modifier": 0,
+      "damage_modifier": 0,
+      "damage_per_die": 0,
+      "effects": {
+        "summary": "Tie Up"
+      },
+      "style_ids": [
+        "martial-arts.179.kusarijutsu",
+        "martial-arts.182.fairbairn-close-combat-training",
+        "martial-arts.201.taihojutsu",
+        "martial-arts.210.freefighting"
+      ],
+      "tags": [
+        "cinematic",
+        "technique"
+      ],
+      "original": {
+        "name": "Binding*",
+        "damage": "Tie Up"
+      }
+    },
+    {
+      "identifier": "martial-arts.68.breakfall",
+      "source": "Martial Arts",
+      "page": "68",
+      "name": "Breakfall",
+      "difficulty": "A",
+      "prerequisites": [
+        "Acrobatics, Judo, or Wrestling"
+      ],
+      "defaults": [
+        "PS"
+      ],
+      "maximum": "PS+5",
+      "profile": "realistic",
+      "silly": false,
+      "automatable": false,
+      "attack_modifier": 0,
+      "defense_modifier": 0,
+      "damage_modifier": 0,
+      "damage_per_die": 0,
+      "effects": {
+        "summary": "N/A"
+      },
+      "style_ids": [
+        "martial-arts.149.aikido",
+        "martial-arts.149.aikijutsu",
+        "martial-arts.161.hapkido",
+        "martial-arts.163.hwa-rang-do",
+        "martial-arts.166.judo",
+        "martial-arts.172.kempo",
+        "martial-arts.183.krav-maga",
+        "martial-arts.190.tapak-sutji-pentjak-silat",
+        "martial-arts.202.taijutsu",
+        "martial-arts.204.combat-wrestling",
+        "martial-arts.206.professional-wrestling"
+      ],
+      "tags": [
+        "realistic",
+        "technique"
+      ],
+      "original": {
+        "name": "Breakfall",
+        "damage": "N/A"
+      }
+    },
+    {
+      "identifier": "martial-arts.69.cavalry-training",
+      "source": "Martial Arts",
+      "page": "69",
+      "name": "Cavalry Training",
+      "difficulty": "H",
+      "prerequisites": [
+        "Riding and any MWS"
+      ],
+      "defaults": [
+        "PS-2"
+      ],
+      "maximum": "PS",
+      "profile": "realistic",
+      "silly": false,
+      "automatable": true,
+      "attack_modifier": -2,
+      "defense_modifier": 0,
+      "damage_modifier": 0,
+      "damage_per_die": 0,
+      "effects": {
+        "summary": "Per attack"
+      },
+      "style_ids": [
+        "martial-arts.150.armatura-equestris",
+        "martial-arts.159.furusiyya",
+        "martial-arts.177.late-medieval"
+      ],
+      "tags": [
+        "realistic",
+        "technique"
+      ],
+      "original": {
+        "name": "Cavalry Training",
+        "damage": "Per attack"
+      }
+    },
+    {
+      "identifier": "martial-arts.69.choke-hold",
+      "source": "Martial Arts",
+      "page": "69",
+      "name": "Choke Hold",
+      "difficulty": "H",
+      "prerequisites": [
+        "Judo, Wrestling, or app. WS"
+      ],
+      "defaults": [
+        "Judo-2, Wrestling-3, or app. WS-3"
+      ],
+      "maximum": "PS",
+      "profile": "realistic",
+      "silly": false,
+      "automatable": false,
+      "attack_modifier": -2,
+      "defense_modifier": 0,
+      "damage_modifier": 0,
+      "damage_per_die": 0,
+      "effects": {
+        "summary": "QC"
+      },
+      "style_ids": [
+        "martial-arts.152.kachin-bando",
+        "martial-arts.154.chin-na",
+        "martial-arts.155.dagger-fighting",
+        "martial-arts.155.escrima",
+        "martial-arts.161.hapkido",
+        "martial-arts.177.late-medieval",
+        "martial-arts.179.kusarijutsu",
+        "martial-arts.180.kusarigamajutsu",
+        "martial-arts.182.fairbairn-close-combat-training",
+        "martial-arts.185.sambo",
+        "martial-arts.194.shaolin-kung-fu",
+        "martial-arts.202.taijutsu",
+        "martial-arts.205.submission-wrestling",
+        "martial-arts.206.professional-wrestling",
+        "martial-arts.210.smasha"
+      ],
+      "tags": [
+        "realistic",
+        "technique"
+      ],
+      "original": {
+        "name": "Choke Hold",
+        "damage": "QC"
+      }
+    },
+    {
+      "identifier": "martial-arts.69.close-combat",
+      "source": "Martial Arts",
+      "page": "69",
+      "name": "Close Combat",
+      "difficulty": "H",
+      "prerequisites": [
+        "Any MWS"
+      ],
+      "defaults": [
+        "PS-4, -8, or -12"
+      ],
+      "maximum": "PS-2, -4, or -6",
+      "profile": "realistic",
+      "silly": false,
+      "automatable": true,
+      "attack_modifier": -4,
+      "defense_modifier": 0,
+      "damage_modifier": 0,
+      "damage_per_die": 0,
+      "effects": {
+        "summary": "Per attack"
+      },
+      "style_ids": [
+        "martial-arts.158.transitional-french-school",
+        "martial-arts.159.french-smallsword",
+        "martial-arts.161.hoplomachia",
+        "martial-arts.181.foot-archery",
+        "martial-arts.195.shortsword-fighting",
+        "martial-arts.203.wing-chun"
+      ],
+      "tags": [
+        "realistic",
+        "technique"
+      ],
+      "original": {
+        "name": "Close Combat",
+        "damage": "Per attack"
+      }
+    },
+    {
+      "identifier": "martial-arts.69.close-combat-ranged",
+      "source": "Martial Arts",
+      "page": "69",
+      "name": "Close Combat – Ranged",
+      "difficulty": "H",
+      "prerequisites": [
+        "Any RCS"
+      ],
+      "defaults": [
+        "PS-Bulk"
+      ],
+      "maximum": "PS",
+      "profile": "realistic",
+      "silly": false,
+      "automatable": true,
+      "attack_modifier": 0,
+      "defense_modifier": 0,
+      "damage_modifier": 0,
+      "damage_per_die": 0,
+      "effects": {
+        "summary": "Per attack"
+      },
+      "style_ids": [],
+      "tags": [
+        "realistic",
+        "technique"
+      ],
+      "original": {
+        "name": "Close Combat –",
+        "damage": "Per attack"
+      }
+    },
+    {
+      "identifier": "martial-arts.69.combat-riding",
+      "source": "Martial Arts",
+      "page": "69",
+      "name": "Combat Riding",
+      "difficulty": "H",
+      "prerequisites": [
+        "Riding"
+      ],
+      "defaults": [
+        "Riding"
+      ],
+      "maximum": "Riding+4",
+      "profile": "realistic",
+      "silly": false,
+      "automatable": false,
+      "attack_modifier": 0,
+      "defense_modifier": 0,
+      "damage_modifier": 0,
+      "damage_per_die": 0,
+      "effects": {
+        "summary": "N/A"
+      },
+      "style_ids": [
+        "martial-arts.150.armatura-equestris",
+        "martial-arts.151.bajutsu",
+        "martial-arts.159.furusiyya",
+        "martial-arts.177.late-medieval",
+        "martial-arts.179.kyujutsu",
+        "martial-arts.181.yabusame"
+      ],
+      "tags": [
+        "realistic",
+        "technique"
+      ],
+      "original": {
+        "name": "Combat Riding",
+        "damage": "N/A"
+      }
+    },
+    {
+      "identifier": "martial-arts.80.combination-2-attacks",
+      "source": "Martial Arts",
+      "page": "80",
+      "name": "Combination – 2 Attacks",
+      "difficulty": "H+2",
+      "prerequisites": [
+        "Any 2 TAs, even defaults"
+      ],
+      "defaults": [
+        "TAs-6"
+      ],
+      "maximum": "TAs",
+      "profile": "realistic",
+      "silly": false,
+      "automatable": true,
+      "attack_modifier": 0,
+      "defense_modifier": 0,
+      "damage_modifier": 0,
+      "damage_per_die": 0,
+      "effects": {
+        "summary": "Per attacks"
+      },
+      "style_ids": [],
+      "tags": [
+        "realistic",
+        "technique"
+      ],
+      "original": {
+        "name": "Combination –",
+        "damage": "Per attacks"
+      }
+    },
+    {
+      "identifier": "martial-arts.80.combination-3-attacks",
+      "source": "Martial Arts",
+      "page": "80",
+      "name": "Combination – 3 Attacks",
+      "difficulty": "H+3",
+      "prerequisites": [
+        "Any 3 TAs, even defaults"
+      ],
+      "defaults": [
+        "TAs-12"
+      ],
+      "maximum": "TAs",
+      "profile": "realistic",
+      "silly": false,
+      "automatable": true,
+      "attack_modifier": 0,
+      "defense_modifier": 0,
+      "damage_modifier": 0,
+      "damage_per_die": 0,
+      "effects": {
+        "summary": "Per attacks"
+      },
+      "style_ids": [],
+      "tags": [
+        "realistic",
+        "technique"
+      ],
+      "original": {
+        "name": "Combination –",
+        "damage": "Per attacks"
+      }
+    },
+    {
+      "identifier": "martial-arts.80.combination-2h-2-attacks",
+      "source": "Martial Arts",
+      "page": "80",
+      "name": "Combination, 2H – 2 Attacks",
+      "difficulty": "H+2",
+      "prerequisites": [
+        "Any 2 TAs, even defaults"
+      ],
+      "defaults": [
+        "TAs-4"
+      ],
+      "maximum": "TAs",
+      "profile": "realistic",
+      "silly": false,
+      "automatable": true,
+      "attack_modifier": 0,
+      "defense_modifier": 0,
+      "damage_modifier": 0,
+      "damage_per_die": 0,
+      "effects": {
+        "summary": "Per attacks"
+      },
+      "style_ids": [],
+      "tags": [
+        "realistic",
+        "technique"
+      ],
+      "original": {
+        "name": "Combination,",
+        "damage": "Per attacks"
+      }
+    },
+    {
+      "identifier": "martial-arts.80.combination-2h-3-attacks",
+      "source": "Martial Arts",
+      "page": "80",
+      "name": "Combination, 2H – 3 Attacks",
+      "difficulty": "H+3",
+      "prerequisites": [
+        "Any 3 TAs, even defaults"
+      ],
+      "defaults": [
+        "TAs-9"
+      ],
+      "maximum": "TAs",
+      "profile": "realistic",
+      "silly": false,
+      "automatable": true,
+      "attack_modifier": 0,
+      "defense_modifier": 0,
+      "damage_modifier": 0,
+      "damage_per_die": 0,
+      "effects": {
+        "summary": "Per attacks"
+      },
+      "style_ids": [],
+      "tags": [
+        "realistic",
+        "technique"
+      ],
+      "original": {
+        "name": "Combination,",
+        "damage": "Per attacks"
+      }
+    },
+    {
+      "identifier": "martial-arts.70.counterattack",
+      "source": "Martial Arts",
+      "page": "70",
+      "name": "Counterattack",
+      "difficulty": "H",
+      "prerequisites": [
+        "Any MWS or UCS"
+      ],
+      "defaults": [
+        "PS-5"
+      ],
+      "maximum": "PS",
+      "profile": "realistic",
+      "silly": false,
+      "automatable": true,
+      "attack_modifier": -5,
+      "defense_modifier": 0,
+      "damage_modifier": 0,
+      "damage_per_die": 0,
+      "effects": {
+        "summary": "Per attack"
+      },
+      "style_ids": [
+        "martial-arts.151.aba-bando",
+        "martial-arts.152.boxing",
+        "martial-arts.156.italian-school",
+        "martial-arts.158.la-verdadera-destreza",
+        "martial-arts.158.transitional-french-school",
+        "martial-arts.160.epee",
+        "martial-arts.160.foil",
+        "martial-arts.160.saber",
+        "martial-arts.162.hsing-i-chuan",
+        "martial-arts.163.hwa-rang-do",
+        "martial-arts.163.tiger-crane-style",
+        "martial-arts.164.jeet-kune-do",
+        "martial-arts.169.te",
+        "martial-arts.173.kenjutsu",
+        "martial-arts.174.nito-ryu",
+        "martial-arts.177.late-medieval",
+        "martial-arts.178.kuntao",
+        "martial-arts.185.muay-thai",
+        "martial-arts.187.glaive-fighting",
+        "martial-arts.188.pak-hok",
+        "martial-arts.190.kumango-silat",
+        "martial-arts.190.tapak-sutji-pentjak-silat",
+        "martial-arts.191.praying-mantis-kung-fu",
+        "martial-arts.199.fighting",
+        "martial-arts.199.sword-and-buckler-play",
+        "martial-arts.203.wing-chun",
+        "martial-arts.207.death-fist"
+      ],
+      "tags": [
+        "realistic",
+        "technique"
+      ],
+      "original": {
+        "name": "Counterattack",
+        "damage": "Per attack"
+      }
+    },
+    {
+      "identifier": "martial-arts.70.crack",
+      "source": "Martial Arts",
+      "page": "70",
+      "name": "Crack",
+      "difficulty": "A",
+      "prerequisites": [
+        "Whip"
+      ],
+      "defaults": [
+        "Whip-4"
+      ],
+      "maximum": "Whip",
+      "profile": "realistic",
+      "silly": false,
+      "automatable": true,
+      "attack_modifier": 0,
+      "defense_modifier": 0,
+      "damage_modifier": 2,
+      "damage_per_die": 0,
+      "effects": {
+        "summary": "Per attack+2"
+      },
+      "style_ids": [],
+      "tags": [
+        "realistic",
+        "technique"
+      ],
+      "original": {
+        "name": "Crack",
+        "damage": "Per attack+2"
+      }
+    },
+    {
+      "identifier": "martial-arts.70.disarming",
+      "source": "Martial Arts",
+      "page": "70",
+      "name": "Disarming",
+      "difficulty": "H",
+      "prerequisites": [
+        "Any MWS or UCS"
+      ],
+      "defaults": [
+        "PS"
+      ],
+      "maximum": "PS+5",
+      "profile": "realistic",
+      "silly": false,
+      "automatable": false,
+      "attack_modifier": 0,
+      "defense_modifier": 0,
+      "damage_modifier": 0,
+      "damage_per_die": 0,
+      "effects": {
+        "summary": "Disarm"
+      },
+      "style_ids": [
+        "martial-arts.149.aikijutsu",
+        "martial-arts.155.escrima",
+        "martial-arts.156.italian-school",
+        "martial-arts.157.la-canne-de-combat",
+        "martial-arts.158.la-verdadera-destreza",
+        "martial-arts.158.transitional-french-school",
+        "martial-arts.159.french-smallsword",
+        "martial-arts.163.hwa-rang-do",
+        "martial-arts.166.jujutsu",
+        "martial-arts.178.kobujutsu",
+        "martial-arts.182.fairbairn-close-combat-training",
+        "martial-arts.182.weapon-training",
+        "martial-arts.183.krav-maga",
+        "martial-arts.183.martial-arts-program",
+        "martial-arts.185.sambo",
+        "martial-arts.186.naginatajutsu",
+        "martial-arts.187.glaive-fighting",
+        "martial-arts.191.pollaxe-fighting",
+        "martial-arts.192.jojutsu",
+        "martial-arts.194.shaolin-kung-fu",
+        "martial-arts.195.shortsword-fighting",
+        "martial-arts.199.sword-and-buckler-play",
+        "martial-arts.201.taihojutsu",
+        "martial-arts.204.combat-wrestling",
+        "martial-arts.210.freefighting"
+      ],
+      "tags": [
+        "realistic",
+        "technique"
+      ],
+      "original": {
+        "name": "Disarming",
+        "damage": "Disarm"
+      }
+    },
+    {
+      "identifier": "martial-arts.88.double-eye-poke",
+      "source": "Martial Arts",
+      "page": "88",
+      "name": "Double Eye-Poke",
+      "difficulty": "H",
+      "prerequisites": [
+        "Brawling or Karate"
+      ],
+      "defaults": [
+        "PS-5"
+      ],
+      "maximum": "PS",
+      "profile": "cinematic",
+      "silly": true,
+      "automatable": false,
+      "attack_modifier": -5,
+      "defense_modifier": 0,
+      "damage_modifier": 0,
+      "damage_per_die": 0,
+      "effects": {
+        "summary": "Blind"
+      },
+      "style_ids": [],
+      "tags": [
+        "cinematic",
+        "silly"
+      ],
+      "original": {
+        "name": "Double Eye-Poke†",
+        "damage": "Blind"
+      }
+    },
+    {
+      "identifier": "martial-arts.70.drop-kick",
+      "source": "Martial Arts",
+      "page": "70",
+      "name": "Drop Kick",
+      "difficulty": "H",
+      "prerequisites": [
+        "Brawling, Sumo Wrestling, or Wrestling"
+      ],
+      "defaults": [
+        "Brawling-1, Sumo Wrestling-1, or Wrestling-2"
+      ],
+      "maximum": "PS",
+      "profile": "realistic",
+      "silly": false,
+      "automatable": false,
+      "attack_modifier": -1,
+      "defense_modifier": 0,
+      "damage_modifier": 0,
+      "damage_per_die": 0,
+      "effects": {
+        "summary": "Slam+2"
+      },
+      "style_ids": [
+        "martial-arts.206.professional-wrestling"
+      ],
+      "tags": [
+        "realistic",
+        "technique"
+      ],
+      "original": {
+        "name": "Drop Kick",
+        "damage": "Slam+2"
+      }
+    },
+    {
+      "identifier": "martial-arts.83.dual-weapon-attack",
+      "source": "Martial Arts",
+      "page": "83",
+      "name": "Dual-Weapon Attack",
+      "difficulty": "H",
+      "prerequisites": [
+        "Any UCS or 1H CS"
+      ],
+      "defaults": [
+        "PS-4"
+      ],
+      "maximum": "PS",
+      "profile": "cinematic",
+      "silly": false,
+      "automatable": true,
+      "attack_modifier": -4,
+      "defense_modifier": 0,
+      "damage_modifier": 0,
+      "damage_per_die": 0,
+      "effects": {
+        "summary": "Per attack"
+      },
+      "style_ids": [
+        "martial-arts.149.aikido",
+        "martial-arts.155.dagger-fighting",
+        "martial-arts.155.escrima",
+        "martial-arts.156.italian-school",
+        "martial-arts.158.la-verdadera-destreza",
+        "martial-arts.169.te",
+        "martial-arts.170.goju-ryu",
+        "martial-arts.171.isshinryu",
+        "martial-arts.176.krabi-krabong",
+        "martial-arts.178.kobujutsu",
+        "martial-arts.178.kuntao",
+        "martial-arts.179.kusarijutsu",
+        "martial-arts.180.kusarigamajutsu",
+        "martial-arts.181.foot-archery",
+        "martial-arts.182.weapon-training",
+        "martial-arts.190.kumango-silat",
+        "martial-arts.195.shortsword-fighting",
+        "martial-arts.199.fighting",
+        "martial-arts.199.sword-and-buckler-play",
+        "martial-arts.203.wing-chun",
+        "martial-arts.206.wushu",
+        "martial-arts.208.dragon-man-kung-fu",
+        "martial-arts.209.force-swordsmanship"
+      ],
+      "tags": [
+        "cinematic",
+        "technique"
+      ],
+      "original": {
+        "name": "Dual-Weapon",
+        "damage": "Per attack"
+      }
+    },
+    {
+      "identifier": "martial-arts.83.dual-weapon-attack-bow",
+      "source": "Martial Arts",
+      "page": "83",
+      "name": "Dual-Weapon Attack (Bow)",
+      "difficulty": "H",
+      "prerequisites": [
+        "Bow"
+      ],
+      "defaults": [
+        "Bow-4"
+      ],
+      "maximum": "PS",
+      "profile": "cinematic",
+      "silly": false,
+      "automatable": true,
+      "attack_modifier": 0,
+      "defense_modifier": 0,
+      "damage_modifier": 0,
+      "damage_per_die": 0,
+      "effects": {
+        "summary": "Per attack"
+      },
+      "style_ids": [],
+      "tags": [
+        "cinematic",
+        "technique"
+      ],
+      "original": {
+        "name": "Dual-Weapon",
+        "damage": "Per attack"
+      }
+    },
+    {
+      "identifier": "martial-arts.83.dual-weapon-defense",
+      "source": "Martial Arts",
+      "page": "83",
+      "name": "Dual-Weapon Defense",
+      "difficulty": "H",
+      "prerequisites": [
+        "Any MWS or UCS"
+      ],
+      "defaults": [
+        "Block-1 or Parry-1"
+      ],
+      "maximum": "Block or Parry",
+      "profile": "cinematic",
+      "silly": false,
+      "automatable": false,
+      "attack_modifier": -1,
+      "defense_modifier": 0,
+      "damage_modifier": 0,
+      "damage_per_die": 0,
+      "effects": {
+        "summary": "N/A"
+      },
+      "style_ids": [
+        "martial-arts.155.escrima",
+        "martial-arts.156.italian-school",
+        "martial-arts.158.la-verdadera-destreza",
+        "martial-arts.173.kenjutsu",
+        "martial-arts.175.kendo",
+        "martial-arts.178.kobujutsu",
+        "martial-arts.186.naginatajutsu",
+        "martial-arts.194.shaolin-kung-fu",
+        "martial-arts.199.fighting",
+        "martial-arts.203.wing-chun",
+        "martial-arts.206.wushu",
+        "martial-arts.209.force-swordsmanship"
+      ],
+      "tags": [
+        "cinematic",
+        "technique"
+      ],
+      "original": {
+        "name": "Dual-Weapon",
+        "damage": "N/A"
+      }
+    },
+    {
+      "identifier": "martial-arts.70.ear-clap",
+      "source": "Martial Arts",
+      "page": "70",
+      "name": "Ear Clap",
+      "difficulty": "A",
+      "prerequisites": [
+        "Any SS"
+      ],
+      "defaults": [
+        "PS-3"
+      ],
+      "maximum": "PS-1",
+      "profile": "realistic",
+      "silly": false,
+      "automatable": false,
+      "attack_modifier": -3,
+      "defense_modifier": 0,
+      "damage_modifier": 0,
+      "damage_per_die": 0,
+      "effects": {
+        "summary": "thr-3 cr‡, Deaf, Stun"
+      },
+      "style_ids": [
+        "martial-arts.164.jeet-kune-do",
+        "martial-arts.191.praying-mantis-kung-fu",
+        "martial-arts.202.taijutsu"
+      ],
+      "tags": [
+        "realistic",
+        "technique"
+      ],
+      "original": {
+        "name": "Ear Clap",
+        "damage": "thr-3 cr‡, Deaf, Stun"
+      }
+    },
+    {
+      "identifier": "martial-arts.70.elbow-drop",
+      "source": "Martial Arts",
+      "page": "70",
+      "name": "Elbow Drop",
+      "difficulty": "H",
+      "prerequisites": [
+        "Brawling or Wrestling"
+      ],
+      "defaults": [
+        "Brawling-4 or Wrestling-5"
+      ],
+      "maximum": "PS",
+      "profile": "realistic",
+      "silly": false,
+      "automatable": false,
+      "attack_modifier": -4,
+      "defense_modifier": 0,
+      "damage_modifier": 0,
+      "damage_per_die": 0,
+      "effects": {
+        "summary": "Better of thr+2 or thr at +1/d cr‡, Knockdown"
+      },
+      "style_ids": [
+        "martial-arts.206.professional-wrestling"
+      ],
+      "tags": [
+        "realistic",
+        "technique"
+      ],
+      "original": {
+        "name": "Elbow Drop",
+        "damage": "Better of thr+2 or thr at +1/d cr‡, Knockdown"
+      }
+    },
+    {
+      "identifier": "martial-arts.71.elbow-strike",
+      "source": "Martial Arts",
+      "page": "71",
+      "name": "Elbow Strike",
+      "difficulty": "A",
+      "prerequisites": [
+        "Brawling or Karate"
+      ],
+      "defaults": [
+        "PS-2"
+      ],
+      "maximum": "PS",
+      "profile": "realistic",
+      "silly": false,
+      "automatable": false,
+      "attack_modifier": -2,
+      "defense_modifier": 0,
+      "damage_modifier": 0,
+      "damage_per_die": 0,
+      "effects": {
+        "summary": "thr-1 cr‡"
+      },
+      "style_ids": [
+        "martial-arts.151.aba-bando",
+        "martial-arts.152.kachin-bando",
+        "martial-arts.164.jeet-kune-do",
+        "martial-arts.166.jujutsu",
+        "martial-arts.168.kajukenbo",
+        "martial-arts.168.kalaripayit",
+        "martial-arts.169.te",
+        "martial-arts.170.goju-ryu",
+        "martial-arts.170.shotokan",
+        "martial-arts.171.isshinryu",
+        "martial-arts.171.kyokushin",
+        "martial-arts.172.kempo",
+        "martial-arts.176.krabi-krabong",
+        "martial-arts.183.krav-maga",
+        "martial-arts.183.martial-arts-program",
+        "martial-arts.185.muay-thai",
+        "martial-arts.185.sambo",
+        "martial-arts.190.kumango-silat",
+        "martial-arts.194.shaolin-kung-fu",
+        "martial-arts.200.tae-kwon-do",
+        "martial-arts.202.taijutsu",
+        "martial-arts.203.wing-chun",
+        "martial-arts.204.combat-wrestling"
+      ],
+      "tags": [
+        "realistic",
+        "technique"
+      ],
+      "original": {
+        "name": "Elbow Strike",
+        "damage": "thr-1 cr‡"
+      }
+    },
+    {
+      "identifier": "martial-arts.71.entangle",
+      "source": "Martial Arts",
+      "page": "71",
+      "name": "Entangle",
+      "difficulty": "H",
+      "prerequisites": [
+        "Kusari or Whip"
+      ],
+      "defaults": [
+        "PS-4"
+      ],
+      "maximum": "PS",
+      "profile": "realistic",
+      "silly": false,
+      "automatable": false,
+      "attack_modifier": -4,
+      "defense_modifier": 0,
+      "damage_modifier": 0,
+      "damage_per_die": 0,
+      "effects": {
+        "summary": "Entangle"
+      },
+      "style_ids": [
+        "martial-arts.179.kusarijutsu",
+        "martial-arts.180.kusarigamajutsu",
+        "martial-arts.201.taihojutsu"
+      ],
+      "tags": [
+        "realistic",
+        "technique"
+      ],
+      "original": {
+        "name": "Entangle",
+        "damage": "Entangle"
+      }
+    },
+    {
+      "identifier": "martial-arts.71.evade",
+      "source": "Martial Arts",
+      "page": "71",
+      "name": "Evade",
+      "difficulty": "A",
+      "prerequisites": [
+        "Acrobatics or Judo ARTIAL RTS ECHNIQUES"
+      ],
+      "defaults": [
+        "PS HEAT"
+      ],
+      "maximum": "PS+5 HEET",
+      "profile": "realistic",
+      "silly": false,
+      "automatable": false,
+      "attack_modifier": 0,
+      "defense_modifier": 0,
+      "damage_modifier": 0,
+      "damage_per_die": 0,
+      "effects": {
+        "summary": "N/A"
+      },
+      "style_ids": [
+        "martial-arts.178.kuntao",
+        "martial-arts.190.kumango-silat",
+        "martial-arts.202.taijutsu",
+        "martial-arts.206.wushu"
+      ],
+      "tags": [
+        "realistic",
+        "technique"
+      ],
+      "original": {
+        "name": "Evade",
+        "damage": "N/A"
+      }
+    },
+    {
+      "identifier": "martial-arts.71.exotic-hand-strike",
+      "source": "Martial Arts",
+      "page": "71",
+      "name": "Exotic Hand Strike",
+      "difficulty": "A",
+      "prerequisites": [
+        "Karate"
+      ],
+      "defaults": [
+        "Karate-1"
+      ],
+      "maximum": "Karate thr",
+      "profile": "realistic",
+      "silly": false,
+      "automatable": false,
+      "attack_modifier": -1,
+      "defense_modifier": 0,
+      "damage_modifier": 0,
+      "damage_per_die": 0,
+      "effects": {
+        "summary": "cr‡"
+      },
+      "style_ids": [
+        "martial-arts.162.hsing-i-chuan",
+        "martial-arts.163.hwa-rang-do",
+        "martial-arts.163.tiger-crane-style",
+        "martial-arts.168.kajukenbo",
+        "martial-arts.169.te",
+        "martial-arts.170.goju-ryu",
+        "martial-arts.170.shotokan",
+        "martial-arts.171.isshinryu",
+        "martial-arts.171.kyokushin",
+        "martial-arts.178.kuntao",
+        "martial-arts.187.naginatado-or-atarashii-naginata",
+        "martial-arts.188.pak-hok",
+        "martial-arts.190.kumango-silat",
+        "martial-arts.190.tapak-sutji-pentjak-silat",
+        "martial-arts.191.praying-mantis-kung-fu",
+        "martial-arts.194.shaolin-kung-fu",
+        "martial-arts.200.tae-kwon-do",
+        "martial-arts.202.taijutsu",
+        "martial-arts.206.wushu"
+      ],
+      "tags": [
+        "realistic",
+        "technique"
+      ],
+      "original": {
+        "name": "Exotic Hand",
+        "damage": "cr‡"
+      }
+    },
+    {
+      "identifier": "martial-arts.71.eye-gouging",
+      "source": "Martial Arts",
+      "page": "71",
+      "name": "Eye-Gouging",
+      "difficulty": "H",
+      "prerequisites": [
+        "Brawling, Judo, or Wrestling"
+      ],
+      "defaults": [
+        "PS-5"
+      ],
+      "maximum": "PS",
+      "profile": "realistic",
+      "silly": false,
+      "automatable": false,
+      "attack_modifier": -5,
+      "defense_modifier": 0,
+      "damage_modifier": 0,
+      "damage_per_die": 0,
+      "effects": {
+        "summary": "thr-4 cr, Blind"
+      },
+      "style_ids": [
+        "martial-arts.152.kachin-bando",
+        "martial-arts.204.combat-wrestling",
+        "martial-arts.210.smasha"
+      ],
+      "tags": [
+        "realistic",
+        "technique"
+      ],
+      "original": {
+        "name": "Eye-Gouging",
+        "damage": "thr-4 cr, Blind"
+      }
+    },
+    {
+      "identifier": "martial-arts.72.eye-pluck",
+      "source": "Martial Arts",
+      "page": "72",
+      "name": "Eye-Pluck",
+      "difficulty": "H",
+      "prerequisites": [
+        "Brawling or Karate"
+      ],
+      "defaults": [
+        "PS-10"
+      ],
+      "maximum": "PS-4",
+      "profile": "cinematic",
+      "silly": false,
+      "automatable": false,
+      "attack_modifier": -10,
+      "defense_modifier": 0,
+      "damage_modifier": 0,
+      "damage_per_die": 0,
+      "effects": {
+        "summary": "thr-3 cr‡, Cripple"
+      },
+      "style_ids": [
+        "martial-arts.188.pak-hok",
+        "martial-arts.202.taijutsu",
+        "martial-arts.210.smasha"
+      ],
+      "tags": [
+        "cinematic",
+        "technique"
+      ],
+      "original": {
+        "name": "Eye-Pluck*",
+        "damage": "thr-3 cr‡, Cripple"
+      }
+    },
+    {
+      "identifier": "martial-arts.72.eye-poke",
+      "source": "Martial Arts",
+      "page": "72",
+      "name": "Eye-Poke",
+      "difficulty": "H",
+      "prerequisites": [
+        "Any SS"
+      ],
+      "defaults": [
+        "PS-9"
+      ],
+      "maximum": "PS-4",
+      "profile": "realistic",
+      "silly": false,
+      "automatable": false,
+      "attack_modifier": -9,
+      "defense_modifier": 0,
+      "damage_modifier": 0,
+      "damage_per_die": 0,
+      "effects": {
+        "summary": "thr-3 cr"
+      },
+      "style_ids": [
+        "martial-arts.164.jeet-kune-do",
+        "martial-arts.191.praying-mantis-kung-fu",
+        "martial-arts.195.shortsword-fighting",
+        "martial-arts.202.taijutsu",
+        "martial-arts.210.smasha"
+      ],
+      "tags": [
+        "realistic",
+        "technique"
+      ],
+      "original": {
+        "name": "Eye-Poke",
+        "damage": "thr-3 cr"
+      }
+    },
+    {
+      "identifier": "martial-arts.88.eye-poke-defense",
+      "source": "Martial Arts",
+      "page": "88",
+      "name": "Eye-Poke Defense",
+      "difficulty": "H",
+      "prerequisites": [
+        "Any UCS"
+      ],
+      "defaults": [
+        "Parry"
+      ],
+      "maximum": "Parry+5",
+      "profile": "cinematic",
+      "silly": true,
+      "automatable": false,
+      "attack_modifier": 0,
+      "defense_modifier": 0,
+      "damage_modifier": 0,
+      "damage_per_die": 0,
+      "effects": {
+        "summary": "N/A"
+      },
+      "style_ids": [],
+      "tags": [
+        "cinematic",
+        "silly"
+      ],
+      "original": {
+        "name": "Eye-Poke",
+        "damage": "N/A"
+      }
+    },
+    {
+      "identifier": "martial-arts.72.eye-rake",
+      "source": "Martial Arts",
+      "page": "72",
+      "name": "Eye-Rake",
+      "difficulty": "H",
+      "prerequisites": [
+        "Brawling or Karate"
+      ],
+      "defaults": [
+        "PS-5"
+      ],
+      "maximum": "PS",
+      "profile": "realistic",
+      "silly": false,
+      "automatable": false,
+      "attack_modifier": -5,
+      "defense_modifier": 0,
+      "damage_modifier": 0,
+      "damage_per_die": 0,
+      "effects": {
+        "summary": "Blind"
+      },
+      "style_ids": [
+        "martial-arts.152.kachin-bando",
+        "martial-arts.183.krav-maga",
+        "martial-arts.204.combat-wrestling",
+        "martial-arts.210.smasha"
+      ],
+      "tags": [
+        "realistic",
+        "technique"
+      ],
+      "original": {
+        "name": "Eye-Rake",
+        "damage": "Blind"
+      }
+    },
+    {
+      "identifier": "martial-arts.73.feint",
+      "source": "Martial Arts",
+      "page": "73",
+      "name": "Feint",
+      "difficulty": "H",
+      "prerequisites": [
+        "Any UCS, MWS, or special"
+      ],
+      "defaults": [
+        "PS"
+      ],
+      "maximum": "PS+4",
+      "profile": "realistic",
+      "silly": false,
+      "automatable": false,
+      "attack_modifier": 0,
+      "defense_modifier": 0,
+      "damage_modifier": 0,
+      "damage_per_die": 0,
+      "effects": {
+        "summary": "Feint"
+      },
+      "style_ids": [
+        "martial-arts.150.armatura",
+        "martial-arts.152.boxing",
+        "martial-arts.155.dagger-fighting",
+        "martial-arts.155.escrima",
+        "martial-arts.156.italian-school",
+        "martial-arts.157.la-canne-de-combat",
+        "martial-arts.157.victorian-singlestick",
+        "martial-arts.158.la-verdadera-destreza",
+        "martial-arts.158.transitional-french-school",
+        "martial-arts.159.french-smallsword",
+        "martial-arts.160.epee",
+        "martial-arts.160.foil",
+        "martial-arts.160.saber",
+        "martial-arts.160.schlager",
+        "martial-arts.161.hoplomachia",
+        "martial-arts.164.jeet-kune-do",
+        "martial-arts.170.shotokan",
+        "martial-arts.171.isshinryu",
+        "martial-arts.173.kenjutsu",
+        "martial-arts.174.nito-ryu",
+        "martial-arts.175.kendo",
+        "martial-arts.176.krabi-krabong",
+        "martial-arts.178.kobujutsu",
+        "martial-arts.182.weapon-training",
+        "martial-arts.186.naginatajutsu",
+        "martial-arts.187.glaive-fighting",
+        "martial-arts.188.pak-hok",
+        "martial-arts.190.kumango-silat",
+        "martial-arts.190.tapak-sutji-pentjak-silat",
+        "martial-arts.191.pollaxe-fighting",
+        "martial-arts.192.jojutsu",
+        "martial-arts.192.sport-quarterstaff",
+        "martial-arts.193.la-boxe-francaise",
+        "martial-arts.194.shaolin-kung-fu",
+        "martial-arts.195.shortsword-fighting",
+        "martial-arts.197.jukenjutsu-bayonet-fighting",
+        "martial-arts.198.sumo",
+        "martial-arts.199.fighting",
+        "martial-arts.199.sword-and-buckler-play",
+        "martial-arts.202.taijutsu",
+        "martial-arts.203.wing-chun",
+        "martial-arts.205.greco-roman-wrestling",
+        "martial-arts.206.wushu",
+        "martial-arts.209.force-swordsmanship"
+      ],
+      "tags": [
+        "realistic",
+        "technique"
+      ],
+      "original": {
+        "name": "Feint",
+        "damage": "Feint"
+      }
+    },
+    {
+      "identifier": "martial-arts.83.fighting-while-seated",
+      "source": "Martial Arts",
+      "page": "83",
+      "name": "Fighting While Seated",
+      "difficulty": "H",
+      "prerequisites": [
+        "Any CS"
+      ],
+      "defaults": [
+        "PS-2"
+      ],
+      "maximum": "PS",
+      "profile": "cinematic",
+      "silly": false,
+      "automatable": true,
+      "attack_modifier": -2,
+      "defense_modifier": 0,
+      "damage_modifier": 0,
+      "damage_per_die": 0,
+      "effects": {
+        "summary": "Per attack"
+      },
+      "style_ids": [
+        "martial-arts.155.dagger-fighting",
+        "martial-arts.194.shaolin-kung-fu",
+        "martial-arts.195.shortsword-fighting",
+        "martial-arts.204.combat-wrestling",
+        "martial-arts.206.wushu"
+      ],
+      "tags": [
+        "cinematic",
+        "technique"
+      ],
+      "original": {
+        "name": "Fighting While",
+        "damage": "Per attack"
+      }
+    },
+    {
+      "identifier": "martial-arts.73.finger-lock",
+      "source": "Martial Arts",
+      "page": "73",
+      "name": "Finger Lock",
+      "difficulty": "H",
+      "prerequisites": [
+        "Arm Lock"
+      ],
+      "defaults": [
+        "Arm Lock-3"
+      ],
+      "maximum": "Arm Lock",
+      "profile": "realistic",
+      "silly": false,
+      "automatable": false,
+      "attack_modifier": 0,
+      "defense_modifier": 0,
+      "damage_modifier": 0,
+      "damage_per_die": 0,
+      "effects": {
+        "summary": "QC"
+      },
+      "style_ids": [
+        "martial-arts.149.aikido",
+        "martial-arts.154.chin-na",
+        "martial-arts.204.combat-wrestling"
+      ],
+      "tags": [
+        "realistic",
+        "technique"
+      ],
+      "original": {
+        "name": "Finger Lock",
+        "damage": "QC"
+      }
+    },
+    {
+      "identifier": "martial-arts.88.flying-atomic-wedgie",
+      "source": "Martial Arts",
+      "page": "88",
+      "name": "Flying Atomic Wedgie",
+      "difficulty": "H",
+      "prerequisites": [
+        "Brawling or Wrestling"
+      ],
+      "defaults": [
+        "PS-8"
+      ],
+      "maximum": "PS",
+      "profile": "cinematic",
+      "silly": true,
+      "automatable": false,
+      "attack_modifier": -8,
+      "defense_modifier": 0,
+      "damage_modifier": 0,
+      "damage_per_die": 0,
+      "effects": {
+        "summary": "Pain"
+      },
+      "style_ids": [],
+      "tags": [
+        "cinematic",
+        "silly"
+      ],
+      "original": {
+        "name": "Flying Atomic",
+        "damage": "Pain"
+      }
+    },
+    {
+      "identifier": "martial-arts.83.flying-jump-kick",
+      "source": "Martial Arts",
+      "page": "83",
+      "name": "Flying Jump Kick",
+      "difficulty": "H",
+      "prerequisites": [
+        "Karate"
+      ],
+      "defaults": [
+        "Karate-7"
+      ],
+      "maximum": "Karate",
+      "profile": "cinematic",
+      "silly": false,
+      "automatable": true,
+      "attack_modifier": -7,
+      "defense_modifier": 0,
+      "damage_modifier": 0,
+      "damage_per_die": 0,
+      "effects": {
+        "summary": "Kick at better of +2 or +1/d"
+      },
+      "style_ids": [
+        "martial-arts.161.hapkido",
+        "martial-arts.164.jeet-kune-do",
+        "martial-arts.194.shaolin-kung-fu",
+        "martial-arts.200.tae-kwon-do",
+        "martial-arts.206.wushu",
+        "martial-arts.208.dragon-man-kung-fu"
+      ],
+      "tags": [
+        "cinematic",
+        "technique"
+      ],
+      "original": {
+        "name": "Flying Jump",
+        "damage": "Kick at better of +2 or +1/d"
+      }
+    },
+    {
+      "identifier": "martial-arts.83.flying-lunge",
+      "source": "Martial Arts",
+      "page": "83",
+      "name": "Flying Lunge",
+      "difficulty": "H",
+      "prerequisites": [
+        "Any thrusting MWS"
+      ],
+      "defaults": [
+        "PS-4"
+      ],
+      "maximum": "PS",
+      "profile": "cinematic",
+      "silly": false,
+      "automatable": true,
+      "attack_modifier": -4,
+      "defense_modifier": 0,
+      "damage_modifier": 0,
+      "damage_per_die": 0,
+      "effects": {
+        "summary": "Per attack at better of +2 or +1/d"
+      },
+      "style_ids": [
+        "martial-arts.156.italian-school",
+        "martial-arts.158.transitional-french-school",
+        "martial-arts.159.french-smallsword",
+        "martial-arts.199.fighting",
+        "martial-arts.208.dragon-man-kung-fu"
+      ],
+      "tags": [
+        "cinematic",
+        "technique"
+      ],
+      "original": {
+        "name": "Flying Lunge*",
+        "damage": "Per attack at better of +2 or +1/d"
+      }
+    },
+    {
+      "identifier": "martial-arts.84.grand-disarm",
+      "source": "Martial Arts",
+      "page": "84",
+      "name": "Grand Disarm",
+      "difficulty": "H",
+      "prerequisites": [
+        "Any MWS or UCS"
+      ],
+      "defaults": [
+        "Fencing-9, MWS-11, or UCS-11"
+      ],
+      "maximum": "PS",
+      "profile": "cinematic",
+      "silly": false,
+      "automatable": false,
+      "attack_modifier": 0,
+      "defense_modifier": 0,
+      "damage_modifier": 0,
+      "damage_per_die": 0,
+      "effects": {
+        "summary": "Disarm(s)"
+      },
+      "style_ids": [
+        "martial-arts.156.italian-school",
+        "martial-arts.159.french-smallsword",
+        "martial-arts.182.weapon-training",
+        "martial-arts.194.shaolin-kung-fu"
+      ],
+      "tags": [
+        "cinematic",
+        "technique"
+      ],
+      "original": {
+        "name": "Grand Disarm*",
+        "damage": "Disarm(s)"
+      }
+    },
+    {
+      "identifier": "martial-arts.73.ground-fighting",
+      "source": "Martial Arts",
+      "page": "73",
+      "name": "Ground Fighting",
+      "difficulty": "H",
+      "prerequisites": [
+        "Any CS"
+      ],
+      "defaults": [
+        "PS-4"
+      ],
+      "maximum": "PS",
+      "profile": "realistic",
+      "silly": false,
+      "automatable": true,
+      "attack_modifier": -4,
+      "defense_modifier": 0,
+      "damage_modifier": 0,
+      "damage_per_die": 0,
+      "effects": {
+        "summary": "Per attack"
+      },
+      "style_ids": [
+        "martial-arts.149.aikido",
+        "martial-arts.149.aikijutsu",
+        "martial-arts.152.kachin-bando",
+        "martial-arts.166.judo",
+        "martial-arts.183.krav-maga",
+        "martial-arts.185.sambo",
+        "martial-arts.188.pankration",
+        "martial-arts.195.shortsword-fighting",
+        "martial-arts.205.submission-wrestling"
+      ],
+      "tags": [
+        "realistic",
+        "technique"
+      ],
+      "original": {
+        "name": "Ground Fighting",
+        "damage": "Per attack"
+      }
+    },
+    {
+      "identifier": "martial-arts.88.halitosis-attack",
+      "source": "Martial Arts",
+      "page": "88",
+      "name": "Halitosis Attack",
+      "difficulty": "A",
+      "prerequisites": [
+        "OPH (Foul Breath)"
+      ],
+      "defaults": [
+        "HT-5"
+      ],
+      "maximum": "HT+5",
+      "profile": "cinematic",
+      "silly": true,
+      "automatable": false,
+      "attack_modifier": -5,
+      "defense_modifier": 0,
+      "damage_modifier": 0,
+      "damage_per_die": 0,
+      "effects": {
+        "summary": "Stun"
+      },
+      "style_ids": [],
+      "tags": [
+        "cinematic",
+        "silly"
+      ],
+      "original": {
+        "name": "Halitosis Attack†",
+        "damage": "Stun"
+      }
+    },
+    {
+      "identifier": "martial-arts.73.hammer-fist",
+      "source": "Martial Arts",
+      "page": "73",
+      "name": "Hammer Fist",
+      "difficulty": "A",
+      "prerequisites": [
+        "Brawling or Karate"
+      ],
+      "defaults": [
+        "PS-1"
+      ],
+      "maximum": "PS",
+      "profile": "realistic",
+      "silly": false,
+      "automatable": false,
+      "attack_modifier": -1,
+      "defense_modifier": 0,
+      "damage_modifier": 0,
+      "damage_per_die": 0,
+      "effects": {
+        "summary": "thr-2 cr‡"
+      },
+      "style_ids": [
+        "martial-arts.151.aba-bando",
+        "martial-arts.152.kachin-bando",
+        "martial-arts.163.tiger-crane-style",
+        "martial-arts.168.kajukenbo",
+        "martial-arts.169.te",
+        "martial-arts.170.goju-ryu",
+        "martial-arts.170.shotokan",
+        "martial-arts.171.isshinryu",
+        "martial-arts.171.kyokushin",
+        "martial-arts.178.kuntao",
+        "martial-arts.183.krav-maga",
+        "martial-arts.187.naginatado-or-atarashii-naginata",
+        "martial-arts.188.pak-hok",
+        "martial-arts.188.pankration",
+        "martial-arts.191.praying-mantis-kung-fu",
+        "martial-arts.200.tai-chi-chuan",
+        "martial-arts.204.combat-wrestling"
+      ],
+      "tags": [
+        "realistic",
+        "technique"
+      ],
+      "original": {
+        "name": "Hammer Fist",
+        "damage": "thr-2 cr‡"
+      }
+    },
+    {
+      "identifier": "martial-arts.84.hand-catch",
+      "source": "Martial Arts",
+      "page": "84",
+      "name": "Hand Catch",
+      "difficulty": "H",
+      "prerequisites": [
+        "Any GS"
+      ],
+      "defaults": [
+        "Parry-3"
+      ],
+      "maximum": "Parry",
+      "profile": "cinematic",
+      "silly": false,
+      "automatable": false,
+      "attack_modifier": -3,
+      "defense_modifier": 0,
+      "damage_modifier": 0,
+      "damage_per_die": 0,
+      "effects": {
+        "summary": "Grab or Grapple"
+      },
+      "style_ids": [
+        "martial-arts.156.italian-school",
+        "martial-arts.206.professional-wrestling"
+      ],
+      "tags": [
+        "cinematic",
+        "technique"
+      ],
+      "original": {
+        "name": "Hand Catch*",
+        "damage": "Grab or Grapple"
+      }
+    },
+    {
+      "identifier": "martial-arts.84.hand-catch-pmw",
+      "source": "Martial Arts",
+      "page": "84",
+      "name": "Hand Catch (PMW)",
+      "difficulty": "H",
+      "prerequisites": [
+        "Parry Missile Weapons"
+      ],
+      "defaults": [
+        "Parry-3"
+      ],
+      "maximum": "Parry",
+      "profile": "cinematic",
+      "silly": false,
+      "automatable": false,
+      "attack_modifier": -3,
+      "defense_modifier": 0,
+      "damage_modifier": 0,
+      "damage_per_die": 0,
+      "effects": {
+        "summary": "Grab"
+      },
+      "style_ids": [],
+      "tags": [
+        "cinematic",
+        "technique"
+      ],
+      "original": {
+        "name": "Hand Catch",
+        "damage": "Grab"
+      }
+    },
+    {
+      "identifier": "martial-arts.84.hand-clap-parry",
+      "source": "Martial Arts",
+      "page": "84",
+      "name": "Hand-Clap Parry",
+      "difficulty": "H",
+      "prerequisites": [
+        "Judo or Karate"
+      ],
+      "defaults": [
+        "Parry-5"
+      ],
+      "maximum": "Parry",
+      "profile": "cinematic",
+      "silly": false,
+      "automatable": false,
+      "attack_modifier": -5,
+      "defense_modifier": 0,
+      "damage_modifier": 0,
+      "damage_per_die": 0,
+      "effects": {
+        "summary": "Grab, Disarm"
+      },
+      "style_ids": [
+        "martial-arts.149.aikijutsu",
+        "martial-arts.166.jujutsu",
+        "martial-arts.202.taijutsu"
+      ],
+      "tags": [
+        "cinematic",
+        "technique"
+      ],
+      "original": {
+        "name": "Hand-Clap",
+        "damage": "Grab, Disarm"
+      }
+    },
+    {
+      "identifier": "martial-arts.73.handcuffing",
+      "source": "Martial Arts",
+      "page": "73",
+      "name": "Handcuffing",
+      "difficulty": "A",
+      "prerequisites": [
+        "None"
+      ],
+      "defaults": [
+        "Binding, DX-2, Binding, Judo-1, or or Wrestling-2"
+      ],
+      "maximum": "DX, Judo, Wrestling",
+      "profile": "realistic",
+      "silly": false,
+      "automatable": false,
+      "attack_modifier": -2,
+      "defense_modifier": 0,
+      "damage_modifier": 0,
+      "damage_per_die": 0,
+      "effects": {
+        "summary": "Cuff"
+      },
+      "style_ids": [],
+      "tags": [
+        "realistic",
+        "technique"
+      ],
+      "original": {
+        "name": "Handcuffing",
+        "damage": "Cuff"
+      }
+    },
+    {
+      "identifier": "martial-arts.73.hands-free-riding",
+      "source": "Martial Arts",
+      "page": "73",
+      "name": "Hands-Free Riding",
+      "difficulty": "H",
+      "prerequisites": [
+        "Riding"
+      ],
+      "defaults": [
+        "Riding-3"
+      ],
+      "maximum": "Riding",
+      "profile": "realistic",
+      "silly": false,
+      "automatable": false,
+      "attack_modifier": 0,
+      "defense_modifier": 0,
+      "damage_modifier": 0,
+      "damage_per_die": 0,
+      "effects": {
+        "summary": "N/A"
+      },
+      "style_ids": [
+        "martial-arts.150.armatura-equestris",
+        "martial-arts.151.bajutsu",
+        "martial-arts.159.furusiyya",
+        "martial-arts.179.kyujutsu",
+        "martial-arts.181.yabusame"
+      ],
+      "tags": [
+        "realistic",
+        "technique"
+      ],
+      "original": {
+        "name": "Hands-Free",
+        "damage": "N/A"
+      }
+    },
+    {
+      "identifier": "martial-arts.74.head-butt",
+      "source": "Martial Arts",
+      "page": "74",
+      "name": "Head Butt",
+      "difficulty": "H",
+      "prerequisites": [
+        "Brawling or Karate"
+      ],
+      "defaults": [
+        "PS-1"
+      ],
+      "maximum": "PS",
+      "profile": "realistic",
+      "silly": false,
+      "automatable": false,
+      "attack_modifier": -1,
+      "defense_modifier": 0,
+      "damage_modifier": 0,
+      "damage_per_die": 0,
+      "effects": {
+        "summary": "thr-1 cr"
+      },
+      "style_ids": [
+        "martial-arts.151.aba-bando",
+        "martial-arts.152.kachin-bando",
+        "martial-arts.164.jeet-kune-do",
+        "martial-arts.167.bartitsu",
+        "martial-arts.171.kyokushin",
+        "martial-arts.182.fairbairn-close-combat-training",
+        "martial-arts.206.professional-wrestling",
+        "martial-arts.210.smasha"
+      ],
+      "tags": [
+        "realistic",
+        "technique"
+      ],
+      "original": {
+        "name": "Head Butt",
+        "damage": "thr-1 cr"
+      }
+    },
+    {
+      "identifier": "martial-arts.74.head-lock",
+      "source": "Martial Arts",
+      "page": "74",
+      "name": "Head Lock",
+      "difficulty": "H",
+      "prerequisites": [
+        "Judo or Wrestling"
+      ],
+      "defaults": [
+        "PS-3"
+      ],
+      "maximum": "PS",
+      "profile": "realistic",
+      "silly": false,
+      "automatable": false,
+      "attack_modifier": -3,
+      "defense_modifier": 0,
+      "damage_modifier": 0,
+      "damage_per_die": 0,
+      "effects": {
+        "summary": "QC"
+      },
+      "style_ids": [
+        "martial-arts.151.aba-bando",
+        "martial-arts.154.chin-na",
+        "martial-arts.161.hapkido",
+        "martial-arts.163.hwa-rang-do",
+        "martial-arts.167.bartitsu",
+        "martial-arts.178.kuntao",
+        "martial-arts.183.krav-maga",
+        "martial-arts.185.sambo",
+        "martial-arts.204.combat-wrestling"
+      ],
+      "tags": [
+        "realistic",
+        "technique"
+      ],
+      "original": {
+        "name": "Head Lock",
+        "damage": "QC"
+      }
+    },
+    {
+      "identifier": "martial-arts.74.hook",
+      "source": "Martial Arts",
+      "page": "74",
+      "name": "Hook",
+      "difficulty": "H",
+      "prerequisites": [
+        "Any app. MWS"
+      ],
+      "defaults": [
+        "PS-5"
+      ],
+      "maximum": "PS",
+      "profile": "realistic",
+      "silly": false,
+      "automatable": false,
+      "attack_modifier": -5,
+      "defense_modifier": 0,
+      "damage_modifier": 0,
+      "damage_per_die": 0,
+      "effects": {
+        "summary": "Hook"
+      },
+      "style_ids": [
+        "martial-arts.177.late-medieval",
+        "martial-arts.182.weapon-training",
+        "martial-arts.187.glaive-fighting",
+        "martial-arts.191.pollaxe-fighting",
+        "martial-arts.201.taihojutsu"
+      ],
+      "tags": [
+        "realistic",
+        "technique"
+      ],
+      "original": {
+        "name": "Hook",
+        "damage": "Hook"
+      }
+    },
+    {
+      "identifier": "martial-arts.74.horse-archery",
+      "source": "Martial Arts",
+      "page": "74",
+      "name": "Horse Archery",
+      "difficulty": "H",
+      "prerequisites": [
+        "Bow and Riding"
+      ],
+      "defaults": [
+        "Bow-4"
+      ],
+      "maximum": "Bow",
+      "profile": "realistic",
+      "silly": false,
+      "automatable": true,
+      "attack_modifier": 0,
+      "defense_modifier": 0,
+      "damage_modifier": 0,
+      "damage_per_die": 0,
+      "effects": {
+        "summary": "Per attack"
+      },
+      "style_ids": [
+        "martial-arts.150.armatura-equestris",
+        "martial-arts.159.furusiyya",
+        "martial-arts.179.kyujutsu",
+        "martial-arts.181.yabusame"
+      ],
+      "tags": [
+        "realistic",
+        "technique"
+      ],
+      "original": {
+        "name": "Horse Archery",
+        "damage": "Per attack"
+      }
+    },
+    {
+      "identifier": "martial-arts.85.initial-carving",
+      "source": "Martial Arts",
+      "page": "85",
+      "name": "Initial Carving",
+      "difficulty": "H",
+      "prerequisites": [
+        "Any fencing"
+      ],
+      "defaults": [
+        "PS-4"
+      ],
+      "maximum": "PS",
+      "profile": "cinematic",
+      "silly": false,
+      "automatable": true,
+      "attack_modifier": -4,
+      "defense_modifier": 0,
+      "damage_modifier": 0,
+      "damage_per_die": 0,
+      "effects": {
+        "summary": "Per attack"
+      },
+      "style_ids": [
+        "martial-arts.156.italian-school",
+        "martial-arts.158.la-verdadera-destreza",
+        "martial-arts.158.transitional-french-school",
+        "martial-arts.159.french-smallsword"
+      ],
+      "tags": [
+        "cinematic",
+        "technique"
+      ],
+      "original": {
+        "name": "Initial Carving*",
+        "damage": "Per attack"
+      }
+    },
+    {
+      "identifier": "martial-arts.74.jam",
+      "source": "Martial Arts",
+      "page": "74",
+      "name": "Jam",
+      "difficulty": "H",
+      "prerequisites": [
+        "Brawling or Karate"
+      ],
+      "defaults": [
+        "Parry-1"
+      ],
+      "maximum": "Parry",
+      "profile": "realistic",
+      "silly": false,
+      "automatable": false,
+      "attack_modifier": -1,
+      "defense_modifier": 0,
+      "damage_modifier": 0,
+      "damage_per_die": 0,
+      "effects": {
+        "summary": "Worse of thr-3 or thr-1 at -1/d cr‡"
+      },
+      "style_ids": [
+        "martial-arts.152.kachin-bando",
+        "martial-arts.163.tiger-crane-style",
+        "martial-arts.185.muay-thai",
+        "martial-arts.203.wing-chun"
+      ],
+      "tags": [
+        "realistic",
+        "technique"
+      ],
+      "original": {
+        "name": "Jam",
+        "damage": "Worse of thr-3 or thr-1 at -1/d cr‡"
+      }
+    },
+    {
+      "identifier": "martial-arts.75.judo-throw",
+      "source": "Martial Arts",
+      "page": "75",
+      "name": "Judo Throw",
+      "difficulty": "H",
+      "prerequisites": [
+        "Judo"
+      ],
+      "defaults": [
+        "Judo"
+      ],
+      "maximum": "Judo",
+      "profile": "realistic",
+      "silly": false,
+      "automatable": false,
+      "attack_modifier": 0,
+      "defense_modifier": 0,
+      "damage_modifier": 0,
+      "damage_per_die": 0,
+      "effects": {
+        "summary": "thr-1 cr, Knockdown, Stun"
+      },
+      "style_ids": [],
+      "tags": [
+        "realistic",
+        "technique"
+      ],
+      "original": {
+        "name": "Judo Throw",
+        "damage": "thr-1 cr, Knockdown, Stun"
+      }
+    },
+    {
+      "identifier": "martial-arts.75.jump-kick",
+      "source": "Martial Arts",
+      "page": "75",
+      "name": "Jump Kick",
+      "difficulty": "H",
+      "prerequisites": [
+        "Karate"
+      ],
+      "defaults": [
+        "Karate-4"
+      ],
+      "maximum": "Karate",
+      "profile": "realistic",
+      "silly": false,
+      "automatable": false,
+      "attack_modifier": -4,
+      "defense_modifier": 0,
+      "damage_modifier": 0,
+      "damage_per_die": 0,
+      "effects": {
+        "summary": "Better of thr+1 or thr at +1/2d cr‡"
+      },
+      "style_ids": [
+        "martial-arts.161.hapkido",
+        "martial-arts.163.hwa-rang-do",
+        "martial-arts.170.shotokan",
+        "martial-arts.171.kyokushin",
+        "martial-arts.190.tapak-sutji-pentjak-silat",
+        "martial-arts.200.tae-kwon-do",
+        "martial-arts.206.wushu",
+        "martial-arts.207.death-fist",
+        "martial-arts.208.dragon-man-kung-fu"
+      ],
+      "tags": [
+        "realistic",
+        "technique"
+      ],
+      "original": {
+        "name": "Jump Kick",
+        "damage": "Better of thr+1 or thr at +1/2d cr‡"
+      }
+    },
+    {
+      "identifier": "martial-arts.75.kicking",
+      "source": "Martial Arts",
+      "page": "75",
+      "name": "Kicking",
+      "difficulty": "H",
+      "prerequisites": [
+        "Brawling or Karate"
+      ],
+      "defaults": [
+        "PS-2"
+      ],
+      "maximum": "PS",
+      "profile": "realistic",
+      "silly": false,
+      "automatable": false,
+      "attack_modifier": -2,
+      "defense_modifier": 0,
+      "damage_modifier": 0,
+      "damage_per_die": 0,
+      "effects": {
+        "summary": "thr cr‡"
+      },
+      "style_ids": [
+        "martial-arts.152.kachin-bando",
+        "martial-arts.161.hapkido",
+        "martial-arts.163.hwa-rang-do",
+        "martial-arts.164.jeet-kune-do",
+        "martial-arts.168.kajukenbo",
+        "martial-arts.169.te",
+        "martial-arts.170.goju-ryu",
+        "martial-arts.170.shotokan",
+        "martial-arts.171.isshinryu",
+        "martial-arts.171.kyokushin",
+        "martial-arts.172.kempo",
+        "martial-arts.176.krabi-krabong",
+        "martial-arts.185.muay-thai",
+        "martial-arts.187.glaive-fighting",
+        "martial-arts.188.pak-hok",
+        "martial-arts.188.pankration",
+        "martial-arts.190.tapak-sutji-pentjak-silat",
+        "martial-arts.191.praying-mantis-kung-fu",
+        "martial-arts.193.la-boxe-francaise",
+        "martial-arts.194.shaolin-kung-fu",
+        "martial-arts.199.sword-and-buckler-play",
+        "martial-arts.200.tae-kwon-do",
+        "martial-arts.202.taijutsu",
+        "martial-arts.206.wushu",
+        "martial-arts.208.dragon-man-kung-fu",
+        "martial-arts.210.smasha"
+      ],
+      "tags": [
+        "realistic",
+        "technique"
+      ],
+      "original": {
+        "name": "Kicking",
+        "damage": "thr cr‡"
+      }
+    },
+    {
+      "identifier": "martial-arts.76.knee-drop",
+      "source": "Martial Arts",
+      "page": "76",
+      "name": "Knee Drop",
+      "difficulty": "H",
+      "prerequisites": [
+        "Brawling or Wrestling"
+      ],
+      "defaults": [
+        "Brawling-3 or Wrestling-4"
+      ],
+      "maximum": "PS",
+      "profile": "realistic",
+      "silly": false,
+      "automatable": false,
+      "attack_modifier": -3,
+      "defense_modifier": 0,
+      "damage_modifier": 0,
+      "damage_per_die": 0,
+      "effects": {
+        "summary": "Better of thr+2 or thr at +1/d cr‡"
+      },
+      "style_ids": [
+        "martial-arts.204.combat-wrestling"
+      ],
+      "tags": [
+        "realistic",
+        "technique"
+      ],
+      "original": {
+        "name": "Knee Drop",
+        "damage": "Better of thr+2 or thr at +1/d cr‡"
+      }
+    },
+    {
+      "identifier": "martial-arts.76.knee-strike",
+      "source": "Martial Arts",
+      "page": "76",
+      "name": "Knee Strike",
+      "difficulty": "A",
+      "prerequisites": [
+        "Brawling or Karate"
+      ],
+      "defaults": [
+        "PS-1"
+      ],
+      "maximum": "PS",
+      "profile": "realistic",
+      "silly": false,
+      "automatable": false,
+      "attack_modifier": -1,
+      "defense_modifier": 0,
+      "damage_modifier": 0,
+      "damage_per_die": 0,
+      "effects": {
+        "summary": "thr cr‡"
+      },
+      "style_ids": [
+        "martial-arts.151.aba-bando",
+        "martial-arts.152.kachin-bando",
+        "martial-arts.164.jeet-kune-do",
+        "martial-arts.167.bartitsu",
+        "martial-arts.168.kalaripayit",
+        "martial-arts.169.te",
+        "martial-arts.170.goju-ryu",
+        "martial-arts.170.shotokan",
+        "martial-arts.171.isshinryu",
+        "martial-arts.171.kyokushin",
+        "martial-arts.172.kempo",
+        "martial-arts.182.fairbairn-close-combat-training",
+        "martial-arts.183.krav-maga",
+        "martial-arts.183.martial-arts-program",
+        "martial-arts.185.muay-thai",
+        "martial-arts.187.glaive-fighting",
+        "martial-arts.188.pankration",
+        "martial-arts.191.pollaxe-fighting",
+        "martial-arts.191.praying-mantis-kung-fu",
+        "martial-arts.202.taijutsu",
+        "martial-arts.203.wing-chun",
+        "martial-arts.204.combat-wrestling",
+        "martial-arts.210.freefighting"
+      ],
+      "tags": [
+        "realistic",
+        "technique"
+      ],
+      "original": {
+        "name": "Knee Strike",
+        "damage": "thr cr‡"
+      }
+    },
+    {
+      "identifier": "martial-arts.76.leg-grapple",
+      "source": "Martial Arts",
+      "page": "76",
+      "name": "Leg Grapple",
+      "difficulty": "H",
+      "prerequisites": [
+        "None"
+      ],
+      "defaults": [
+        "DX, Wrestling, DX+4, or Judo"
+      ],
+      "maximum": "Wrestling+4, or Judo+4",
+      "profile": "realistic",
+      "silly": false,
+      "automatable": false,
+      "attack_modifier": 0,
+      "defense_modifier": 0,
+      "damage_modifier": 0,
+      "damage_per_die": 0,
+      "effects": {
+        "summary": "Grapple"
+      },
+      "style_ids": [
+        "martial-arts.154.chin-na",
+        "martial-arts.161.hapkido",
+        "martial-arts.168.kajukenbo",
+        "martial-arts.169.te",
+        "martial-arts.185.muay-thai",
+        "martial-arts.188.pankration",
+        "martial-arts.190.kumango-silat"
+      ],
+      "tags": [
+        "realistic",
+        "technique"
+      ],
+      "original": {
+        "name": "Leg Grapple",
+        "damage": "Grapple"
+      }
+    },
+    {
+      "identifier": "martial-arts.76.leg-lock",
+      "source": "Martial Arts",
+      "page": "76",
+      "name": "Leg Lock",
+      "difficulty": "A",
+      "prerequisites": [
+        "Judo or Wrestling ARTIAL RTS ECHNIQUES"
+      ],
+      "defaults": [
+        "PS HEAT"
+      ],
+      "maximum": "PS+4 HEET",
+      "profile": "realistic",
+      "silly": false,
+      "automatable": false,
+      "attack_modifier": 0,
+      "defense_modifier": 0,
+      "damage_modifier": 0,
+      "damage_per_die": 0,
+      "effects": {
+        "summary": "QC"
+      },
+      "style_ids": [
+        "martial-arts.152.kachin-bando",
+        "martial-arts.161.hapkido",
+        "martial-arts.185.sambo",
+        "martial-arts.205.submission-wrestling"
+      ],
+      "tags": [
+        "realistic",
+        "technique"
+      ],
+      "original": {
+        "name": "Leg Lock",
+        "damage": "QC"
+      }
+    },
+    {
+      "identifier": "martial-arts.79.leg-throw",
+      "source": "Martial Arts",
+      "page": "79",
+      "name": "Leg Throw",
+      "difficulty": "H",
+      "prerequisites": [
+        "Judo"
+      ],
+      "defaults": [
+        "Judo-2"
+      ],
+      "maximum": "Judo thr-1",
+      "profile": "realistic",
+      "silly": false,
+      "automatable": false,
+      "attack_modifier": -2,
+      "defense_modifier": 0,
+      "damage_modifier": 0,
+      "damage_per_die": 0,
+      "effects": {
+        "summary": "cr (ST+2), Knockdown, Stun"
+      },
+      "style_ids": [
+        "martial-arts.185.sambo"
+      ],
+      "tags": [
+        "realistic",
+        "technique"
+      ],
+      "original": {
+        "name": "Leg Throw",
+        "damage": "cr (ST+2), Knockdown, Stun"
+      }
+    },
+    {
+      "identifier": "martial-arts.72.lethal-eye-poke",
+      "source": "Martial Arts",
+      "page": "72",
+      "name": "Lethal Eye-Poke",
+      "difficulty": "H",
+      "prerequisites": [
+        "Karate"
+      ],
+      "defaults": [
+        "Karate-11"
+      ],
+      "maximum": "Karate-5 thr-2",
+      "profile": "cinematic",
+      "silly": false,
+      "automatable": false,
+      "attack_modifier": -11,
+      "defense_modifier": 0,
+      "damage_modifier": 0,
+      "damage_per_die": 0,
+      "effects": {
+        "summary": "pi‡"
+      },
+      "style_ids": [
+        "martial-arts.191.praying-mantis-kung-fu",
+        "martial-arts.202.taijutsu"
+      ],
+      "tags": [
+        "cinematic",
+        "technique"
+      ],
+      "original": {
+        "name": "Lethal Eye-Poke*",
+        "damage": "pi‡"
+      }
+    },
+    {
+      "identifier": "martial-arts.85.lethal-kick",
+      "source": "Martial Arts",
+      "page": "85",
+      "name": "Lethal Kick",
+      "difficulty": "H",
+      "prerequisites": [
+        "Karate"
+      ],
+      "defaults": [
+        "Karate-4"
+      ],
+      "maximum": "Karate thr-1",
+      "profile": "cinematic",
+      "silly": false,
+      "automatable": false,
+      "attack_modifier": -4,
+      "defense_modifier": 0,
+      "damage_modifier": 0,
+      "damage_per_die": 0,
+      "effects": {
+        "summary": "pi‡"
+      },
+      "style_ids": [
+        "martial-arts.168.kajukenbo",
+        "martial-arts.169.te",
+        "martial-arts.170.goju-ryu",
+        "martial-arts.170.shotokan",
+        "martial-arts.171.kyokushin",
+        "martial-arts.188.pak-hok",
+        "martial-arts.202.taijutsu",
+        "martial-arts.206.wushu"
+      ],
+      "tags": [
+        "cinematic",
+        "technique"
+      ],
+      "original": {
+        "name": "Lethal Kick*",
+        "damage": "pi‡"
+      }
+    },
+    {
+      "identifier": "martial-arts.85.lethal-strike",
+      "source": "Martial Arts",
+      "page": "85",
+      "name": "Lethal Strike",
+      "difficulty": "H",
+      "prerequisites": [
+        "Karate"
+      ],
+      "defaults": [
+        "Karate-2"
+      ],
+      "maximum": "Karate thr-2",
+      "profile": "cinematic",
+      "silly": false,
+      "automatable": false,
+      "attack_modifier": -2,
+      "defense_modifier": 0,
+      "damage_modifier": 0,
+      "damage_per_die": 0,
+      "effects": {
+        "summary": "pi‡"
+      },
+      "style_ids": [
+        "martial-arts.162.hsing-i-chuan",
+        "martial-arts.164.jeet-kune-do",
+        "martial-arts.166.jujutsu",
+        "martial-arts.169.te",
+        "martial-arts.170.goju-ryu",
+        "martial-arts.170.shotokan",
+        "martial-arts.171.kyokushin",
+        "martial-arts.183.krav-maga",
+        "martial-arts.188.pak-hok",
+        "martial-arts.188.pankration",
+        "martial-arts.191.praying-mantis-kung-fu",
+        "martial-arts.194.shaolin-kung-fu",
+        "martial-arts.202.taijutsu",
+        "martial-arts.206.wushu"
+      ],
+      "tags": [
+        "cinematic",
+        "technique"
+      ],
+      "original": {
+        "name": "Lethal Strike*",
+        "damage": "pi‡"
+      }
+    },
+    {
+      "identifier": "martial-arts.77.low-fighting",
+      "source": "Martial Arts",
+      "page": "77",
+      "name": "Low Fighting",
+      "difficulty": "H",
+      "prerequisites": [
+        "Any CS"
+      ],
+      "defaults": [
+        "PS-2"
+      ],
+      "maximum": "PS Per",
+      "profile": "realistic",
+      "silly": false,
+      "automatable": false,
+      "attack_modifier": -2,
+      "defense_modifier": 0,
+      "damage_modifier": 0,
+      "damage_per_die": 0,
+      "effects": {
+        "summary": "attack"
+      },
+      "style_ids": [
+        "martial-arts.149.aikido",
+        "martial-arts.149.aikijutsu",
+        "martial-arts.152.kachin-bando",
+        "martial-arts.166.jujutsu",
+        "martial-arts.168.kalaripayit",
+        "martial-arts.174.iaijutsu",
+        "martial-arts.175.iaido",
+        "martial-arts.181.kyudo",
+        "martial-arts.188.pankration",
+        "martial-arts.190.kumango-silat",
+        "martial-arts.190.tapak-sutji-pentjak-silat",
+        "martial-arts.195.shortsword-fighting",
+        "martial-arts.205.greco-roman-wrestling",
+        "martial-arts.205.submission-wrestling"
+      ],
+      "tags": [
+        "realistic",
+        "technique"
+      ],
+      "original": {
+        "name": "Low Fighting",
+        "damage": "attack"
+      }
+    },
+    {
+      "identifier": "martial-arts.77.low-line-defense",
+      "source": "Martial Arts",
+      "page": "77",
+      "name": "Low-Line Defense",
+      "difficulty": "H",
+      "prerequisites": [
+        "Boxing or Sumo Wrestling"
+      ],
+      "defaults": [
+        "Parry-2"
+      ],
+      "maximum": "Parry N/A",
+      "profile": "realistic",
+      "silly": false,
+      "automatable": false,
+      "attack_modifier": -2,
+      "defense_modifier": 0,
+      "damage_modifier": 0,
+      "damage_per_die": 0,
+      "effects": {
+        "summary": ""
+      },
+      "style_ids": [],
+      "tags": [
+        "realistic",
+        "technique"
+      ],
+      "original": {
+        "name": "Low-Line Defense",
+        "damage": ""
+      }
+    },
+    {
+      "identifier": "martial-arts.79.lower-body-arm-lock",
+      "source": "Martial Arts",
+      "page": "79",
+      "name": "Lower-Body Arm Lock",
+      "difficulty": "A",
+      "prerequisites": [
+        "Judo or Wrestling"
+      ],
+      "defaults": [
+        "PS-2"
+      ],
+      "maximum": "PS+4 QC",
+      "profile": "realistic",
+      "silly": false,
+      "automatable": false,
+      "attack_modifier": -2,
+      "defense_modifier": 0,
+      "damage_modifier": 0,
+      "damage_per_die": 0,
+      "effects": {
+        "summary": "(ST+2)"
+      },
+      "style_ids": [
+        "martial-arts.152.kachin-bando",
+        "martial-arts.185.sambo",
+        "martial-arts.205.submission-wrestling"
+      ],
+      "tags": [
+        "realistic",
+        "technique"
+      ],
+      "original": {
+        "name": "Lower-Body Arm",
+        "damage": "(ST+2)"
+      }
+    },
+    {
+      "identifier": "martial-arts.79.lower-body-arm-lock.2",
+      "source": "Martial Arts",
+      "page": "79",
+      "name": "Lower-Body Arm Lock",
+      "difficulty": "A",
+      "prerequisites": [
+        "Judo or Wrestling"
+      ],
+      "defaults": [
+        "PS-2"
+      ],
+      "maximum": "PS+4 QC",
+      "profile": "realistic",
+      "silly": false,
+      "automatable": false,
+      "attack_modifier": -2,
+      "defense_modifier": 0,
+      "damage_modifier": 0,
+      "damage_per_die": 0,
+      "effects": {
+        "summary": "(ST+2)"
+      },
+      "style_ids": [
+        "martial-arts.152.kachin-bando",
+        "martial-arts.185.sambo",
+        "martial-arts.205.submission-wrestling"
+      ],
+      "tags": [
+        "realistic",
+        "technique"
+      ],
+      "original": {
+        "name": "Lower-Body Arm",
+        "damage": "(ST+2)"
+      }
+    },
+    {
+      "identifier": "martial-arts.79.lower-body-head-lock",
+      "source": "Martial Arts",
+      "page": "79",
+      "name": "Lower-Body Head Lock",
+      "difficulty": "H",
+      "prerequisites": [
+        "Judo or Wrestling"
+      ],
+      "defaults": [
+        "PS-5"
+      ],
+      "maximum": "PS QC",
+      "profile": "realistic",
+      "silly": false,
+      "automatable": false,
+      "attack_modifier": -5,
+      "defense_modifier": 0,
+      "damage_modifier": 0,
+      "damage_per_die": 0,
+      "effects": {
+        "summary": "(ST+2)"
+      },
+      "style_ids": [
+        "martial-arts.185.sambo"
+      ],
+      "tags": [
+        "realistic",
+        "technique"
+      ],
+      "original": {
+        "name": "Lower-Body Head",
+        "damage": "(ST+2)"
+      }
+    },
+    {
+      "identifier": "martial-arts.79.lower-body-leg-lock",
+      "source": "Martial Arts",
+      "page": "79",
+      "name": "Lower-Body Leg Lock",
+      "difficulty": "A",
+      "prerequisites": [
+        "Judo or Wrestling"
+      ],
+      "defaults": [
+        "PS-2"
+      ],
+      "maximum": "PS+4 QC",
+      "profile": "realistic",
+      "silly": false,
+      "automatable": false,
+      "attack_modifier": -2,
+      "defense_modifier": 0,
+      "damage_modifier": 0,
+      "damage_per_die": 0,
+      "effects": {
+        "summary": "(ST+2)"
+      },
+      "style_ids": [
+        "martial-arts.152.kachin-bando",
+        "martial-arts.185.sambo",
+        "martial-arts.205.submission-wrestling"
+      ],
+      "tags": [
+        "realistic",
+        "technique"
+      ],
+      "original": {
+        "name": "Lower-Body Leg",
+        "damage": "(ST+2)"
+      }
+    },
+    {
+      "identifier": "martial-arts.77.mounted-shooting",
+      "source": "Martial Arts",
+      "page": "77",
+      "name": "Mounted Shooting",
+      "difficulty": "H",
+      "prerequisites": [
+        "Riding or any vehicle and any RCS"
+      ],
+      "defaults": [
+        "RCS-4"
+      ],
+      "maximum": "RCS Per",
+      "profile": "realistic",
+      "silly": false,
+      "automatable": false,
+      "attack_modifier": 0,
+      "defense_modifier": 0,
+      "damage_modifier": 0,
+      "damage_per_die": 0,
+      "effects": {
+        "summary": "attack"
+      },
+      "style_ids": [],
+      "tags": [
+        "realistic",
+        "technique"
+      ],
+      "original": {
+        "name": "Mounted Shooting",
+        "damage": "attack"
+      }
+    },
+    {
+      "identifier": "martial-arts.77.neck-snap",
+      "source": "Martial Arts",
+      "page": "77",
+      "name": "Neck Snap",
+      "difficulty": "H",
+      "prerequisites": [
+        "None"
+      ],
+      "defaults": [
+        "ST-4"
+      ],
+      "maximum": "ST+3 sw",
+      "profile": "realistic",
+      "silly": false,
+      "automatable": false,
+      "attack_modifier": -4,
+      "defense_modifier": 0,
+      "damage_modifier": 0,
+      "damage_per_die": 0,
+      "effects": {
+        "summary": "cr"
+      },
+      "style_ids": [
+        "martial-arts.182.fairbairn-close-combat-training",
+        "martial-arts.204.combat-wrestling",
+        "martial-arts.210.smasha"
+      ],
+      "tags": [
+        "realistic",
+        "technique"
+      ],
+      "original": {
+        "name": "Neck Snap",
+        "damage": "cr"
+      }
+    },
+    {
+      "identifier": "martial-arts.88.noogie",
+      "source": "Martial Arts",
+      "page": "88",
+      "name": "Noogie",
+      "difficulty": "H",
+      "prerequisites": [
+        "Brawling or Karate"
+      ],
+      "defaults": [
+        "PS-5"
+      ],
+      "maximum": "PS Pain",
+      "profile": "cinematic",
+      "silly": true,
+      "automatable": false,
+      "attack_modifier": -5,
+      "defense_modifier": 0,
+      "damage_modifier": 0,
+      "damage_per_die": 0,
+      "effects": {
+        "summary": ""
+      },
+      "style_ids": [],
+      "tags": [
+        "cinematic",
+        "silly"
+      ],
+      "original": {
+        "name": "Noogie†",
+        "damage": ""
+      }
+    },
+    {
+      "identifier": "martial-arts.88.nose-slap",
+      "source": "Martial Arts",
+      "page": "88",
+      "name": "Nose Slap",
+      "difficulty": "H",
+      "prerequisites": [
+        "Brawling or Wrestling"
+      ],
+      "defaults": [
+        "PS-5"
+      ],
+      "maximum": "PS Stun,",
+      "profile": "cinematic",
+      "silly": true,
+      "automatable": false,
+      "attack_modifier": -5,
+      "defense_modifier": 0,
+      "damage_modifier": 0,
+      "damage_per_die": 0,
+      "effects": {
+        "summary": "Disarm"
+      },
+      "style_ids": [],
+      "tags": [
+        "cinematic",
+        "silly"
+      ],
+      "original": {
+        "name": "Nose Slap†",
+        "damage": "Disarm"
+      }
+    },
+    {
+      "identifier": "martial-arts.85.piledriver",
+      "source": "Martial Arts",
+      "page": "85",
+      "name": "Piledriver",
+      "difficulty": "H",
+      "prerequisites": [
+        "Wrestling ST-5"
+      ],
+      "defaults": [
+        "or Wrestling-5 ST"
+      ],
+      "maximum": "or Wrestling Better",
+      "profile": "cinematic",
+      "silly": false,
+      "automatable": false,
+      "attack_modifier": -5,
+      "defense_modifier": 0,
+      "damage_modifier": 0,
+      "damage_per_die": 0,
+      "effects": {
+        "summary": "of thr+4 or thr+2 at +2/d cr‡, Pin"
+      },
+      "style_ids": [
+        "martial-arts.185.sambo",
+        "martial-arts.206.professional-wrestling"
+      ],
+      "tags": [
+        "cinematic",
+        "technique"
+      ],
+      "original": {
+        "name": "Piledriver*",
+        "damage": "of thr+4 or thr+2 at +2/d cr‡, Pin"
+      }
+    },
+    {
+      "identifier": "martial-arts.87.pole-vault-kick",
+      "source": "Martial Arts",
+      "page": "87",
+      "name": "Pole-Vault Kick",
+      "difficulty": "H",
+      "prerequisites": [
+        "Jumping and Karate"
+      ],
+      "defaults": [
+        "Karate-4"
+      ],
+      "maximum": "Karate Better",
+      "profile": "cinematic",
+      "silly": false,
+      "automatable": false,
+      "attack_modifier": -4,
+      "defense_modifier": 0,
+      "damage_modifier": 0,
+      "damage_per_die": 0,
+      "effects": {
+        "summary": "of thr+3 or thr+1 at +1/d cr‡"
+      },
+      "style_ids": [
+        "martial-arts.194.shaolin-kung-fu"
+      ],
+      "tags": [
+        "cinematic",
+        "technique"
+      ],
+      "original": {
+        "name": "Pole-Vault Kick*",
+        "damage": "of thr+3 or thr+1 at +1/d cr‡"
+      }
+    },
+    {
+      "identifier": "martial-arts.87.pressure-point-strike",
+      "source": "Martial Arts",
+      "page": "87",
+      "name": "Pressure-Point Strike",
+      "difficulty": "H",
+      "prerequisites": [
+        "Pressure Points/Secrets and app. CS"
+      ],
+      "defaults": [
+        "CS-2"
+      ],
+      "maximum": "CS Per",
+      "profile": "cinematic",
+      "silly": false,
+      "automatable": false,
+      "attack_modifier": 0,
+      "defense_modifier": 0,
+      "damage_modifier": 0,
+      "damage_per_die": 0,
+      "effects": {
+        "summary": "attack"
+      },
+      "style_ids": [
+        "martial-arts.154.chin-na",
+        "martial-arts.162.hsing-i-chuan",
+        "martial-arts.163.hwa-rang-do",
+        "martial-arts.163.tiger-crane-style",
+        "martial-arts.164.jeet-kune-do",
+        "martial-arts.166.jujutsu",
+        "martial-arts.168.kalaripayit",
+        "martial-arts.169.te",
+        "martial-arts.170.shotokan",
+        "martial-arts.171.isshinryu",
+        "martial-arts.172.kempo",
+        "martial-arts.178.kuntao",
+        "martial-arts.179.kyujutsu",
+        "martial-arts.183.krav-maga",
+        "martial-arts.188.pak-hok",
+        "martial-arts.191.praying-mantis-kung-fu",
+        "martial-arts.194.shaolin-kung-fu",
+        "martial-arts.200.tai-chi-chuan",
+        "martial-arts.201.taihojutsu",
+        "martial-arts.202.taijutsu",
+        "martial-arts.203.wing-chun",
+        "martial-arts.204.combat-wrestling",
+        "martial-arts.206.wushu",
+        "martial-arts.210.smasha"
+      ],
+      "tags": [
+        "cinematic",
+        "technique"
+      ],
+      "original": {
+        "name": "Pressure-Point",
+        "damage": "attack"
+      }
+    },
+    {
+      "identifier": "martial-arts.78.push-kick",
+      "source": "Martial Arts",
+      "page": "78",
+      "name": "Push Kick",
+      "difficulty": "H",
+      "prerequisites": [
+        "Karate or Brawling"
+      ],
+      "defaults": [
+        "PS-3"
+      ],
+      "maximum": "PS Knockback",
+      "profile": "realistic",
+      "silly": false,
+      "automatable": false,
+      "attack_modifier": -3,
+      "defense_modifier": 0,
+      "damage_modifier": 0,
+      "damage_per_die": 0,
+      "effects": {
+        "summary": ""
+      },
+      "style_ids": [
+        "martial-arts.152.kachin-bando",
+        "martial-arts.185.muay-thai"
+      ],
+      "tags": [
+        "realistic",
+        "technique"
+      ],
+      "original": {
+        "name": "Push Kick",
+        "damage": ""
+      }
+    },
+    {
+      "identifier": "martial-arts.78.quick-mount",
+      "source": "Martial Arts",
+      "page": "78",
+      "name": "Quick Mount",
+      "difficulty": "A",
+      "prerequisites": [
+        "Acrobatics, Jumping, or Riding/vehicle"
+      ],
+      "defaults": [
+        "PS-3"
+      ],
+      "maximum": "PS N/A",
+      "profile": "realistic",
+      "silly": false,
+      "automatable": false,
+      "attack_modifier": -3,
+      "defense_modifier": 0,
+      "damage_modifier": 0,
+      "damage_per_die": 0,
+      "effects": {
+        "summary": ""
+      },
+      "style_ids": [
+        "martial-arts.150.armatura-equestris",
+        "martial-arts.151.bajutsu",
+        "martial-arts.159.furusiyya"
+      ],
+      "tags": [
+        "realistic",
+        "technique"
+      ],
+      "original": {
+        "name": "Quick Mount",
+        "damage": ""
+      }
+    },
+    {
+      "identifier": "martial-arts.78.retain-weapon",
+      "source": "Martial Arts",
+      "page": "78",
+      "name": "Retain Weapon",
+      "difficulty": "H",
+      "prerequisites": [
+        "Any MWS"
+      ],
+      "defaults": [
+        "PS"
+      ],
+      "maximum": "PS+5 N/A",
+      "profile": "realistic",
+      "silly": false,
+      "automatable": false,
+      "attack_modifier": 0,
+      "defense_modifier": 0,
+      "damage_modifier": 0,
+      "damage_per_die": 0,
+      "effects": {
+        "summary": ""
+      },
+      "style_ids": [
+        "martial-arts.150.armatura",
+        "martial-arts.155.dagger-fighting",
+        "martial-arts.158.la-verdadera-destreza",
+        "martial-arts.159.french-smallsword",
+        "martial-arts.181.foot-archery",
+        "martial-arts.186.naginatajutsu",
+        "martial-arts.191.pollaxe-fighting",
+        "martial-arts.197.jukenjutsu-bayonet-fighting",
+        "martial-arts.199.sword-and-buckler-play"
+      ],
+      "tags": [
+        "realistic",
+        "technique"
+      ],
+      "original": {
+        "name": "Retain Weapon",
+        "damage": ""
+      }
+    },
+    {
+      "identifier": "martial-arts.78.retain-weapon-ranged",
+      "source": "Martial Arts",
+      "page": "78",
+      "name": "Retain Weapon – Ranged",
+      "difficulty": "H",
+      "prerequisites": [
+        "Any RCS"
+      ],
+      "defaults": [
+        "DX"
+      ],
+      "maximum": "DX+5 N/A",
+      "profile": "realistic",
+      "silly": false,
+      "automatable": false,
+      "attack_modifier": 0,
+      "defense_modifier": 0,
+      "damage_modifier": 0,
+      "damage_per_die": 0,
+      "effects": {
+        "summary": ""
+      },
+      "style_ids": [],
+      "tags": [
+        "realistic",
+        "technique"
+      ],
+      "original": {
+        "name": "Retain Weapon –",
+        "damage": ""
+      }
+    },
+    {
+      "identifier": "martial-arts.78.return-strike",
+      "source": "Martial Arts",
+      "page": "78",
+      "name": "Return Strike",
+      "difficulty": "H",
+      "prerequisites": [
+        "Flail or Kusari"
+      ],
+      "defaults": [
+        "PS-5"
+      ],
+      "maximum": "PS Per",
+      "profile": "realistic",
+      "silly": false,
+      "automatable": false,
+      "attack_modifier": -5,
+      "defense_modifier": 0,
+      "damage_modifier": 0,
+      "damage_per_die": 0,
+      "effects": {
+        "summary": "attack"
+      },
+      "style_ids": [
+        "martial-arts.179.kusarijutsu",
+        "martial-arts.180.kusarigamajutsu"
+      ],
+      "tags": [
+        "realistic",
+        "technique"
+      ],
+      "original": {
+        "name": "Return Strike",
+        "damage": "attack"
+      }
+    },
+    {
+      "identifier": "martial-arts.78.reverse-grip",
+      "source": "Martial Arts",
+      "page": "78",
+      "name": "Reverse Grip",
+      "difficulty": "A",
+      "prerequisites": [
+        "Any MWS"
+      ],
+      "defaults": [
+        "PS-6, -4, or -0"
+      ],
+      "maximum": "PS N/A",
+      "profile": "realistic",
+      "silly": false,
+      "automatable": false,
+      "attack_modifier": -6,
+      "defense_modifier": 0,
+      "damage_modifier": 0,
+      "damage_per_die": 0,
+      "effects": {
+        "summary": ""
+      },
+      "style_ids": [
+        "martial-arts.155.dagger-fighting",
+        "martial-arts.178.kobujutsu"
+      ],
+      "tags": [
+        "realistic",
+        "technique"
+      ],
+      "original": {
+        "name": "Reverse Grip",
+        "damage": ""
+      }
+    },
+    {
+      "identifier": "martial-arts.87.roll-with-blow",
+      "source": "Martial Arts",
+      "page": "87",
+      "name": "Roll with Blow",
+      "difficulty": "H",
+      "prerequisites": [
+        "Acrobatics or any UCS"
+      ],
+      "defaults": [
+        "PS-2"
+      ],
+      "maximum": "PS N/A",
+      "profile": "cinematic",
+      "silly": false,
+      "automatable": false,
+      "attack_modifier": -2,
+      "defense_modifier": 0,
+      "damage_modifier": 0,
+      "damage_per_die": 0,
+      "effects": {
+        "summary": ""
+      },
+      "style_ids": [
+        "martial-arts.149.aikido",
+        "martial-arts.149.aikijutsu",
+        "martial-arts.152.boxing",
+        "martial-arts.152.kachin-bando",
+        "martial-arts.161.hapkido",
+        "martial-arts.166.judo",
+        "martial-arts.168.kalaripayit",
+        "martial-arts.178.kuntao",
+        "martial-arts.183.krav-maga",
+        "martial-arts.185.muay-thai",
+        "martial-arts.187.naginatado-or-atarashii-naginata",
+        "martial-arts.188.pankration",
+        "martial-arts.191.praying-mantis-kung-fu",
+        "martial-arts.194.shaolin-kung-fu",
+        "martial-arts.200.tai-chi-chuan",
+        "martial-arts.201.tai-chi",
+        "martial-arts.202.taijutsu",
+        "martial-arts.206.professional-wrestling",
+        "martial-arts.206.wushu",
+        "martial-arts.207.death-fist",
+        "martial-arts.208.dragon-man-kung-fu",
+        "martial-arts.210.freefighting",
+        "martial-arts.210.smasha"
+      ],
+      "tags": [
+        "cinematic",
+        "technique"
+      ],
+      "original": {
+        "name": "Roll with Blow*",
+        "damage": ""
+      }
+    },
+    {
+      "identifier": "martial-arts.78.sacrifice-throw",
+      "source": "Martial Arts",
+      "page": "78",
+      "name": "Sacrifice Throw",
+      "difficulty": "H",
+      "prerequisites": [
+        "Judo"
+      ],
+      "defaults": [
+        "Judo"
+      ],
+      "maximum": "Judo Knockdown",
+      "profile": "realistic",
+      "silly": false,
+      "automatable": false,
+      "attack_modifier": 0,
+      "defense_modifier": 0,
+      "damage_modifier": 0,
+      "damage_per_die": 0,
+      "effects": {
+        "summary": ""
+      },
+      "style_ids": [],
+      "tags": [
+        "realistic",
+        "technique"
+      ],
+      "original": {
+        "name": "Sacrifice Throw",
+        "damage": ""
+      }
+    },
+    {
+      "identifier": "martial-arts.79.scissors-hold",
+      "source": "Martial Arts",
+      "page": "79",
+      "name": "Scissors Hold",
+      "difficulty": "H",
+      "prerequisites": [
+        "Wrestling"
+      ],
+      "defaults": [
+        "Wrestling-2"
+      ],
+      "maximum": "Wrestling Grapple",
+      "profile": "realistic",
+      "silly": false,
+      "automatable": false,
+      "attack_modifier": -2,
+      "defense_modifier": 0,
+      "damage_modifier": 0,
+      "damage_per_die": 0,
+      "effects": {
+        "summary": ""
+      },
+      "style_ids": [],
+      "tags": [
+        "realistic",
+        "technique"
+      ],
+      "original": {
+        "name": "Scissors Hold",
+        "damage": ""
+      }
+    },
+    {
+      "identifier": "martial-arts.87.snap-weapon",
+      "source": "Martial Arts",
+      "page": "87",
+      "name": "Snap Weapon",
+      "difficulty": "H",
+      "prerequisites": [
+        "None"
+      ],
+      "defaults": [
+        "ST-4 or ST-based ST+3 Jitte/Sai-4"
+      ],
+      "maximum": "or ST-based QC Jitte/Sai+3",
+      "profile": "cinematic",
+      "silly": false,
+      "automatable": false,
+      "attack_modifier": -4,
+      "defense_modifier": 0,
+      "damage_modifier": 0,
+      "damage_per_die": 0,
+      "effects": {
+        "summary": ""
+      },
+      "style_ids": [
+        "martial-arts.201.taihojutsu"
+      ],
+      "tags": [
+        "cinematic",
+        "technique"
+      ],
+      "original": {
+        "name": "Snap Weapon*",
+        "damage": ""
+      }
+    },
+    {
+      "identifier": "martial-arts.79.spinning-kick",
+      "source": "Martial Arts",
+      "page": "79",
+      "name": "Spinning Kick",
+      "difficulty": "H",
+      "prerequisites": [
+        "Karate"
+      ],
+      "defaults": [
+        "Karate-3"
+      ],
+      "maximum": "Karate Kick,",
+      "profile": "realistic",
+      "silly": false,
+      "automatable": false,
+      "attack_modifier": -3,
+      "defense_modifier": 0,
+      "damage_modifier": 0,
+      "damage_per_die": 0,
+      "effects": {
+        "summary": "Feint"
+      },
+      "style_ids": [
+        "martial-arts.161.hapkido",
+        "martial-arts.163.hwa-rang-do",
+        "martial-arts.170.goju-ryu",
+        "martial-arts.170.shotokan",
+        "martial-arts.171.isshinryu",
+        "martial-arts.171.kyokushin",
+        "martial-arts.172.kempo",
+        "martial-arts.178.kuntao",
+        "martial-arts.185.muay-thai",
+        "martial-arts.190.kumango-silat",
+        "martial-arts.200.tae-kwon-do",
+        "martial-arts.206.wushu",
+        "martial-arts.208.dragon-man-kung-fu"
+      ],
+      "tags": [
+        "realistic",
+        "technique"
+      ],
+      "original": {
+        "name": "Spinning Kick",
+        "damage": "Feint"
+      }
+    },
+    {
+      "identifier": "martial-arts.79.spinning-punch",
+      "source": "Martial Arts",
+      "page": "79",
+      "name": "Spinning Punch",
+      "difficulty": "H",
+      "prerequisites": [
+        "Karate"
+      ],
+      "defaults": [
+        "Karate-2"
+      ],
+      "maximum": "Karate Punch,",
+      "profile": "realistic",
+      "silly": false,
+      "automatable": false,
+      "attack_modifier": -2,
+      "defense_modifier": 0,
+      "damage_modifier": 0,
+      "damage_per_die": 0,
+      "effects": {
+        "summary": "Feint"
+      },
+      "style_ids": [
+        "martial-arts.185.muay-thai",
+        "martial-arts.190.kumango-silat",
+        "martial-arts.194.shaolin-kung-fu",
+        "martial-arts.200.tae-kwon-do",
+        "martial-arts.206.wushu",
+        "martial-arts.208.dragon-man-kung-fu"
+      ],
+      "tags": [
+        "realistic",
+        "technique"
+      ],
+      "original": {
+        "name": "Spinning Punch",
+        "damage": "Feint"
+      }
+    },
+    {
+      "identifier": "martial-arts.79.spinning-strike",
+      "source": "Martial Arts",
+      "page": "79",
+      "name": "Spinning Strike",
+      "difficulty": "H",
+      "prerequisites": [
+        "Any MWS"
+      ],
+      "defaults": [
+        "PS-2"
+      ],
+      "maximum": "PS Per",
+      "profile": "realistic",
+      "silly": false,
+      "automatable": false,
+      "attack_modifier": -2,
+      "defense_modifier": 0,
+      "damage_modifier": 0,
+      "damage_per_die": 0,
+      "effects": {
+        "summary": "attack, Feint"
+      },
+      "style_ids": [
+        "martial-arts.155.dagger-fighting",
+        "martial-arts.161.hoplomachia",
+        "martial-arts.177.late-medieval",
+        "martial-arts.187.glaive-fighting",
+        "martial-arts.194.shaolin-kung-fu",
+        "martial-arts.208.dragon-man-kung-fu"
+      ],
+      "tags": [
+        "realistic",
+        "technique"
+      ],
+      "original": {
+        "name": "Spinning Strike",
+        "damage": "attack, Feint"
+      }
+    },
+    {
+      "identifier": "martial-arts.87.springing-attack",
+      "source": "Martial Arts",
+      "page": "87",
+      "name": "Springing Attack",
+      "difficulty": "H",
+      "prerequisites": [
+        "Any MWS or UCS"
+      ],
+      "defaults": [
+        "PS-2"
+      ],
+      "maximum": "PS Per",
+      "profile": "cinematic",
+      "silly": false,
+      "automatable": false,
+      "attack_modifier": -2,
+      "defense_modifier": 0,
+      "damage_modifier": 0,
+      "damage_per_die": 0,
+      "effects": {
+        "summary": "attack at better of +2 or +1/d"
+      },
+      "style_ids": [
+        "martial-arts.162.hsing-i-chuan",
+        "martial-arts.174.iaijutsu",
+        "martial-arts.175.iaido",
+        "martial-arts.190.kumango-silat",
+        "martial-arts.190.tapak-sutji-pentjak-silat",
+        "martial-arts.206.professional-wrestling",
+        "martial-arts.206.wushu"
+      ],
+      "tags": [
+        "cinematic",
+        "technique"
+      ],
+      "original": {
+        "name": "Springing Attack*",
+        "damage": "attack at better of +2 or +1/d"
+      }
+    },
+    {
+      "identifier": "martial-arts.80.stamp-kick",
+      "source": "Martial Arts",
+      "page": "80",
+      "name": "Stamp Kick",
+      "difficulty": "H",
+      "prerequisites": [
+        "Brawling or Karate"
+      ],
+      "defaults": [
+        "PS-3"
+      ],
+      "maximum": "PS thr+1",
+      "profile": "realistic",
+      "silly": false,
+      "automatable": false,
+      "attack_modifier": -3,
+      "defense_modifier": 0,
+      "damage_modifier": 0,
+      "damage_per_die": 0,
+      "effects": {
+        "summary": "cr‡"
+      },
+      "style_ids": [
+        "martial-arts.163.tiger-crane-style",
+        "martial-arts.164.jeet-kune-do",
+        "martial-arts.168.kajukenbo",
+        "martial-arts.170.shotokan",
+        "martial-arts.171.kyokushin",
+        "martial-arts.183.krav-maga",
+        "martial-arts.183.martial-arts-program",
+        "martial-arts.185.sambo",
+        "martial-arts.188.pankration",
+        "martial-arts.191.pollaxe-fighting",
+        "martial-arts.194.shaolin-kung-fu",
+        "martial-arts.203.wing-chun",
+        "martial-arts.206.professional-wrestling",
+        "martial-arts.210.smasha"
+      ],
+      "tags": [
+        "realistic",
+        "technique"
+      ],
+      "original": {
+        "name": "Stamp Kick",
+        "damage": "cr‡"
+      }
+    },
+    {
+      "identifier": "martial-arts.81.staying-seated",
+      "source": "Martial Arts",
+      "page": "81",
+      "name": "Staying Seated",
+      "difficulty": "A",
+      "prerequisites": [
+        "Riding"
+      ],
+      "defaults": [
+        "Riding"
+      ],
+      "maximum": "Riding+4 N/A",
+      "profile": "realistic",
+      "silly": false,
+      "automatable": false,
+      "attack_modifier": 0,
+      "defense_modifier": 0,
+      "damage_modifier": 0,
+      "damage_per_die": 0,
+      "effects": {
+        "summary": ""
+      },
+      "style_ids": [
+        "martial-arts.177.late-medieval"
+      ],
+      "tags": [
+        "realistic",
+        "technique"
+      ],
+      "original": {
+        "name": "Staying Seated",
+        "damage": ""
+      }
+    },
+    {
+      "identifier": "martial-arts.81.sweep",
+      "source": "Martial Arts",
+      "page": "81",
+      "name": "Sweep",
+      "difficulty": "H",
+      "prerequisites": [
+        "App. MWS or UCS"
+      ],
+      "defaults": [
+        "PS-3"
+      ],
+      "maximum": "PS Knockdown",
+      "profile": "realistic",
+      "silly": false,
+      "automatable": false,
+      "attack_modifier": -3,
+      "defense_modifier": 0,
+      "damage_modifier": 0,
+      "damage_per_die": 0,
+      "effects": {
+        "summary": ""
+      },
+      "style_ids": [
+        "martial-arts.161.hapkido",
+        "martial-arts.162.hsing-i-chuan",
+        "martial-arts.163.hwa-rang-do",
+        "martial-arts.168.kajukenbo",
+        "martial-arts.169.te",
+        "martial-arts.176.krabi-krabong",
+        "martial-arts.177.late-medieval",
+        "martial-arts.182.weapon-training",
+        "martial-arts.185.muay-thai",
+        "martial-arts.186.naginatajutsu",
+        "martial-arts.187.glaive-fighting",
+        "martial-arts.188.pak-hok",
+        "martial-arts.190.kumango-silat",
+        "martial-arts.190.tapak-sutji-pentjak-silat",
+        "martial-arts.191.pollaxe-fighting",
+        "martial-arts.194.shaolin-kung-fu",
+        "martial-arts.198.sumo",
+        "martial-arts.200.tai-chi-chuan",
+        "martial-arts.204.combat-wrestling",
+        "martial-arts.206.wushu"
+      ],
+      "tags": [
+        "realistic",
+        "technique"
+      ],
+      "original": {
+        "name": "Sweep",
+        "damage": ""
+      }
+    },
+    {
+      "identifier": "martial-arts.68.ta-grab-strike-or-throw",
+      "source": "Martial Arts",
+      "page": "68",
+      "name": "TA – Grab, Strike, or Throw",
+      "difficulty": "H",
+      "prerequisites": [
+        "Any MWS or UCS"
+      ],
+      "defaults": [
+        "PS-HL"
+      ],
+      "maximum": "PS-HL/2 Per",
+      "profile": "realistic",
+      "silly": false,
+      "automatable": false,
+      "attack_modifier": 0,
+      "defense_modifier": 0,
+      "damage_modifier": 0,
+      "damage_per_die": 0,
+      "effects": {
+        "summary": "attack"
+      },
+      "style_ids": [],
+      "tags": [
+        "realistic",
+        "technique"
+      ],
+      "original": {
+        "name": "TA – Grab, Strike,",
+        "damage": "attack"
+      }
+    },
+    {
+      "identifier": "martial-arts.68.ta-grapple",
+      "source": "Martial Arts",
+      "page": "68",
+      "name": "TA – Grapple",
+      "difficulty": "H",
+      "prerequisites": [
+        "Any GS ARTIAL RTS ECHNIQUES"
+      ],
+      "defaults": [
+        "PS-HL HEAT"
+      ],
+      "maximum": "PS Per HEET",
+      "profile": "realistic",
+      "silly": false,
+      "automatable": false,
+      "attack_modifier": 0,
+      "defense_modifier": 0,
+      "damage_modifier": 0,
+      "damage_per_die": 0,
+      "effects": {
+        "summary": "attack"
+      },
+      "style_ids": [],
+      "tags": [
+        "realistic",
+        "technique"
+      ],
+      "original": {
+        "name": "TA – Grapple",
+        "damage": "attack"
+      }
+    },
+    {
+      "identifier": "martial-arts.89.timed-defense",
+      "source": "Martial Arts",
+      "page": "89",
+      "name": "Timed Defense",
+      "difficulty": "H",
+      "prerequisites": [
+        "None"
+      ],
+      "defaults": [
+        "AD-2"
+      ],
+      "maximum": "AD N/A",
+      "profile": "cinematic",
+      "silly": false,
+      "automatable": false,
+      "attack_modifier": 0,
+      "defense_modifier": 0,
+      "damage_modifier": 0,
+      "damage_per_die": 0,
+      "effects": {
+        "summary": ""
+      },
+      "style_ids": [
+        "martial-arts.152.kachin-bando",
+        "martial-arts.162.hsing-i-chuan",
+        "martial-arts.168.kajukenbo",
+        "martial-arts.173.kenjutsu",
+        "martial-arts.174.iaijutsu",
+        "martial-arts.177.late-medieval",
+        "martial-arts.194.shaolin-kung-fu",
+        "martial-arts.202.taijutsu",
+        "martial-arts.206.wushu",
+        "martial-arts.208.dragon-man-kung-fu"
+      ],
+      "tags": [
+        "cinematic",
+        "technique"
+      ],
+      "original": {
+        "name": "Timed Defense*",
+        "damage": ""
+      }
+    },
+    {
+      "identifier": "martial-arts.79.triangle-choke",
+      "source": "Martial Arts",
+      "page": "79",
+      "name": "Triangle Choke",
+      "difficulty": "H",
+      "prerequisites": [
+        "Judo or Wrestling Judo-4"
+      ],
+      "defaults": [
+        "or Wrestling-5"
+      ],
+      "maximum": "PS QC",
+      "profile": "realistic",
+      "silly": false,
+      "automatable": false,
+      "attack_modifier": -5,
+      "defense_modifier": 0,
+      "damage_modifier": 0,
+      "damage_per_die": 0,
+      "effects": {
+        "summary": "(ST+2)"
+      },
+      "style_ids": [
+        "martial-arts.152.kachin-bando",
+        "martial-arts.185.sambo",
+        "martial-arts.205.submission-wrestling"
+      ],
+      "tags": [
+        "realistic",
+        "technique"
+      ],
+      "original": {
+        "name": "Triangle Choke",
+        "damage": "(ST+2)"
+      }
+    },
+    {
+      "identifier": "martial-arts.81.trip",
+      "source": "Martial Arts",
+      "page": "81",
+      "name": "Trip",
+      "difficulty": "H",
+      "prerequisites": [
+        "Any GS"
+      ],
+      "defaults": [
+        "Parry-1"
+      ],
+      "maximum": "Parry Knockdown",
+      "profile": "realistic",
+      "silly": false,
+      "automatable": false,
+      "attack_modifier": -1,
+      "defense_modifier": 0,
+      "damage_modifier": 0,
+      "damage_per_die": 0,
+      "effects": {
+        "summary": ""
+      },
+      "style_ids": [
+        "martial-arts.149.aikijutsu",
+        "martial-arts.154.chin-na",
+        "martial-arts.162.hsing-i-chuan",
+        "martial-arts.190.kumango-silat",
+        "martial-arts.198.sumo",
+        "martial-arts.199.sword-and-buckler-play",
+        "martial-arts.205.submission-wrestling"
+      ],
+      "tags": [
+        "realistic",
+        "technique"
+      ],
+      "original": {
+        "name": "Trip",
+        "damage": ""
+      }
+    },
+    {
+      "identifier": "martial-arts.81.two-handed-punch",
+      "source": "Martial Arts",
+      "page": "81",
+      "name": "Two-Handed Punch",
+      "difficulty": "A",
+      "prerequisites": [
+        "Brawling"
+      ],
+      "defaults": [
+        "Brawling-2"
+      ],
+      "maximum": "Brawling Better",
+      "profile": "realistic",
+      "silly": false,
+      "automatable": false,
+      "attack_modifier": -2,
+      "defense_modifier": 0,
+      "damage_modifier": 0,
+      "damage_per_die": 0,
+      "effects": {
+        "summary": "of thr+1 or thr at +1d cr‡"
+      },
+      "style_ids": [
+        "martial-arts.210.smasha"
+      ],
+      "tags": [
+        "realistic",
+        "technique"
+      ],
+      "original": {
+        "name": "Two-Handed",
+        "damage": "of thr+1 or thr at +1d cr‡"
+      }
+    },
+    {
+      "identifier": "martial-arts.81.uppercut",
+      "source": "Martial Arts",
+      "page": "81",
+      "name": "Uppercut",
+      "difficulty": "A",
+      "prerequisites": [
+        "Any SS"
+      ],
+      "defaults": [
+        "PS-1"
+      ],
+      "maximum": "PS thr",
+      "profile": "realistic",
+      "silly": false,
+      "automatable": false,
+      "attack_modifier": -1,
+      "defense_modifier": 0,
+      "damage_modifier": 0,
+      "damage_per_die": 0,
+      "effects": {
+        "summary": "cr‡"
+      },
+      "style_ids": [
+        "martial-arts.152.boxing",
+        "martial-arts.176.krabi-krabong",
+        "martial-arts.185.muay-thai",
+        "martial-arts.188.pak-hok"
+      ],
+      "tags": [
+        "realistic",
+        "technique"
+      ],
+      "original": {
+        "name": "Uppercut",
+        "damage": "cr‡"
+      }
+    },
+    {
+      "identifier": "martial-arts.88.wet-willy",
+      "source": "Martial Arts",
+      "page": "88",
+      "name": "Wet Willy",
+      "difficulty": "H",
+      "prerequisites": [
+        "Brawling or Karate"
+      ],
+      "defaults": [
+        "PS-6"
+      ],
+      "maximum": "PS Squeamish",
+      "profile": "cinematic",
+      "silly": true,
+      "automatable": false,
+      "attack_modifier": -6,
+      "defense_modifier": 0,
+      "damage_modifier": 0,
+      "damage_per_die": 0,
+      "effects": {
+        "summary": ""
+      },
+      "style_ids": [],
+      "tags": [
+        "cinematic",
+        "silly"
+      ],
+      "original": {
+        "name": "Wet Willy†",
+        "damage": ""
+      }
+    },
+    {
+      "identifier": "martial-arts.89.whirlwind-attack",
+      "source": "Martial Arts",
+      "page": "89",
+      "name": "Whirlwind Attack",
+      "difficulty": "H",
+      "prerequisites": [
+        "Boxing, Karate, or any MWS"
+      ],
+      "defaults": [
+        "PS-5"
+      ],
+      "maximum": "PS Per",
+      "profile": "cinematic",
+      "silly": false,
+      "automatable": false,
+      "attack_modifier": -5,
+      "defense_modifier": 0,
+      "damage_modifier": 0,
+      "damage_per_die": 0,
+      "effects": {
+        "summary": "attack(s)"
+      },
+      "style_ids": [
+        "martial-arts.173.kenjutsu",
+        "martial-arts.175.kendo",
+        "martial-arts.178.kobujutsu",
+        "martial-arts.182.weapon-training",
+        "martial-arts.186.naginatajutsu",
+        "martial-arts.194.shaolin-kung-fu",
+        "martial-arts.209.force-swordsmanship"
+      ],
+      "tags": [
+        "cinematic",
+        "technique"
+      ],
+      "original": {
+        "name": "Whirlwind",
+        "damage": "attack(s)"
+      }
+    },
+    {
+      "identifier": "martial-arts.82.wrench-limb",
+      "source": "Martial Arts",
+      "page": "82",
+      "name": "Wrench (Limb)",
+      "difficulty": "H",
+      "prerequisites": [
+        "None"
+      ],
+      "defaults": [
+        "ST-4"
+      ],
+      "maximum": "ST+3 sw",
+      "profile": "realistic",
+      "silly": false,
+      "automatable": false,
+      "attack_modifier": -4,
+      "defense_modifier": 0,
+      "damage_modifier": 0,
+      "damage_per_die": 0,
+      "effects": {
+        "summary": "cr"
+      },
+      "style_ids": [],
+      "tags": [
+        "realistic",
+        "technique"
+      ],
+      "original": {
+        "name": "Wrench (Limb)",
+        "damage": "cr"
+      }
+    },
+    {
+      "identifier": "martial-arts.82.wrench-spine",
+      "source": "Martial Arts",
+      "page": "82",
+      "name": "Wrench Spine",
+      "difficulty": "H",
+      "prerequisites": [
+        "None"
+      ],
+      "defaults": [
+        "ST-4 or Wrestling-4"
+      ],
+      "maximum": "ST+3 or sw Wrestling+3",
+      "profile": "realistic",
+      "silly": false,
+      "automatable": false,
+      "attack_modifier": -4,
+      "defense_modifier": 0,
+      "damage_modifier": 0,
+      "damage_per_die": 0,
+      "effects": {
+        "summary": "cr"
+      },
+      "style_ids": [
+        "martial-arts.204.combat-wrestling"
+      ],
+      "tags": [
+        "realistic",
+        "technique"
+      ],
+      "original": {
+        "name": "Wrench Spine",
+        "damage": "cr"
+      }
+    }
+  ]
+}

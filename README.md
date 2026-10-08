@@ -152,6 +152,17 @@ de idioma e unidades são salvas na pasta de dados do usuário.
 - Troop Strength (TS), estratégia, resultado e baixas
 - Sessão persistente de campanha com aplicação explícita e desfazer
 
+### 15. Dados do mestre (GM Dice)
+
+- Aba **Mestre → Dados**, independente das sessões de combate e campanha
+- Expressões como `104d6+20`, `3d-1`, `2d20` e `1000000d6`
+- Até **10 milhões de dados** por rolagem, com processamento em segundo plano,
+  progresso, cancelamento e armazenamento compacto dos resultados individuais
+- Soma de todos os dados, modificador e total final; resultados negativos preservados
+- Detalhes numerados em páginas de 100 dados, com navegação direta por página
+- Cópia da página atual e exportação de **todos** os dados em arquivo `.txt`
+- Troca de idioma preserva os dados e traduz a apresentação sem nova rolagem
+
 ---
 
 ## Estrutura do Projeto

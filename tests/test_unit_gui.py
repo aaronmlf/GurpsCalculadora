@@ -499,7 +499,7 @@ class UnitGuiTests(unittest.TestCase):
         app._change_language('en_US')
         app.root.update()
         self.assertEqual(app.notebook.index(app.notebook.select()), 10)
-        self.assertEqual(len(app.notebook.tabs()), 15)
+        self.assertEqual(len(app.notebook.tabs()), 16)
 
     def test_ranged_filter_preserves_current_overrides(self):
         app = self.app

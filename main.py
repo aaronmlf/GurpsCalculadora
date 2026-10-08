@@ -64,6 +64,7 @@ from utils.gui_workspace import install_workspace
 from utils.gui_form_state import capture_results, install_form_states, InlineError
 from utils.ui_preferences import load_ui_preferences
 from utils.gui_hub import install_hub, remember_session, confirm_session
+from utils.gm_dice_ui import GMDicePanel
 from utils.gui_editors import VehicleEditor, AbilityEditor, CastingAssistant
 from utils.units import UnitSystem
 from utils.unit_binding import UnitBinding
@@ -174,6 +175,13 @@ class GURPSCalculator:
         Cada variável tk.IntVar/tk.StringVar/tk.BooleanVar é preservada
         quando a UI é reconstruída (troca de idioma).
         """
+        self.gm_dice_expression = tk.StringVar(value='3d6')
+        self.gm_dice_last_result = None
+        self.gm_dice_error_code = None
+        self.gm_dice_page = tk.StringVar(value='1')
+        self._gm_dice_current_page = 1
+        self._gm_dice_job = None
+
         # ─── Knockback (p. 378) ─────────────────────────────────────
         self.kb_damage_type = tk.StringVar(value="crushing")
         self.kb_basic_damage = tk.IntVar(value=10)
@@ -582,11 +590,17 @@ class GURPSCalculator:
         self._create_vehicles_tab()
         self._create_social_tab()
         self._create_mass_combat_tab()
+        self._create_gm_dice_tab()
         self._bind_unit_inputs()
         install_workspace(self, active)
         install_form_states(self, saved_results)
         self._build_menu()
         install_hub(self)
+
+    def _create_gm_dice_tab(self):
+        content = self._scrollable_tab('tab_gm_dice')
+        self.gm_dice_panel = GMDicePanel(content, self)
+        self.gm_dice_panel.pack(fill=tk.BOTH, expand=True)
 
     def _bind_unit_inputs(self):
         imperial = self.result_units.get() == "imperial"

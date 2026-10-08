@@ -1,0 +1,4133 @@
+{
+  "schema": "gurps-calculadora.style-catalog.v1",
+  "styles": [
+    {
+      "identifier": "martial-arts.163.tiger-crane-style",
+      "source": "Martial Arts",
+      "page": "163",
+      "name": "(Tiger-Crane Style)",
+      "required_skills": [
+        "Breath Control",
+        "Karate",
+        "Philosophy (Buddhism)"
+      ],
+      "techniques": [
+        "Aggressive Parry (Karate)",
+        "Counterattack (Karate)",
+        "Exotic Hand Strike",
+        "Hammer Fist",
+        "Jam",
+        "Stamp Kick"
+      ],
+      "cinematic_skills": [
+        "Body Control",
+        "Immovable Stance",
+        "Power Blow",
+        "Pressure Points",
+        "Pressure Secrets"
+      ],
+      "cinematic_techniques": [
+        "Pressure-Point Strike"
+      ],
+      "perks": [
+        "Iron Body Parts (Any)",
+        "Naval Training",
+        "Off-Hand Weapon Training (Any)",
+        "Sure-Footed (Slippery)"
+      ],
+      "optional_traits": [],
+      "minimum_cost": 4,
+      "profile": "realistic",
+      "origin": "",
+      "period": "",
+      "original": {
+        "cost": "4 points"
+      }
+    },
+    {
+      "identifier": "martial-arts.151.aba-bando",
+      "source": "Martial Arts",
+      "page": "151",
+      "name": "ABA Bando",
+      "required_skills": [
+        "Judo",
+        "Karate",
+        "Savoir-Faire (Dojo)"
+      ],
+      "techniques": [
+        "Aggressive Parry (Karate)",
+        "Arm Lock",
+        "Counterattack (Karate)",
+        "Elbow Strike",
+        "Hammer Fist",
+        "Head Butt",
+        "Head Lock",
+        "Knee Strike",
+        "Stamp Kick. Cinematic"
+      ],
+      "cinematic_skills": [],
+      "cinematic_techniques": [
+        "Roll with Blow. STYLES 151 Bando Animal Forms Bando contains various animal forms, the exact number of which depends on the specific school. There are typically 12 in ABA Bando (boar, bull, cobra, deer, eagle, monkey, paddy bird, panther, python, scorpion, tiger, and viper) and 16 in Kachin Bando (barking deer, boar, bull, cobra, crocodile, eagle, monkey, paddy bird, panther, python, scorpi- on, sun bear, tiger, viper, white elephant, and white rhino). These forms aren’t sub-styles! They describe the personality, tactics, and favored techniques of the fighter – not of Bando itself. They also differ from kungfuanimalforms,whichaimtoreplicatetheani- mal’s tactics. Thelineageholderandhisimmediatefamilytrain in all of Bando’s techniques and skills. Outsiders, even trusted students, learn only the small subset of moves appropriate to their animal form. This makes them effective fighters . . . but they lack the gamut of skills necessary to defeat the lineage holder and his family. A student who wishes to learn the full style must persuade his master to part with a family secret – or to let him join the family. The GM may wish to treat each animal form as a separate Style Familiarity – e.g., Style Familiarity (Kachin Bando, Bull Form) – and reserve the full ver- sion – e.g., Style Familiarity (Kachin Bando) – for the lineage holder and his family"
+      ],
+      "perks": [
+        "Iron Legs",
+        "Power Grappling",
+        "Special Exercises (Striker, Crushing with Limb, Shin)",
+        "Style Adaptation (Any modern style)"
+      ],
+      "optional_traits": [],
+      "minimum_cost": 4,
+      "profile": "realistic",
+      "origin": "",
+      "period": "",
+      "original": {
+        "cost": "4 points"
+      }
+    },
+    {
+      "identifier": "martial-arts.157.african-stickfighting",
+      "source": "Martial Arts",
+      "page": "157",
+      "name": "African Stickfighting",
+      "required_skills": [
+        "Smallsword"
+      ],
+      "techniques": [
+        "As Escrima (pp. 155-156), but remove all Karate and Main-Gauche techniques. For styles with Axe/Mace, any technique listed for Smallsword is also available for Axe/Mace"
+      ],
+      "cinematic_skills": [],
+      "cinematic_techniques": [],
+      "perks": [],
+      "optional_traits": [],
+      "minimum_cost": 2,
+      "profile": "realistic",
+      "origin": "",
+      "period": "",
+      "original": {
+        "cost": "2 points"
+      }
+    },
+    {
+      "identifier": "martial-arts.149.aikido",
+      "source": "Martial Arts",
+      "page": "149",
+      "name": "Aikido",
+      "required_skills": [
+        "Judo Art",
+        "Savoir-Faire (Dojo)"
+      ],
+      "techniques": [
+        "Acrobatic Stand",
+        "Arm Lock",
+        "Breakfall",
+        "Finger Lock",
+        "Ground Fighting (Judo Art)",
+        "Low Fighting (Judo Art)"
+      ],
+      "cinematic_skills": [
+        "Immovable Stance",
+        "Invisibility Art",
+        "Mental Strength",
+        "Pressure Points",
+        "Push"
+      ],
+      "cinematic_techniques": [
+        "Dual-Weapon Attack (Judo Art)",
+        "Roll with Blow"
+      ],
+      "perks": [
+        "Power Grappling",
+        "Skill Adaptation (Acrobatic Stand defaults to Judo Art)"
+      ],
+      "optional_traits": [],
+      "minimum_cost": 3,
+      "profile": "realistic",
+      "origin": "",
+      "period": "",
+      "original": {
+        "cost": "3 points"
+      }
+    },
+    {
+      "identifier": "martial-arts.149.aikijutsu",
+      "source": "Martial Arts",
+      "page": "149",
+      "name": "Aikijutsu",
+      "required_skills": [
+        "Judo"
+      ],
+      "techniques": [
+        "Arm Lock",
+        "Breakfall",
+        "Disarming (Judo)",
+        "Ground Fighting (Judo)",
+        "Low Fighting (Judo)",
+        "Trip"
+      ],
+      "cinematic_skills": [
+        "Immovable Stance",
+        "Mental Strength",
+        "Pressure Points",
+        "Push"
+      ],
+      "cinematic_techniques": [
+        "Hand-Clap Parry",
+        "Roll with Blow"
+      ],
+      "perks": [
+        "Armor Familiarity",
+        "Power Grappling",
+        "Sure-Footed (Uneven)"
+      ],
+      "optional_traits": [],
+      "minimum_cost": 2,
+      "profile": "realistic",
+      "origin": "",
+      "period": "",
+      "original": {
+        "cost": "2 points"
+      }
+    },
+    {
+      "identifier": "martial-arts.153.ancient-greek-boxing",
+      "source": "Martial Arts",
+      "page": "153",
+      "name": "Ancient Greek Boxing",
+      "required_skills": [
+        "Boxing",
+        "Games (Boxing)"
+      ],
+      "techniques": [
+        "As Boxing (pp. 152-153), but add Exotic Hand Strike (Boxing)"
+      ],
+      "cinematic_skills": [],
+      "cinematic_techniques": [],
+      "perks": [
+        "Skill Adaptation (Exotic Hand Strike defaults to Boxing)",
+        "Special Exercises (DR with Ablative)",
+        "Special Exercises (Striking ST +1)"
+      ],
+      "optional_traits": [],
+      "minimum_cost": 3,
+      "profile": "realistic",
+      "origin": "",
+      "period": "",
+      "original": {
+        "cost": "3 points"
+      }
+    },
+    {
+      "identifier": "martial-arts.150.armatura",
+      "source": "Martial Arts",
+      "page": "150",
+      "name": "Armatura",
+      "required_skills": [
+        "Hiking",
+        "Shield",
+        "Shortsword",
+        "Spear",
+        "Thrown Weapon (Spear)"
+      ],
+      "techniques": [
+        "Feint (Shield or Shortsword)",
+        "Retain Weapon (Shortsword or Spear)",
+        "Targeted Attack (Shortsword Thrust/Vitals)"
+      ],
+      "cinematic_skills": [
+        "Immovable Stance",
+        "Kiai",
+        "Power Blow"
+      ],
+      "cinematic_techniques": [],
+      "perks": [
+        "Naval Training, for marines",
+        "Shield-Wall Training",
+        "Teamwork (Armatura)"
+      ],
+      "optional_traits": [],
+      "minimum_cost": 6,
+      "profile": "realistic",
+      "origin": "",
+      "period": "",
+      "original": {
+        "cost": "6 points"
+      }
+    },
+    {
+      "identifier": "martial-arts.150.armatura-equestris",
+      "source": "Martial Arts",
+      "page": "150",
+      "name": "Armatura Equestris",
+      "required_skills": [
+        "Bow",
+        "Broadsword",
+        "Riding (Horse)",
+        "Shield",
+        "Spear"
+      ],
+      "techniques": [
+        "Cavalry Training (Broadsword or Spear)",
+        "Combat Riding",
+        "Hands-Free Riding",
+        "Horse Archery",
+        "Quick Mount"
+      ],
+      "cinematic_skills": [
+        "Zen Archery"
+      ],
+      "cinematic_techniques": [],
+      "perks": [
+        "Strongbow",
+        "Sure-Footed (Water)"
+      ],
+      "optional_traits": [],
+      "minimum_cost": 6,
+      "profile": "realistic",
+      "origin": "",
+      "period": "",
+      "original": {
+        "cost": "6 points"
+      }
+    },
+    {
+      "identifier": "martial-arts.151.bajutsu",
+      "source": "Martial Arts",
+      "page": "151",
+      "name": "Bajutsu",
+      "required_skills": [
+        "Animal Handling (Equines)",
+        "Riding (Horse)"
+      ],
+      "techniques": [
+        "Combat Riding",
+        "Hands-Free Riding",
+        "Quick Mount",
+        "Staying Seated. Cinematic"
+      ],
+      "cinematic_skills": [],
+      "cinematic_techniques": [],
+      "perks": [
+        "Style Adaptation (Any mounted style)"
+      ],
+      "optional_traits": [],
+      "minimum_cost": 3,
+      "profile": "realistic",
+      "origin": "",
+      "period": "",
+      "original": {
+        "cost": "3 points"
+      }
+    },
+    {
+      "identifier": "martial-arts.176.banshay",
+      "source": "Martial Arts",
+      "page": "176",
+      "name": "Banshay",
+      "required_skills": [
+        "Broadsword",
+        "Knife",
+        "Shield",
+        "Shortsword",
+        "Spear",
+        "Staff"
+      ],
+      "techniques": [
+        "As Kobujutsu (p. 178), but for the above weapon skills"
+      ],
+      "cinematic_skills": [],
+      "cinematic_techniques": [],
+      "perks": [],
+      "optional_traits": [],
+      "minimum_cost": 7,
+      "profile": "realistic",
+      "origin": "",
+      "period": "",
+      "original": {
+        "cost": "7 points"
+      }
+    },
+    {
+      "identifier": "martial-arts.153.bare-knuckle-boxing",
+      "source": "Martial Arts",
+      "page": "153",
+      "name": "Bare-Knuckle Boxing",
+      "required_skills": [
+        "Boxing",
+        "Wrestling"
+      ],
+      "techniques": [
+        "As Boxing (pp. 152-153), but add Head Butt"
+      ],
+      "cinematic_skills": [],
+      "cinematic_techniques": [],
+      "perks": [
+        "As Boxing, but replace Clinch with Skill Adaptation (Head Butt defaults to Boxing)"
+      ],
+      "optional_traits": [],
+      "minimum_cost": 3,
+      "profile": "realistic",
+      "origin": "",
+      "period": "",
+      "original": {
+        "cost": "3 points"
+      }
+    },
+    {
+      "identifier": "martial-arts.167.bartitsu",
+      "source": "Martial Arts",
+      "page": "167",
+      "name": "Bartitsu",
+      "required_skills": [
+        "Brawling",
+        "Hobby Skill (Feats of Strength)",
+        "Judo"
+      ],
+      "techniques": [
+        "Arm Lock",
+        "Head Butt",
+        "Head Lock",
+        "Knee Strike"
+      ],
+      "cinematic_skills": [
+        "Immovable Stance",
+        "Power Blow",
+        "Push"
+      ],
+      "cinematic_techniques": [],
+      "perks": [
+        "Power Grappling"
+      ],
+      "optional_traits": [],
+      "minimum_cost": 4,
+      "profile": "realistic",
+      "origin": "",
+      "period": "",
+      "original": {
+        "cost": "4 points"
+      }
+    },
+    {
+      "identifier": "martial-arts.152.boxing",
+      "source": "Martial Arts",
+      "page": "152",
+      "name": "Boxing",
+      "required_skills": [
+        "Boxing",
+        "Boxing Sport",
+        "Games (Boxing)"
+      ],
+      "techniques": [
+        "Counterattack (Boxing)",
+        "Feint (Boxing)",
+        "Targeted Attack (Boxing Punch/Face)",
+        "Targeted Attack (Boxing Uppercut/Face)",
+        "Uppercut"
+      ],
+      "cinematic_skills": [
+        "Power Blow"
+      ],
+      "cinematic_techniques": [
+        "Roll with Blow"
+      ],
+      "perks": [
+        "Clinch (Boxing)",
+        "Neck Control (Boxing)",
+        "Special Exercises (DR with Ablative)",
+        "Special Exercises (Striking ST +1)",
+        "Unusual Training (Roll with Blow, Only against the ropes)"
+      ],
+      "optional_traits": [],
+      "minimum_cost": 4,
+      "profile": "realistic",
+      "origin": "",
+      "period": "",
+      "original": {
+        "cost": "4 points"
+      }
+    },
+    {
+      "identifier": "martial-arts.154.chin-na",
+      "source": "Martial Arts",
+      "page": "154",
+      "name": "Chin Na",
+      "required_skills": [
+        "Judo"
+      ],
+      "techniques": [
+        "Arm Lock",
+        "Choke Hold",
+        "Finger Lock",
+        "Head Lock",
+        "Leg Grapple",
+        "Trip"
+      ],
+      "cinematic_skills": [
+        "Pressure Points",
+        "Pressure Secrets"
+      ],
+      "cinematic_techniques": [
+        "Pressure-Point Strike"
+      ],
+      "perks": [
+        "Technique Mastery (Arm Lock)",
+        "Technique Mastery (Finger Lock)",
+        "Unusual Training (Pressure Points)"
+      ],
+      "optional_traits": [],
+      "minimum_cost": 2,
+      "profile": "realistic",
+      "origin": "",
+      "period": "",
+      "original": {
+        "cost": "2 points"
+      }
+    },
+    {
+      "identifier": "martial-arts.187.chinese-horse-cutter-fighting",
+      "source": "Martial Arts",
+      "page": "187",
+      "name": "Chinese Horse-Cutter Fighting",
+      "required_skills": [
+        "Polearm",
+        "Polearm Art",
+        "Staff"
+      ],
+      "techniques": [
+        "As Naginatajutsu (p. 186), plus Counter- attack (Polearm) and Spinning Strike (Polearm)"
+      ],
+      "cinematic_skills": [],
+      "cinematic_techniques": [],
+      "perks": [
+        "Form Mastery (Horse-Cutter)",
+        "Grip Mastery (Horse-Cutter)"
+      ],
+      "optional_traits": [],
+      "minimum_cost": 4,
+      "profile": "realistic",
+      "origin": "",
+      "period": "",
+      "original": {
+        "cost": "4 points"
+      }
+    },
+    {
+      "identifier": "martial-arts.196.chinese-spear-fighting",
+      "source": "Martial Arts",
+      "page": "196",
+      "name": "Chinese Spear Fighting",
+      "required_skills": [
+        "Acrobatics",
+        "Spear",
+        "Staff"
+      ],
+      "techniques": [
+        "As Sojutsu (pp. 197-198), but add Feint (Staff) and Sweep (Staff). Cinematic Skills and Techniques: As Sojutsu, but add Flying Lunge (Spear)"
+      ],
+      "cinematic_skills": [],
+      "cinematic_techniques": [],
+      "perks": [
+        "Form Mastery (Spear)",
+        "Grip Mastery (Spear)"
+      ],
+      "optional_traits": [],
+      "minimum_cost": 4,
+      "profile": "realistic",
+      "origin": "",
+      "period": "",
+      "original": {
+        "cost": "4 points"
+      }
+    },
+    {
+      "identifier": "martial-arts.204.combat-wrestling",
+      "source": "Martial Arts",
+      "page": "204",
+      "name": "Combat Wrestling",
+      "required_skills": [
+        "Brawling",
+        "Judo",
+        "Wrestling"
+      ],
+      "techniques": [
+        "ArmLock",
+        "Breakfall",
+        "ChokeHold",
+        "Disarming (Brawling, Judo, or Wrestling)",
+        "Elbow Strike",
+        "Eye-Gouging",
+        "Eye-Rake",
+        "Finger Lock",
+        "Hammer Fist",
+        "Head Lock",
+        "Knee Drop",
+        "Knee Strike",
+        "Neck Snap",
+        "Sweep (Judo)",
+        "Targeted Attack (Brawling Kick/Groin)",
+        "Targeted Attack (Brawling Punch/Face)",
+        "Wrench (Limb)",
+        "Wrench Spine"
+      ],
+      "cinematic_skills": [
+        "Immovable Stance",
+        "Mental Strength",
+        "Pressure Points"
+      ],
+      "cinematic_techniques": [
+        "Backbreaker",
+        "Fighting While Seated (Judo)",
+        "Pressure-Point Strike"
+      ],
+      "perks": [
+        "Special Exercises (Lifting ST +1)"
+      ],
+      "optional_traits": [],
+      "minimum_cost": 4,
+      "profile": "realistic",
+      "origin": "",
+      "period": "",
+      "original": {
+        "cost": "4 points"
+      }
+    },
+    {
+      "identifier": "martial-arts.155.dagger-fighting",
+      "source": "Martial Arts",
+      "page": "155",
+      "name": "Dagger Fighting",
+      "required_skills": [
+        "Knife",
+        "Wrestling"
+      ],
+      "techniques": [
+        "ArmLock(KnifeorWrestling)",
+        "ArmedGrapple (Knife)",
+        "Back Strike (Knife)",
+        "Choke Hold (Knife)",
+        "Feint (Knife)",
+        "Retain Weapon (Knife)",
+        "Reverse Grip (Knife)",
+        "Spinning Strike (Knife)"
+      ],
+      "cinematic_skills": [
+        "Hypnotic Hands",
+        "Power Blow"
+      ],
+      "cinematic_techniques": [
+        "Dual-Weapon Attack (Knife or Wrestling)",
+        "Fighting While Seated (Knife)"
+      ],
+      "perks": [
+        "Off-Hand Weapon Training (Knife)",
+        "Quick-Swap (Knife)"
+      ],
+      "optional_traits": [],
+      "minimum_cost": 3,
+      "profile": "realistic",
+      "origin": "",
+      "period": "",
+      "original": {
+        "cost": "3 points"
+      }
+    },
+    {
+      "identifier": "martial-arts.207.death-fist",
+      "source": "Martial Arts",
+      "page": "207",
+      "name": "Death Fist",
+      "required_skills": [
+        "Judo",
+        "Karate",
+        "and the spells Clumsiness, Deathtouch, Itch, Pain, Paralyze Limb, Resist Pain, Spasm, and Wither Limb"
+      ],
+      "techniques": [
+        "Arm Lock",
+        "Counterattack (Judo or Karate)",
+        "Jump Kick",
+        "Targeted Attack (Judo Grapple/Arm)",
+        "Targeted Attack (Judo Grapple/Leg)"
+      ],
+      "cinematic_skills": [
+        "Body Control",
+        "Mental Strength",
+        "Pressure Points",
+        "Pressure Secrets",
+        "Sensitivity"
+      ],
+      "cinematic_techniques": [
+        "Roll with Blow"
+      ],
+      "perks": [
+        "Style Adaptation (Quarterstaff)",
+        "Technique Adaptation (Counterattack)"
+      ],
+      "optional_traits": [],
+      "minimum_cost": 11,
+      "profile": "cinematic",
+      "origin": "",
+      "period": "",
+      "original": {
+        "cost": "11 points"
+      }
+    },
+    {
+      "identifier": "martial-arts.208.dragon-man-kung-fu",
+      "source": "Martial Arts",
+      "page": "208",
+      "name": "Dragon-Man Kung Fu",
+      "required_skills": [
+        "Acrobatics",
+        "Breath Control",
+        "Innate Attack (Breath)",
+        "Judo",
+        "Karate",
+        "Meditation",
+        "Philosophy (Dragon Temple)",
+        "Rapier",
+        "and at least one of Smallsword, Spear, Staff, or Two-Handed Sword"
+      ],
+      "techniques": [
+        "Acrobatic Stand",
+        "Arm Lock",
+        "Axe Kick",
+        "Back Kick",
+        "Jump Kick",
+        "Kicking",
+        "Spinning Kick",
+        "Spinning Punch",
+        "Spinning Strike (Any)"
+      ],
+      "cinematic_skills": [
+        "Breaking Blow",
+        "Flying Leap",
+        "Hypnotic Hands",
+        "Kiai",
+        "Lizard Climb",
+        "Mental Strength",
+        "Power Blow",
+        "Pressure Points",
+        "Pressure Secrets. 208 STYLES"
+      ],
+      "cinematic_techniques": [
+        "Dual-Weapon Attack (Any)",
+        "Dual- Weapon Defense (Any)",
+        "Flying Jump Kick",
+        "Flying Lunge (Any)",
+        "Roll with Blow",
+        "Timed Defense"
+      ],
+      "perks": [
+        "Acrobatic Feints",
+        "Chi Resistance (Any)",
+        "Form Mastery (Spear)",
+        "Grip Mastery (Any)",
+        "Shtick (“Dragon-Man Flourish”: +4 to Intimidation on the turn after knocking down or killing a foe)",
+        "Weapon Adaptation (Broadsword to Rapier)",
+        "Weapon Adaptation (Shortsword to Smallsword)"
+      ],
+      "optional_traits": [],
+      "minimum_cost": 10,
+      "profile": "cinematic",
+      "origin": "",
+      "period": "",
+      "original": {
+        "cost": "10 points"
+      }
+    },
+    {
+      "identifier": "martial-arts.155.escrima",
+      "source": "Martial Arts",
+      "page": "155",
+      "name": "Escrima",
+      "required_skills": [
+        "Karate",
+        "Main-Gauche",
+        "Smallsword"
+      ],
+      "techniques": [
+        "Aggressive Parry (Karate)",
+        "Arm Lock (Smallsword)",
+        "Armed Grapple (Smallsword)",
+        "Choke Hold (Smallsword)",
+        "Disarming(Smallsword)",
+        "ElbowStrike",
+        "Feint (Main-GaucheorSmallsword)",
+        "KneeStrike",
+        "TargetedAttack (Main-Gauche Swing/Arm)",
+        "Targeted Attack (Main-Gauche Swing/Hand)",
+        "Targeted Attack (Smallsword Swing/Arm)",
+        "Targeted Attack (Smallsword Swing/Hand)"
+      ],
+      "cinematic_skills": [
+        "Mental Strength",
+        "Power Blow",
+        "Pressure Points"
+      ],
+      "cinematic_techniques": [
+        "Dual-Weapon Attack (Main- Gauche or Smallsword)",
+        "Dual-Weapon Defense (Smallsword)"
+      ],
+      "perks": [
+        "Off-Hand Weapon Training (Main-Gauche or Smallsword)",
+        "Unusual Training (Dual-Weapon Attack, Both attacks must target the same foe)",
+        "Weapon Adaptation (Shortsword to Smallsword)"
+      ],
+      "optional_traits": [],
+      "minimum_cost": 4,
+      "profile": "realistic",
+      "origin": "",
+      "period": "",
+      "original": {
+        "cost": "4 points"
+      }
+    },
+    {
+      "identifier": "martial-arts.182.fairbairn-close-combat-training",
+      "source": "Martial Arts",
+      "page": "182",
+      "name": "Fairbairn Close Combat Training",
+      "required_skills": [
+        "Judo",
+        "Karate",
+        "Knife",
+        "Stealth"
+      ],
+      "techniques": [
+        "Choke Hold",
+        "Disarming (Judo)",
+        "Head Butt",
+        "Knee Strike",
+        "Neck Snap",
+        "Targeted Attack (Knife Thrust/Neck)"
+      ],
+      "cinematic_skills": [
+        "Invisibility Art",
+        "Light Walk"
+      ],
+      "cinematic_techniques": [
+        "Backbreaker",
+        "Binding"
+      ],
+      "perks": [
+        "Improvised Weapons (Karate)"
+      ],
+      "optional_traits": [],
+      "minimum_cost": 5,
+      "profile": "realistic",
+      "origin": "",
+      "period": "",
+      "original": {
+        "cost": "5 points"
+      }
+    },
+    {
+      "identifier": "martial-arts.199.fighting",
+      "source": "Martial Arts",
+      "page": "199",
+      "name": "Fighting",
+      "required_skills": [
+        "Broadsword",
+        "Shield",
+        "Wrestling"
+      ],
+      "techniques": [
+        "Counterattack (Broadsword)",
+        "Feint (Broadsword or Shield)"
+      ],
+      "cinematic_skills": [],
+      "cinematic_techniques": [
+        "Dual-Weapon Attack (Broadsword or Shield)",
+        "Dual-Weapon Defense (Broadsword or Shield)",
+        "Flying Lunge (Broadsword)"
+      ],
+      "perks": [
+        "Shield-Wall Training",
+        "Sure-Footed (Uneven)"
+      ],
+      "optional_traits": [],
+      "minimum_cost": 4,
+      "profile": "realistic",
+      "origin": "",
+      "period": "",
+      "original": {
+        "cost": "4 points"
+      }
+    },
+    {
+      "identifier": "martial-arts.160.foil",
+      "source": "Martial Arts",
+      "page": "160",
+      "name": "Foil",
+      "required_skills": [
+        "Games (Foil Fencing)",
+        "Smallsword Sport"
+      ],
+      "techniques": [
+        "Counterattack (Smallsword Sport)",
+        "Feint (Smallsword Sport)"
+      ],
+      "cinematic_skills": [],
+      "cinematic_techniques": [],
+      "perks": [],
+      "optional_traits": [],
+      "minimum_cost": 3,
+      "profile": "realistic",
+      "origin": "",
+      "period": "",
+      "original": {
+        "cost": "3 points"
+      }
+    },
+    {
+      "identifier": "martial-arts.181.foot-archery",
+      "source": "Martial Arts",
+      "page": "181",
+      "name": "Foot Archery",
+      "required_skills": [
+        "Bow",
+        "Bow Sport"
+      ],
+      "techniques": [
+        "Close Combat (Bow)",
+        "Retain Weapon (Bow)"
+      ],
+      "cinematic_skills": [
+        "Blind Fighting",
+        "Kiai",
+        "Zen Archery"
+      ],
+      "cinematic_techniques": [
+        "Dual-Weapon Attack (Bow)"
+      ],
+      "perks": [
+        "SpecialExercises(ArmST+1)uptothreetimes, allowing Arm ST +3",
+        "Strongbow",
+        "Sure-Footed (Slippery)"
+      ],
+      "optional_traits": [],
+      "minimum_cost": 3,
+      "profile": "realistic",
+      "origin": "",
+      "period": "",
+      "original": {
+        "cost": "3 points"
+      }
+    },
+    {
+      "identifier": "martial-arts.209.force-swordsmanship",
+      "source": "Martial Arts",
+      "page": "209",
+      "name": "Force-Swordsmanship",
+      "required_skills": [
+        "Acrobatics",
+        "Force Sword",
+        "Force Sword Art",
+        "Parry Missile Weapons"
+      ],
+      "techniques": [
+        "Feint (Force Sword)",
+        "Targeted Attack (Force Sword Swing/Arm)",
+        "Targeted Attack (Force Sword Swing/Leg)",
+        "Targeted Attack (Force Sword Swing/Neck)"
+      ],
+      "cinematic_skills": [
+        "Blind Fighting",
+        "Body Control",
+        "Flying Leap",
+        "Kiai",
+        "Mental Strength",
+        "Power Blow",
+        "Precognitive Parry"
+      ],
+      "cinematic_techniques": [
+        "Dual-Weapon Attack (Force Sword)",
+        "Dual-Weapon Defense (Force Sword)",
+        "Whirlwind Attack (Force Sword)"
+      ],
+      "perks": [
+        "Acrobatic Feints",
+        "Chi Resistance (Any)",
+        "Grip Mastery (Force Sword)",
+        "Off-Hand Weapon Training (Force Sword)",
+        "Special Setup (Power Blow works with Force Sword)",
+        "Sure-Footed (Slippery)",
+        "Sure-Footed (Uneven)"
+      ],
+      "optional_traits": [],
+      "minimum_cost": 5,
+      "profile": "cinematic",
+      "origin": "",
+      "period": "",
+      "original": {
+        "cost": "5 points"
+      }
+    },
+    {
+      "identifier": "martial-arts.210.freefighting",
+      "source": "Martial Arts",
+      "page": "210",
+      "name": "Freefighting",
+      "required_skills": [
+        "Brawling",
+        "Free Fall",
+        "Judo",
+        "Vacc Suit"
+      ],
+      "techniques": [
+        "Arm Lock",
+        "Disarming (Judo)",
+        "Knee Strike"
+      ],
+      "cinematic_skills": [
+        "Blind Fighting",
+        "Sensitivity"
+      ],
+      "cinematic_techniques": [
+        "Binding",
+        "Roll with Blow"
+      ],
+      "perks": [
+        "Suit Familiarity (Vacc Suit)"
+      ],
+      "optional_traits": [],
+      "minimum_cost": 5,
+      "profile": "cinematic",
+      "origin": "",
+      "period": "",
+      "original": {
+        "cost": "5 points"
+      }
+    },
+    {
+      "identifier": "martial-arts.159.french-smallsword",
+      "source": "Martial Arts",
+      "page": "159",
+      "name": "French Smallsword",
+      "required_skills": [
+        "Games (Sport Fencing)",
+        "Smallsword",
+        "Smallsword Art"
+      ],
+      "techniques": [
+        "Bind Weapon (Smallsword)",
+        "Close Combat (Smallsword)",
+        "Disarming (Smallsword)",
+        "Feint (Smallsword)",
+        "Retain Weapon (Smallsword)",
+        "Targeted Attack (Smallsword Thrust/Vitals)"
+      ],
+      "cinematic_skills": [
+        "Flying Leap"
+      ],
+      "cinematic_techniques": [
+        "Flying Lunge (Smallsword)",
+        "Grand Disarm (Smallsword)",
+        "Initial Carving (Smallsword)"
+      ],
+      "perks": [
+        "Quick-Sheathe (Sword)",
+        "Quick-Swap (Smallsword)"
+      ],
+      "optional_traits": [],
+      "minimum_cost": 4,
+      "profile": "realistic",
+      "origin": "",
+      "period": "",
+      "original": {
+        "cost": "4 points"
+      }
+    },
+    {
+      "identifier": "martial-arts.159.furusiyya",
+      "source": "Martial Arts",
+      "page": "159",
+      "name": "Furusiyya",
+      "required_skills": [
+        "Bow",
+        "Broadsword",
+        "Riding (Horse)",
+        "Spear"
+      ],
+      "techniques": [
+        "Cavalry Training (Broadsword or Spear)",
+        "Combat Riding",
+        "Hands-Free Riding",
+        "Horse Archery",
+        "Quick Mount",
+        "Targeted Attack (Broadsword Swing/Neck)",
+        "Targeted Attack (Spear Thrust/Vitals)"
+      ],
+      "cinematic_skills": [
+        "Zen Archery. 160 STYLES Sport fencing largely eliminates moves that are dan- gerous to one’s opponent. The point is to test skill – not to killone’sadversary–sosportstylesfavorsafetyandstruc- ture over the rough-and-tumble of combat fencing. For instance, sport fencers rarely swing their weapons",
+        "even saber cuts are powered by wrist and fingers, not hip and shoulder, making them faster but reducing the odds of injury. Matches take place on a strip and emphasize lin- ear movement . . . unlike duels of the past, which took place wherever honor demanded. Further distinguishing sport fencing from combat are such rules as “right of way” and “priority,” which determine which hits count and which fencer can attack, and in what manner. In game terms, sport fencers don’t use the Strong option for All-Out or Committed Attack. The Determined, Feint,andLongversionsarequitecommon,however.The Deceptive Attack and Riposte combat options see exten- sive use, too. Cinematic sport fencers aren’t bound by these restric- tions. The GM ought to let such PCs learn combat and Combat Sport skills, and give them access to the full range of maneuvers and combat options. Their tech- niques should work as well in battle as on the strip. Below are several sport-fencing styles. Schläger is less common than the others and uses a bare blade",
+        "injury determines the victor"
+      ],
+      "cinematic_techniques": [],
+      "perks": [],
+      "optional_traits": [],
+      "minimum_cost": 5,
+      "profile": "realistic",
+      "origin": "",
+      "period": "",
+      "original": {
+        "cost": "5 points"
+      }
+    },
+    {
+      "identifier": "martial-arts.187.glaive-fighting",
+      "source": "Martial Arts",
+      "page": "187",
+      "name": "Glaive Fighting",
+      "required_skills": [
+        "Brawling",
+        "Polearm",
+        "Staff"
+      ],
+      "techniques": [
+        "Counterattack (Polearm)",
+        "Disarming (Polearm)",
+        "Feint (Polearm or Staff)",
+        "Hook (Polearm)",
+        "Kicking",
+        "Knee Strike",
+        "Spinning Strike (Polearm)",
+        "Sweep (Polearm)",
+        "Targeted Attack (Polearm Swing/Leg)",
+        "Targeted Attack (Polearm Thrust/Vitals)"
+      ],
+      "cinematic_skills": [],
+      "cinematic_techniques": [],
+      "perks": [
+        "Form Mastery (Dueling Bill)",
+        "Form Mastery (Dueling Glaive)"
+      ],
+      "optional_traits": [],
+      "minimum_cost": 4,
+      "profile": "realistic",
+      "origin": "",
+      "period": "",
+      "original": {
+        "cost": "4 points"
+      }
+    },
+    {
+      "identifier": "martial-arts.170.goju-ryu",
+      "source": "Martial Arts",
+      "page": "170",
+      "name": "Goju Ryu",
+      "required_skills": [
+        "Breath Control",
+        "Karate",
+        "Karate Art",
+        "Savoir-Faire (Dojo)"
+      ],
+      "techniques": [
+        "Aggressive Parry",
+        "Back Kick",
+        "Elbow Strike",
+        "Exotic Hand Strike",
+        "Hammer Fist",
+        "Kicking",
+        "Knee Strike",
+        "Spinning Kick",
+        "Targeted Attack (Karate Exotic Hand Strike/Vitals)",
+        "Targeted Attack (Karate Kick/Vitals)"
+      ],
+      "cinematic_skills": [
+        "Body Control",
+        "Breaking Blow",
+        "Immovable Stance",
+        "Kiai",
+        "Power Blow",
+        "Pressure Points",
+        "Pressure Secrets"
+      ],
+      "cinematic_techniques": [
+        "Dual-Weapon Attack (Karate)",
+        "Lethal Kick",
+        "Lethal Strike",
+        "Targeted Attack (Lethal Kick/Vitals)",
+        "Targeted Attack (Lethal Strike/Vitals)"
+      ],
+      "perks": [
+        "Clinch (Karate)",
+        "Iron Hands",
+        "Special Exercises (DR 1 with Tough Skin)",
+        "Unusual Training (Breaking Blow, Only vs. well-braced objects out of combat)"
+      ],
+      "optional_traits": [],
+      "minimum_cost": 5,
+      "profile": "realistic",
+      "origin": "",
+      "period": "",
+      "original": {
+        "cost": "5 points"
+      }
+    },
+    {
+      "identifier": "martial-arts.205.greco-roman-wrestling",
+      "source": "Martial Arts",
+      "page": "205",
+      "name": "Greco-Roman Wrestling",
+      "required_skills": [
+        "Games (Wrestling)",
+        "Wrestling Sport"
+      ],
+      "techniques": [
+        "Arm Lock",
+        "Feint (Wrestling Sport)",
+        "Low Fighting (Wrestling Sport)"
+      ],
+      "cinematic_skills": [],
+      "cinematic_techniques": [],
+      "perks": [
+        "PowerGrappling",
+        "SpecialExercises(LiftingST+1)"
+      ],
+      "optional_traits": [],
+      "minimum_cost": 3,
+      "profile": "realistic",
+      "origin": "",
+      "period": "",
+      "original": {
+        "cost": "3 points"
+      }
+    },
+    {
+      "identifier": "martial-arts.161.hapkido",
+      "source": "Martial Arts",
+      "page": "161",
+      "name": "Hapkido",
+      "required_skills": [
+        "Judo",
+        "Karate",
+        "Karate Sport",
+        "Savoir-Faire (Dojo)"
+      ],
+      "techniques": [
+        "Arm Lock",
+        "Back Kick",
+        "Breakfall",
+        "Choke Hold",
+        "Head Lock",
+        "Jump Kick",
+        "Kicking",
+        "Leg Grapple",
+        "Leg Lock",
+        "Spinning Kick",
+        "Sweep (Judo or Karate)"
+      ],
+      "cinematic_skills": [
+        "Breaking Blow",
+        "Flying Leap",
+        "Power Blow"
+      ],
+      "cinematic_techniques": [
+        "Flying Jump Kick",
+        "Roll with Blow"
+      ],
+      "perks": [
+        "Back Kick possible from kneeling without posture penalty"
+      ],
+      "optional_traits": [],
+      "minimum_cost": 5,
+      "profile": "realistic",
+      "origin": "",
+      "period": "",
+      "original": {
+        "cost": "5 points"
+      }
+    },
+    {
+      "identifier": "martial-arts.196.heroic-spear-fighting",
+      "source": "Martial Arts",
+      "page": "196",
+      "name": "Heroic Spear Fighting",
+      "required_skills": [
+        "Shield",
+        "Spear",
+        "Thrown Weapon (Spear)"
+      ],
+      "techniques": [
+        "As Sojutsu (pp. 197-198), but remove Disarming (Spear) and Sweep (Spear). Cinematic Skills and Techniques: As Sojutsu, but add Dual-Weapon Attack (Thrown Spear)"
+      ],
+      "cinematic_skills": [],
+      "cinematic_techniques": [],
+      "perks": [
+        "Naval Training",
+        "Off-Hand Weapon Training (Thrown Spear)"
+      ],
+      "optional_traits": [],
+      "minimum_cost": 4,
+      "profile": "realistic",
+      "origin": "",
+      "period": "",
+      "original": {
+        "cost": "4 points"
+      }
+    },
+    {
+      "identifier": "martial-arts.161.hoplomachia",
+      "source": "Martial Arts",
+      "page": "161",
+      "name": "Hoplomachia",
+      "required_skills": [
+        "Shield",
+        "Shortsword",
+        "Spear",
+        "Wrestling"
+      ],
+      "techniques": [
+        "Close Combat (Shortsword)",
+        "Feint (Shield)",
+        "Spinning Strike (Spear)",
+        "Targeted Attack (Spear Thrust/Face)",
+        "Targeted Attack (Spear Thrust/Neck)"
+      ],
+      "cinematic_skills": [
+        "Immovable Stance",
+        "Push, used with shield"
+      ],
+      "cinematic_techniques": [],
+      "perks": [
+        "Grip Mastery (Spear)",
+        "Naval Training, for elite epibatai, or marines, aboard triremes",
+        "Teamwork (Hoplomachia)"
+      ],
+      "optional_traits": [],
+      "minimum_cost": 5,
+      "profile": "realistic",
+      "origin": "",
+      "period": "",
+      "original": {
+        "cost": "5 points"
+      }
+    },
+    {
+      "identifier": "martial-arts.162.hsing-i-chuan",
+      "source": "Martial Arts",
+      "page": "162",
+      "name": "Hsing I Chuan",
+      "required_skills": [
+        "Judo",
+        "Karate"
+      ],
+      "techniques": [
+        "Arm Lock",
+        "Counterattack (Karate)",
+        "Exotic Hand Strike",
+        "Sweep (Judo or Karate)",
+        "Trip"
+      ],
+      "cinematic_skills": [
+        "Breaking Blow",
+        "Immovable Stance",
+        "Kiai",
+        "Mental Strength",
+        "Power Blow",
+        "Pressure Points",
+        "Pressure Secrets",
+        "Sensitivity"
+      ],
+      "cinematic_techniques": [
+        "Lethal Strike",
+        "Pressure-Point Strike",
+        "Springing Attack",
+        "Timed Defense"
+      ],
+      "perks": [
+        "Style Adaptation (Pa Kua Chuan)",
+        "Technique Adaptation (Counterattack)"
+      ],
+      "optional_traits": [],
+      "minimum_cost": 3,
+      "profile": "realistic",
+      "origin": "",
+      "period": "",
+      "original": {
+        "cost": "3 points"
+      }
+    },
+    {
+      "identifier": "martial-arts.163.hwa-rang-do",
+      "source": "Martial Arts",
+      "page": "163",
+      "name": "Hwa Rang Do",
+      "required_skills": [
+        "Judo",
+        "Karate",
+        "Karate Sport",
+        "Savoir-Faire (Dojo)"
+      ],
+      "techniques": [
+        "Arm Lock",
+        "Back Kick",
+        "Breakfall",
+        "Counterattack (Karate)",
+        "Disarming (Judo)",
+        "Exotic Hand Strike",
+        "Head Lock",
+        "Jump Kick",
+        "Kicking",
+        "Spinning Kick",
+        "Sweep (Karate)"
+      ],
+      "cinematic_skills": [
+        "Body Control",
+        "Breaking Blow",
+        "Power Blow",
+        "Pressure Points",
+        "Pressure Secrets"
+      ],
+      "cinematic_techniques": [
+        "Pressure-Point Strike"
+      ],
+      "perks": [
+        "Chi Resistance (Any)",
+        "Spinning Kick takes no pos- turepenalty",
+        "UnusualTraining(BreakingBlow,Onlyvs.well- braced objects out of combat)"
+      ],
+      "optional_traits": [],
+      "minimum_cost": 5,
+      "profile": "realistic",
+      "origin": "",
+      "period": "",
+      "original": {
+        "cost": "5 points"
+      }
+    },
+    {
+      "identifier": "martial-arts.175.iaido",
+      "source": "Martial Arts",
+      "page": "175",
+      "name": "Iaido",
+      "required_skills": [
+        "Broadsword Art",
+        "Fast-Draw (Sword)",
+        "Savoir-Faire (Dojo)",
+        "Two- Handed Sword Art"
+      ],
+      "techniques": [
+        "Low Fighting (Broadsword Art or Two-Handed Sword Art)"
+      ],
+      "cinematic_skills": [
+        "Mental Strength"
+      ],
+      "cinematic_techniques": [
+        "Springing Attack (Broadsword Art or Two-Handed Sword Art)"
+      ],
+      "perks": [
+        "Grip Mastery (Katana)",
+        "Quick-Sheathe (Sword)",
+        "Shtick (Chiburi)"
+      ],
+      "optional_traits": [],
+      "minimum_cost": 5,
+      "profile": "realistic",
+      "origin": "",
+      "period": "",
+      "original": {
+        "cost": "5 points"
+      }
+    },
+    {
+      "identifier": "martial-arts.174.iaijutsu",
+      "source": "Martial Arts",
+      "page": "174",
+      "name": "Iaijutsu",
+      "required_skills": [
+        "Broadsword",
+        "BroadswordArt",
+        "Fast-Draw(Sword)",
+        "Two-Handed Sword"
+      ],
+      "techniques": [
+        "Back Strike (Broadsword or Two-Handed Sword)",
+        "Low Fighting (Broadsword or Two-Handed Sword)",
+        "Targeted Attack (Broadsword or Two-Handed Sword Swing/Arm)",
+        "Targeted Attack (Broadsword or Two- Handed Sword Swing/Neck)",
+        "Targeted Attack (Broadsword or Two-Handed Sword Swing/Skull)",
+        "Targeted Attack (Broadsword or Two-Handed Sword Thrust/Neck)",
+        "Targeted Attack (Broadsword or Two-Handed Sword Thrust/Vitals)"
+      ],
+      "cinematic_skills": [
+        "Mental Strength",
+        "Precognitive Parry"
+      ],
+      "cinematic_techniques": [
+        "Springing Attack (Broadsword or Two-Handed Sword)",
+        "Timed Defense (Broadsword or Two- Handed Sword)"
+      ],
+      "perks": [
+        "Grip Mastery (Katana)",
+        "Quick-Sheathe (Sword)",
+        "Shtick (Chiburi)"
+      ],
+      "optional_traits": [],
+      "minimum_cost": 5,
+      "profile": "realistic",
+      "origin": "",
+      "period": "",
+      "original": {
+        "cost": "5 points"
+      }
+    },
+    {
+      "identifier": "martial-arts.197.iklwa-fighting",
+      "source": "Martial Arts",
+      "page": "197",
+      "name": "Iklwa Fighting",
+      "required_skills": [
+        "Axe/Mace",
+        "Running",
+        "Shield",
+        "Spear"
+      ],
+      "techniques": [
+        "As Sojutsu (pp. 197-198), but replace Disarming (Spear) and Sweep (Spear) with Armed Grapple (Shield) and Feint (Shield)"
+      ],
+      "cinematic_skills": [],
+      "cinematic_techniques": [],
+      "perks": [],
+      "optional_traits": [],
+      "minimum_cost": 5,
+      "profile": "realistic",
+      "origin": "",
+      "period": "",
+      "original": {
+        "cost": "5 points"
+      }
+    },
+    {
+      "identifier": "martial-arts.171.isshinryu",
+      "source": "Martial Arts",
+      "page": "171",
+      "name": "Isshinryu",
+      "required_skills": [
+        "Karate",
+        "Karate Art",
+        "Savoir-Faire (Dojo)"
+      ],
+      "techniques": [
+        "Aggressive Parry",
+        "Back Kick",
+        "Elbow Strike",
+        "Exotic Hand Strike",
+        "Feint (Karate)",
+        "Hammer Fist",
+        "Kicking",
+        "Knee Strike",
+        "Spinning Kick"
+      ],
+      "cinematic_skills": [
+        "Kiai",
+        "Mental Strength",
+        "Pressure Points",
+        "Pressure Secrets"
+      ],
+      "cinematic_techniques": [
+        "Dual-Weapon Attack (Karate)",
+        "Pressure-Point Strike"
+      ],
+      "perks": [
+        "Clinch (Karate)",
+        "Rapid Retraction (Punches)",
+        "Unusual Training (Breaking Blow, Only vs. well-braced objects out of combat)"
+      ],
+      "optional_traits": [],
+      "minimum_cost": 4,
+      "profile": "realistic",
+      "origin": "",
+      "period": "",
+      "original": {
+        "cost": "4 points"
+      }
+    },
+    {
+      "identifier": "martial-arts.156.italian-school",
+      "source": "Martial Arts",
+      "page": "156",
+      "name": "Italian School",
+      "required_skills": [
+        "Main-Gauche",
+        "Rapier",
+        "Shield(Buckler)",
+        "Wrestling"
+      ],
+      "techniques": [
+        "Bind Weapon (Main-Gauche or Rapier)",
+        "Counterattack (Rapier)",
+        "Disarming (Main-Gauche or Rapier)",
+        "Feint (Main-Gauche or Rapier)",
+        "Targeted Attack (Main-Gauche Thrust/Vitals)",
+        "Targeted Attack (Rapier Thrust/Face)",
+        "Targeted Attack (Rapier Thrust/Neck)",
+        "Targeted Attack (Rapier Thrust/Vitals)"
+      ],
+      "cinematic_skills": [
+        "Flying Leap"
+      ],
+      "cinematic_techniques": [
+        "Dual-Weapon Attack (Main- Gauche or Rapier)",
+        "Dual-Weapon Defense (Main-Gauche or Rapier)",
+        "Flying Lunge (Rapier)",
+        "Grand Disarm (Rapier)",
+        "Hand Catch",
+        "Initial Carving (Rapier)"
+      ],
+      "perks": [
+        "Off-Hand Weapon Training (Rapier)",
+        "Technique Adaptation (Counterattack)"
+      ],
+      "optional_traits": [],
+      "minimum_cost": 5,
+      "profile": "realistic",
+      "origin": "",
+      "period": "",
+      "original": {
+        "cost": "5 points"
+      }
+    },
+    {
+      "identifier": "martial-arts.164.jeet-kune-do",
+      "source": "Martial Arts",
+      "page": "164",
+      "name": "Jeet Kune Do",
+      "required_skills": [
+        "Judo",
+        "Karate"
+      ],
+      "techniques": [
+        "Counterattack (Karate)",
+        "Ear Clap",
+        "Elbow Strike",
+        "Eye-Poke",
+        "Feint (Karate)",
+        "Head Butt",
+        "Kicking",
+        "Knee Strike",
+        "Stamp Kick"
+      ],
+      "cinematic_skills": [
+        "Power Blow",
+        "Pressure Points",
+        "Pressure Secrets",
+        "Push"
+      ],
+      "cinematic_techniques": [
+        "Flying Jump Kick",
+        "Lethal Eye- Poke",
+        "Lethal Strike",
+        "Pressure-Point Strike"
+      ],
+      "perks": [
+        "Biting Mastery",
+        "Style Adaptation (All)",
+        "Technique Adaptation (Counterattack)",
+        "Technique Adaptation (Feint)"
+      ],
+      "optional_traits": [],
+      "minimum_cost": 3,
+      "profile": "realistic",
+      "origin": "",
+      "period": "",
+      "original": {
+        "cost": "3 points"
+      }
+    },
+    {
+      "identifier": "martial-arts.192.jojutsu",
+      "source": "Martial Arts",
+      "page": "192",
+      "name": "Jojutsu",
+      "required_skills": [
+        "Staff",
+        "Two-Handed Sword"
+      ],
+      "techniques": [
+        "Arm Lock (Staff)",
+        "Disarming (Staff or Two-Handed Sword)",
+        "Feint (Staff or Two-Handed Sword)",
+        "Sweep (Staff). Cinematic Skills and Techniques: As Quarterstaff (p. 193)"
+      ],
+      "cinematic_skills": [],
+      "cinematic_techniques": [],
+      "perks": [
+        "Form Mastery (Jo)"
+      ],
+      "optional_traits": [],
+      "minimum_cost": 3,
+      "profile": "realistic",
+      "origin": "",
+      "period": "",
+      "original": {
+        "cost": "3 points"
+      }
+    },
+    {
+      "identifier": "martial-arts.166.judo",
+      "source": "Martial Arts",
+      "page": "166",
+      "name": "Judo",
+      "required_skills": [
+        "Games (Judo)",
+        "Judo Sport",
+        "Savoir-Faire (Dojo)"
+      ],
+      "techniques": [
+        "Arm Lock",
+        "Breakfall",
+        "Ground Fighting (Judo Sport)"
+      ],
+      "cinematic_skills": [
+        "Blind Fighting",
+        "Immovable Stance",
+        "Mental Strength",
+        "Power Blow",
+        "Pressure Points"
+      ],
+      "cinematic_techniques": [
+        "Roll with Blow"
+      ],
+      "perks": [
+        "Power Grappling",
+        "Technique Mastery (Judo Throw)",
+        "Technique Mastery (Sacrifice Throw)"
+      ],
+      "optional_traits": [],
+      "minimum_cost": 4,
+      "profile": "realistic",
+      "origin": "",
+      "period": "",
+      "original": {
+        "cost": "4 points"
+      }
+    },
+    {
+      "identifier": "martial-arts.166.jujutsu",
+      "source": "Martial Arts",
+      "page": "166",
+      "name": "Jujutsu",
+      "required_skills": [
+        "Judo",
+        "Karate"
+      ],
+      "techniques": [
+        "Arm Lock",
+        "Back Kick",
+        "Disarming (Judo)",
+        "Elbow Strike",
+        "Low Fighting (Judo or Karate)",
+        "Targeted Attack (Karate Kick/Leg)",
+        "Targeted Attack (Karate Punch/Face)",
+        "Targeted Attack (Karate Punch/Neck)"
+      ],
+      "cinematic_skills": [
+        "Immovable Stance",
+        "Kiai",
+        "Mental Strength",
+        "Pressure Points",
+        "Pressure Secrets"
+      ],
+      "cinematic_techniques": [
+        "Hand-Clap Parry",
+        "Lethal Strike",
+        "Pressure-Point Strike"
+      ],
+      "perks": [
+        "Armor Familiarity",
+        "Power Grappling",
+        "Sure-Footed (Uneven)"
+      ],
+      "optional_traits": [],
+      "minimum_cost": 3,
+      "profile": "realistic",
+      "origin": "",
+      "period": "",
+      "original": {
+        "cost": "3 points"
+      }
+    },
+    {
+      "identifier": "martial-arts.197.jukenjutsu-bayonet-fighting",
+      "source": "Martial Arts",
+      "page": "197",
+      "name": "Jukenjutsu (Bayonet Fighting)",
+      "required_skills": [
+        "Savoir-Faire (Dojo)",
+        "Spear",
+        "Spear Sport"
+      ],
+      "techniques": [
+        "Feint (Spear)",
+        "Retain Weapon (Rifle)",
+        "TargetedAttack(SpearThrust/Face)",
+        "TargetedAttack(Spear Thrust/Neck)",
+        "Targeted Attack (Spear Thrust/Vitals)"
+      ],
+      "cinematic_skills": [],
+      "cinematic_techniques": [],
+      "perks": [],
+      "optional_traits": [],
+      "minimum_cost": 4,
+      "profile": "realistic",
+      "origin": "",
+      "period": "",
+      "original": {
+        "cost": "4 points"
+      }
+    },
+    {
+      "identifier": "martial-arts.152.kachin-bando",
+      "source": "Martial Arts",
+      "page": "152",
+      "name": "Kachin Bando",
+      "required_skills": [
+        "Karate",
+        "Wrestling"
+      ],
+      "techniques": [
+        "Aggressive Parry",
+        "Arm Lock",
+        "Choke Hold",
+        "Elbow Strike",
+        "Eye-Gouging",
+        "Eye-Rake",
+        "Ground Fighting (Karate or Wrestling)",
+        "Hammer Fist",
+        "Head Butt",
+        "Jam",
+        "Kicking",
+        "Knee Strike",
+        "Leg Lock",
+        "Low Fighting (Karate or Wrestling)",
+        "Lower-Body Arm Lock",
+        "Lower-Body Leg Lock",
+        "Push Kick",
+        "Triangle Choke"
+      ],
+      "cinematic_skills": [
+        "Power Blow"
+      ],
+      "cinematic_techniques": [
+        "Roll with Blow",
+        "Timed Defense"
+      ],
+      "perks": [
+        "Biting Mastery",
+        "Iron Legs",
+        "Neck Control (Karate)",
+        "Power Grappling",
+        "Special Exercises (Striker, Crushing with Limb, Shin)",
+        "Style Adaptation (Lethwei)"
+      ],
+      "optional_traits": [],
+      "minimum_cost": 3,
+      "profile": "realistic",
+      "origin": "",
+      "period": "",
+      "original": {
+        "cost": "3 points"
+      }
+    },
+    {
+      "identifier": "martial-arts.168.kajukenbo",
+      "source": "Martial Arts",
+      "page": "168",
+      "name": "Kajukenbo",
+      "required_skills": [
+        "Judo",
+        "Karate"
+      ],
+      "techniques": [
+        "Arm Lock",
+        "Elbow Strike",
+        "Exotic Hand Strike",
+        "Hammer Fist",
+        "Kicking",
+        "Leg Grapple",
+        "Stamp Kick",
+        "Sweep (Karate)"
+      ],
+      "cinematic_skills": [
+        "Immovable Stance",
+        "Power Blow"
+      ],
+      "cinematic_techniques": [
+        "Lethal Kick",
+        "Timed Defense"
+      ],
+      "perks": [
+        "Neck Control (Karate)",
+        "Special Exercises (DR 1 with Tough Skin)"
+      ],
+      "optional_traits": [],
+      "minimum_cost": 3,
+      "profile": "realistic",
+      "origin": "",
+      "period": "",
+      "original": {
+        "cost": "3 points"
+      }
+    },
+    {
+      "identifier": "martial-arts.168.kalaripayit",
+      "source": "Martial Arts",
+      "page": "168",
+      "name": "Kalaripayit",
+      "required_skills": [
+        "Axe/Mace",
+        "Broadsword",
+        "Karate",
+        "Knife",
+        "Meditation",
+        "Shield",
+        "Shortsword",
+        "Spear",
+        "Staff",
+        "Theology (Hinduism)",
+        "Two-Handed Axe/Mace",
+        "Whip",
+        "Wrestling"
+      ],
+      "techniques": [
+        "Arm Lock",
+        "Elbow Strike",
+        "Knee Strike",
+        "Low Fighting (Any)"
+      ],
+      "cinematic_skills": [
+        "Body Control",
+        "Mental Strength",
+        "Pressure Points",
+        "Pressure Secrets"
+      ],
+      "cinematic_techniques": [
+        "Pressure-Point Strike",
+        "Roll with Blow"
+      ],
+      "perks": [
+        "Unusual Training (Pressure Points)"
+      ],
+      "optional_traits": [],
+      "minimum_cost": 14,
+      "profile": "realistic",
+      "origin": "",
+      "period": "",
+      "original": {
+        "cost": "14 points"
+      }
+    },
+    {
+      "identifier": "martial-arts.172.kempo",
+      "source": "Martial Arts",
+      "page": "172",
+      "name": "Kempo",
+      "required_skills": [
+        "Breath Control",
+        "Judo",
+        "Karate",
+        "Karate Art",
+        "Philosophy (Buddhism)",
+        "Savoir-Faire (Dojo)"
+      ],
+      "techniques": [
+        "Arm Lock",
+        "Back Kick",
+        "Breakfall",
+        "Elbow Strike",
+        "Kicking",
+        "Knee Strike",
+        "Spinning Kick"
+      ],
+      "cinematic_skills": [
+        "Body Control",
+        "Immovable Stance",
+        "Mental Strength",
+        "Pressure Points",
+        "Pressure Secrets"
+      ],
+      "cinematic_techniques": [
+        "Pressure-Point Strike"
+      ],
+      "perks": [
+        "Special Setup (Karate Parry > Judo Throw)"
+      ],
+      "optional_traits": [],
+      "minimum_cost": 7,
+      "profile": "realistic",
+      "origin": "",
+      "period": "",
+      "original": {
+        "cost": "7 points"
+      }
+    },
+    {
+      "identifier": "martial-arts.175.kendo",
+      "source": "Martial Arts",
+      "page": "175",
+      "name": "Kendo",
+      "required_skills": [
+        "Games (Kendo)",
+        "Savoir-Faire (Dojo)",
+        "Two-Handed Sword Sport"
+      ],
+      "techniques": [
+        "Feint (Two-Handed Sword Sport)",
+        "Targeted Attack (Two- Handed Sword Sport Swing/Arm)",
+        "Targeted Attack (Two-Handed Sword Sport Swing/Skull)",
+        "Targeted Attack (Two-Handed Sword Sport Thrust/Neck)"
+      ],
+      "cinematic_skills": [
+        "Kiai",
+        "Immovable Stance",
+        "Mental Strength",
+        "Power Blow"
+      ],
+      "cinematic_techniques": [
+        "Dual-Weapon Defense (Two-Handed Sword Sport)",
+        "Whirlwind Attack (Two-Handed Sword Sport)"
+      ],
+      "perks": [],
+      "optional_traits": [],
+      "minimum_cost": 4,
+      "profile": "realistic",
+      "origin": "",
+      "period": "",
+      "original": {
+        "cost": "4 points"
+      }
+    },
+    {
+      "identifier": "martial-arts.173.kenjutsu",
+      "source": "Martial Arts",
+      "page": "173",
+      "name": "Kenjutsu",
+      "required_skills": [
+        "Broadsword",
+        "Two-Handed Sword"
+      ],
+      "techniques": [
+        "Back Strike (Two-Handed Sword)",
+        "Counterattack (Two-Handed Sword)",
+        "Feint (Broadsword or Two-Handed Sword)",
+        "Targeted Attack (Two-Handed Sword Swing/Arm)",
+        "Targeted Attack (Two-Handed Sword Swing/Neck)",
+        "Targeted Attack (Two-Handed Sword Swing/Skull)",
+        "Targeted Attack (Two-Handed Sword Thrust/Neck)",
+        "Targeted Attack (Two-Handed Sword Thrust/Vitals). Cinematic"
+      ],
+      "cinematic_skills": [],
+      "cinematic_techniques": [
+        "Dual-Weapon Defense (Two- Handed Sword)",
+        "Timed Defense (Two-Handed Sword)",
+        "Whirlwind Attack (Two-Handed Sword)"
+      ],
+      "perks": [
+        "Grip Mastery (Katana)"
+      ],
+      "optional_traits": [],
+      "minimum_cost": 3,
+      "profile": "realistic",
+      "origin": "",
+      "period": "",
+      "original": {
+        "cost": "3 points"
+      }
+    },
+    {
+      "identifier": "martial-arts.178.kobujutsu",
+      "source": "Martial Arts",
+      "page": "178",
+      "name": "Kobujutsu",
+      "required_skills": [
+        "Axe/Mace",
+        "Flail",
+        "Jitte/Sai",
+        "Savoir-Faire (Dojo)",
+        "Staff",
+        "Tonfa",
+        "and at least one of Broadsword, Knife, Kusari, Polearm, Shield (Buckler), Shortsword, Spear, and Two- Handed Axe/Mace"
+      ],
+      "techniques": [
+        "Disarming (Jitte/Sai)",
+        "Feint (Any weapon skill in style)",
+        "Reverse Grip (Axe/Mace or Jitte/Sai)"
+      ],
+      "cinematic_skills": [
+        "Power Blow"
+      ],
+      "cinematic_techniques": [
+        "Dual-Weapon Attack (Axe/Mace, Flail, Jitte/Sai, or Tonfa)",
+        "Dual-Weapon Defense (Any weapon skill in style)",
+        "Whirlwind Attack (Any weapon skill in style)"
+      ],
+      "perks": [
+        "Grip Mastery (Staff)",
+        "Off-Hand Weapon Training (Any one-handed weapon skill in style)",
+        "Technique Adaptation (Feint)",
+        "Technique Adaptation (Whirlwind Attack)"
+      ],
+      "optional_traits": [],
+      "minimum_cost": 8,
+      "profile": "realistic",
+      "origin": "",
+      "period": "",
+      "original": {
+        "cost": "8 points"
+      }
+    },
+    {
+      "identifier": "martial-arts.176.krabi-krabong",
+      "source": "Martial Arts",
+      "page": "176",
+      "name": "Krabi Krabong",
+      "required_skills": [
+        "Judo",
+        "Karate",
+        "Polearm",
+        "Saber",
+        "Smallsword",
+        "Staff",
+        "Tonfa"
+      ],
+      "techniques": [
+        "Back Kick",
+        "Elbow Strike",
+        "Feint (Polearm, Saber,Smallsword,orStaff)",
+        "Kicking",
+        "KneeStrike",
+        "Sweep (Staff)",
+        "Uppercut"
+      ],
+      "cinematic_skills": [
+        "Power Blow"
+      ],
+      "cinematic_techniques": [
+        "Dual-Weapon Attack (Saber, Smallsword, or Tonfa)"
+      ],
+      "perks": [
+        "Style Adaptation (Muay Thai)",
+        "Unusual Training (Dual-Weapon Attack, Both attacks must target the same foe)",
+        "Weapon Adaptation (Shortsword to Smallsword)"
+      ],
+      "optional_traits": [],
+      "minimum_cost": 8,
+      "profile": "realistic",
+      "origin": "",
+      "period": "",
+      "original": {
+        "cost": "8 points"
+      }
+    },
+    {
+      "identifier": "martial-arts.183.krav-maga",
+      "source": "Martial Arts",
+      "page": "183",
+      "name": "Krav Maga",
+      "required_skills": [
+        "Karate",
+        "Wrestling"
+      ],
+      "techniques": [
+        "ArmLock",
+        "Breakfall",
+        "ChokeHold",
+        "Disarming (Wrestling)",
+        "Elbow Strike",
+        "Eye-Rake",
+        "Ground Fighting (Wrestling)",
+        "Hammer Fist",
+        "Head Lock",
+        "Knee Strike",
+        "Stamp Kick"
+      ],
+      "cinematic_skills": [
+        "Mental Strength",
+        "Power Blow",
+        "Pressure Points",
+        "Pressure Secrets"
+      ],
+      "cinematic_techniques": [
+        "Lethal Strike",
+        "Pressure-Point Strike",
+        "Roll with Blow"
+      ],
+      "perks": [
+        "Improvised Weapons (Karate)"
+      ],
+      "optional_traits": [],
+      "minimum_cost": 3,
+      "profile": "realistic",
+      "origin": "",
+      "period": "",
+      "original": {
+        "cost": "3 points"
+      }
+    },
+    {
+      "identifier": "martial-arts.190.kumango-silat",
+      "source": "Martial Arts",
+      "page": "190",
+      "name": "Kumango Silat",
+      "required_skills": [
+        "Judo",
+        "Karate",
+        "Knife"
+      ],
+      "techniques": [
+        "Aggressive Parry (Karate)",
+        "Arm Lock",
+        "Counterattack (Karate or Knife)",
+        "Elbow Strike",
+        "Evade",
+        "Exotic Hand Strike",
+        "Feint (Karate or Knife)",
+        "Leg Grapple",
+        "Low Fighting (Judo, Karate, or Knife)",
+        "Spinning Kick",
+        "Spinning Punch",
+        "Sweep (Judo or Karate)",
+        "Targeted Attack (Karate Kick/Groin)",
+        "Targeted Attack (Karate Punch/Neck)",
+        "Targeted Attack (Karate Punch/Vitals)",
+        "Targeted Attack (Knife Thrust/Vitals)",
+        "Trip"
+      ],
+      "cinematic_skills": [
+        "Breaking Blow",
+        "Hypnotic Hands",
+        "Mental Strength",
+        "Power Blow",
+        "Pressure Points",
+        "Pressure Secrets"
+      ],
+      "cinematic_techniques": [
+        "Dual-Weapon Attack (Karate)",
+        "Springing Attack (Karate)"
+      ],
+      "perks": [
+        "Sure-Footed (Sand)",
+        "Technique Adaptation (Low Fighting)",
+        "Unusual Training (Dual-Weapon Attack, Both attacks must target the same foe)"
+      ],
+      "optional_traits": [],
+      "minimum_cost": 4,
+      "profile": "realistic",
+      "origin": "",
+      "period": "",
+      "original": {
+        "cost": "4 points"
+      }
+    },
+    {
+      "identifier": "martial-arts.178.kuntao",
+      "source": "Martial Arts",
+      "page": "178",
+      "name": "Kuntao",
+      "required_skills": [
+        "Broadsword",
+        "Judo",
+        "Karate",
+        "Shortsword",
+        "and at least one of Jitte/Sai, Knife, Kusari, Polearm, Smallsword, Spear, Staff, Two-Handed Flail, Two-Handed Sword, and Whip. 178 STYLES"
+      ],
+      "techniques": [
+        "Arm Lock",
+        "Back Kick",
+        "Counterattack (Karate)",
+        "Evade",
+        "Exotic Hand Strike",
+        "Hammer Fist",
+        "Head Lock",
+        "Spinning Kick"
+      ],
+      "cinematic_skills": [
+        "Blind Fighting",
+        "Body Control",
+        "Breaking Blow",
+        "Mental Strength",
+        "Power Blow",
+        "Pressure Points",
+        "Pressure Secrets",
+        "Throwing Art"
+      ],
+      "cinematic_techniques": [
+        "Dual-Weapon Attack (Shortsword)",
+        "Pressure-Point Strike",
+        "Roll with Blow"
+      ],
+      "perks": [
+        "Off-Hand Weapon Training (Shortsword)",
+        "Rapid Retraction (Punches)"
+      ],
+      "optional_traits": [],
+      "minimum_cost": 6,
+      "profile": "realistic",
+      "origin": "",
+      "period": "",
+      "original": {
+        "cost": "6 points"
+      }
+    },
+    {
+      "identifier": "martial-arts.180.kusarigamajutsu",
+      "source": "Martial Arts",
+      "page": "180",
+      "name": "Kusarigamajutsu",
+      "required_skills": [
+        "Axe/Mace",
+        "Kusari"
+      ],
+      "techniques": [
+        "Choke Hold (Kusari)",
+        "Entangle (Kusari)",
+        "Return Strike (Kusari)",
+        "Targeted Attack (Axe/Mace Swing/Neck)",
+        "Targeted Attack (Kusari Swing/Arm)",
+        "Targeted Attack (Kusari Swing/Skull)",
+        "Targeted Attack (Kusari Thrust/Face)"
+      ],
+      "cinematic_skills": [
+        "Power Blow"
+      ],
+      "cinematic_techniques": [
+        "Dual-Weapon Attack (Axe/Mace or Kusari)"
+      ],
+      "perks": [
+        "Grip Mastery (Kusarigama)",
+        "Off-Hand Weapon Training (Kusari)",
+        "Unusual Training (Dual-Weapon Attack, Both attacks must target the same foe)"
+      ],
+      "optional_traits": [],
+      "minimum_cost": 3,
+      "profile": "realistic",
+      "origin": "",
+      "period": "",
+      "original": {
+        "cost": "3 points"
+      }
+    },
+    {
+      "identifier": "martial-arts.179.kusarijutsu",
+      "source": "Martial Arts",
+      "page": "179",
+      "name": "Kusarijutsu",
+      "required_skills": [
+        "Kusari"
+      ],
+      "techniques": [
+        "Arm Lock (Kusari)",
+        "Back Strike (Kusari)",
+        "Choke Hold (Kusari)",
+        "Entangle (Kusari)",
+        "Return Strike (Kusari)",
+        "Targeted Attack (Kusari Swing/Arm)",
+        "Targeted Attack (Kusari Swing/Skull)",
+        "Targeted Attack (Kusari Thrust/Face)"
+      ],
+      "cinematic_skills": [
+        "Power Blow"
+      ],
+      "cinematic_techniques": [
+        "Binding",
+        "Dual-Weapon Attack (Kusari)"
+      ],
+      "perks": [
+        "Special Setup (Kusari Parry > Arm Lock)"
+      ],
+      "optional_traits": [],
+      "minimum_cost": 2,
+      "profile": "realistic",
+      "origin": "",
+      "period": "",
+      "original": {
+        "cost": "2 points"
+      }
+    },
+    {
+      "identifier": "martial-arts.171.kyokushin",
+      "source": "Martial Arts",
+      "page": "171",
+      "name": "Kyokushin",
+      "required_skills": [
+        "Karate",
+        "Karate Sport",
+        "Savoir-Faire (Dojo)"
+      ],
+      "techniques": [
+        "Aggressive Parry",
+        "Axe Kick",
+        "Back Kick",
+        "Elbow Strike",
+        "Exotic Hand Strike",
+        "Hammer Fist",
+        "Head Butt",
+        "Jump Kick",
+        "Kicking",
+        "Knee Strike",
+        "Spinning Kick",
+        "Stamp Kick"
+      ],
+      "cinematic_skills": [
+        "Breaking Blow",
+        "Immovable Stance",
+        "Kiai",
+        "Mental Strength",
+        "Power Blow",
+        "Pressure Points",
+        "Pressure Secrets"
+      ],
+      "cinematic_techniques": [
+        "Lethal Kick",
+        "Lethal Strike",
+        "Pressure- Point Strike"
+      ],
+      "perks": [
+        "Clinch(Karate)",
+        "IronHands",
+        "SpecialExercises(DR1 with Tough Skin)",
+        "Special Exercises (Striking ST +1)",
+        "Unusual Training (Breaking Blow, Only vs. well-braced objects out of combat)"
+      ],
+      "optional_traits": [],
+      "minimum_cost": 4,
+      "profile": "realistic",
+      "origin": "",
+      "period": "",
+      "original": {
+        "cost": "4 points"
+      }
+    },
+    {
+      "identifier": "martial-arts.181.kyudo",
+      "source": "Martial Arts",
+      "page": "181",
+      "name": "Kyudo",
+      "required_skills": [
+        "Bow Art",
+        "Meditation",
+        "Savoir-Faire (Dojo)"
+      ],
+      "techniques": [
+        "Low Fighting (Bow Art)"
+      ],
+      "cinematic_skills": [
+        "As Kyujutsu (pp. 179-180)"
+      ],
+      "cinematic_techniques": [],
+      "perks": [],
+      "optional_traits": [],
+      "minimum_cost": 4,
+      "profile": "realistic",
+      "origin": "",
+      "period": "",
+      "original": {
+        "cost": "4 points"
+      }
+    },
+    {
+      "identifier": "martial-arts.179.kyujutsu",
+      "source": "Martial Arts",
+      "page": "179",
+      "name": "Kyujutsu",
+      "required_skills": [
+        "Bow",
+        "Fast-Draw (Arrow)",
+        "Riding (Horse)"
+      ],
+      "techniques": [
+        "Combat Riding",
+        "Hands-Free Riding",
+        "Horse Archery",
+        "Targeted Attack (Bow Shot/Face)"
+      ],
+      "cinematic_skills": [
+        "Mental Strength",
+        "Pressure Points (Bow)",
+        "Zen Archery"
+      ],
+      "cinematic_techniques": [
+        "Pressure-Point Strike"
+      ],
+      "perks": [
+        "Strongbow",
+        "Technique Adaptation (Targeted Attack)"
+      ],
+      "optional_traits": [],
+      "minimum_cost": 4,
+      "profile": "realistic",
+      "origin": "",
+      "period": "",
+      "original": {
+        "cost": "4 points"
+      }
+    },
+    {
+      "identifier": "martial-arts.193.la-boxe-francaise",
+      "source": "Martial Arts",
+      "page": "193",
+      "name": "La Boxe Française",
+      "required_skills": [
+        "Games (La Boxe Française)",
+        "Karate Sport"
+      ],
+      "techniques": [
+        "BackKick",
+        "Feint(KarateSport)",
+        "JumpKick",
+        "Kicking"
+      ],
+      "cinematic_skills": [],
+      "cinematic_techniques": [],
+      "perks": [],
+      "optional_traits": [],
+      "minimum_cost": 3,
+      "profile": "realistic",
+      "origin": "",
+      "period": "",
+      "original": {
+        "cost": "3 points"
+      }
+    },
+    {
+      "identifier": "martial-arts.157.la-canne-de-combat",
+      "source": "Martial Arts",
+      "page": "157",
+      "name": "La Canne de Combat",
+      "required_skills": [
+        "Smallsword"
+      ],
+      "techniques": [
+        "Disarming (Smallsword)",
+        "Feint (Smallsword)"
+      ],
+      "cinematic_skills": [],
+      "cinematic_techniques": [],
+      "perks": [],
+      "optional_traits": [],
+      "minimum_cost": 2,
+      "profile": "realistic",
+      "origin": "",
+      "period": "",
+      "original": {
+        "cost": "2 points"
+      }
+    },
+    {
+      "identifier": "martial-arts.158.la-verdadera-destreza",
+      "source": "Martial Arts",
+      "page": "158",
+      "name": "La Verdadera Destreza",
+      "required_skills": [
+        "Expert Skill (Natural Philosophy)",
+        "Mathematics/TL2 (Pure)",
+        "Rapier"
+      ],
+      "techniques": [
+        "Bind Weapon (Rapier)",
+        "Counterattack (Rapier)",
+        "Disarming (Rapier)",
+        "Feint (Rapier)",
+        "Retain Weapon (Rapier)",
+        "Targeted Attack (Rapier Thrust/Face)",
+        "Targeted Attack (Rapier Thrust/Neck)",
+        "Targeted Attack (Rapier Thrust/Vitals)"
+      ],
+      "cinematic_skills": [
+        "Blind Fighting",
+        "Light Walk",
+        "Mental Strength",
+        "Precognitive Parry"
+      ],
+      "cinematic_techniques": [
+        "Dual-Weapon Attack (Rapier)",
+        "Dual-Weapon Defense (Rapier)",
+        "Initial Carving (Rapier)"
+      ],
+      "perks": [
+        "Chi Resistance (Kiai)",
+        "Off-Hand Weapon Training (Rapier)",
+        "Sure-Footed (Uneven)"
+      ],
+      "optional_traits": [],
+      "minimum_cost": 4,
+      "profile": "realistic",
+      "origin": "",
+      "period": "",
+      "original": {
+        "cost": "4 points"
+      }
+    },
+    {
+      "identifier": "martial-arts.177.late-medieval",
+      "source": "Martial Arts",
+      "page": "177",
+      "name": "Late Medieval",
+      "required_skills": [
+        "Judo",
+        "Lance",
+        "Riding (Horse)",
+        "and Polearm or Two- Handed Sword"
+      ],
+      "techniques": [
+        "Cavalry Training (Any)",
+        "Choke Hold (Polearm or Two-Handed Sword)",
+        "Combat Riding",
+        "Counterattack (Polearm or Two-Handed Sword)",
+        "Hook (Polearm)",
+        "Spinning Strike (Polearm or Two-Handed Sword)",
+        "Staying Seated",
+        "Sweep (Polearm)",
+        "Targeted Attack (Two-Handed Sword Swing/Neck)",
+        "Targeted Attack (Two- Handed Sword Thrust/Neck)",
+        "Targeted Attack (Two-Handed Sword Thrust/Vitals)",
+        "Targeted Attack (Two-Handed Sword Thrust/Vitals Chinks)"
+      ],
+      "cinematic_skills": [
+        "Kiai",
+        "Power Blow"
+      ],
+      "cinematic_techniques": [
+        "Timed Defense (Any)"
+      ],
+      "perks": [
+        "Armor Familiarity (Judo)",
+        "Grip Mastery (Polearm orTwo-HandedSword)",
+        "StyleAdaptation(PollaxeFighting)"
+      ],
+      "optional_traits": [],
+      "minimum_cost": 5,
+      "profile": "realistic",
+      "origin": "",
+      "period": "",
+      "original": {
+        "cost": "5 points"
+      }
+    },
+    {
+      "identifier": "martial-arts.186.lethwei",
+      "source": "Martial Arts",
+      "page": "186",
+      "name": "Lethwei",
+      "required_skills": [
+        "As Muay Thai, but add Judo and change Games specialty to Lethwei"
+      ],
+      "techniques": [
+        "As Muay Thai, plus Head Butt"
+      ],
+      "cinematic_skills": [],
+      "cinematic_techniques": [],
+      "perks": [
+        "As Muay Thai, plus Iron Hands"
+      ],
+      "optional_traits": [],
+      "minimum_cost": 4,
+      "profile": "realistic",
+      "origin": "",
+      "period": "",
+      "original": {
+        "cost": "4 points"
+      }
+    },
+    {
+      "identifier": "martial-arts.183.martial-arts-program",
+      "source": "Martial Arts",
+      "page": "183",
+      "name": "Martial Arts Program)",
+      "required_skills": [
+        "Brawling",
+        "Judo"
+      ],
+      "techniques": [
+        "Disarming (Judo)",
+        "Elbow Strike",
+        "Knee Strike",
+        "Stamp Kick",
+        "Targeted Attack (Stamp Kick/Face)",
+        "Targeted Attack (Stamp Kick/Skull)"
+      ],
+      "cinematic_skills": [],
+      "cinematic_techniques": [],
+      "perks": [
+        "Improvised Weapons (Brawling)"
+      ],
+      "optional_traits": [],
+      "minimum_cost": 3,
+      "profile": "realistic",
+      "origin": "",
+      "period": "",
+      "original": {
+        "cost": "3 points"
+      }
+    },
+    {
+      "identifier": "martial-arts.185.muay-thai",
+      "source": "Martial Arts",
+      "page": "185",
+      "name": "Muay Thai",
+      "required_skills": [
+        "Games (Muay Thai)",
+        "Karate"
+      ],
+      "techniques": [
+        "Counterattack (Karate)",
+        "Elbow Strike",
+        "Jam",
+        "Kicking",
+        "Knee Strike",
+        "Leg Grapple (DX)",
+        "Push Kick",
+        "Spinning Kick",
+        "Spinning Punch",
+        "Sweep (Karate)",
+        "Targeted Attack (Karate Kick/Leg)",
+        "Uppercut"
+      ],
+      "cinematic_skills": [
+        "Power Blow"
+      ],
+      "cinematic_techniques": [
+        "Roll with Blow"
+      ],
+      "perks": [
+        "Clinch (Karate)",
+        "Iron Legs",
+        "Neck Control (Karate)",
+        "Special Exercises (Striker, Crushing with Limb, Shin)",
+        "Technique Mastery (Knee Strike)"
+      ],
+      "optional_traits": [],
+      "minimum_cost": 3,
+      "profile": "realistic",
+      "origin": "",
+      "period": "",
+      "original": {
+        "cost": "3 points"
+      }
+    },
+    {
+      "identifier": "martial-arts.187.naginatado-or-atarashii-naginata",
+      "source": "Martial Arts",
+      "page": "187",
+      "name": "Naginatado (or Atarashii Naginata)",
+      "required_skills": [
+        "Polearm Sport",
+        "Savoir-Faire (Dojo)",
+        "Staff Sport. Techniques and"
+      ],
+      "techniques": [
+        "Arm Lock",
+        "Exotic Hand Strike",
+        "Hammer Fist"
+      ],
+      "cinematic_skills": [
+        "Hypnotic Hands",
+        "Immovable Stance",
+        "Mental Strength",
+        "Power Blow",
+        "Push",
+        "Pressure Points",
+        "Pressure Secrets"
+      ],
+      "cinematic_techniques": [
+        "Roll with Blow"
+      ],
+      "perks": [
+        "As Naginatajutsu. Polearm Fighting"
+      ],
+      "optional_traits": [],
+      "minimum_cost": 4,
+      "profile": "realistic",
+      "origin": "",
+      "period": "",
+      "original": {
+        "cost": "4 points"
+      }
+    },
+    {
+      "identifier": "martial-arts.186.naginatajutsu",
+      "source": "Martial Arts",
+      "page": "186",
+      "name": "Naginatajutsu",
+      "required_skills": [
+        "Polearm",
+        "Staff"
+      ],
+      "techniques": [
+        "Back Strike (Staff)",
+        "Disarming (Staff)",
+        "Feint (Polearm or Staff)",
+        "Retain Weapon (Polearm)",
+        "Sweep (Polearm or Staff)",
+        "Targeted Attack (Polearm Swing/Face)",
+        "Targeted Attack (Polearm Swing/Leg)"
+      ],
+      "cinematic_skills": [
+        "Kiai",
+        "Mental Strength",
+        "Power Blow"
+      ],
+      "cinematic_techniques": [
+        "Dual-Weapon Defense (Polearm or Staff)",
+        "Whirlwind Attack (Polearm or Staff)"
+      ],
+      "perks": [
+        "FormMastery(Naginata)",
+        "GripMastery(Naginata)"
+      ],
+      "optional_traits": [],
+      "minimum_cost": 3,
+      "profile": "realistic",
+      "origin": "",
+      "period": "",
+      "original": {
+        "cost": "3 points"
+      }
+    },
+    {
+      "identifier": "martial-arts.174.nito-ryu",
+      "source": "Martial Arts",
+      "page": "174",
+      "name": "Nito Ryu",
+      "required_skills": [
+        "Broadsword",
+        "Shortsword"
+      ],
+      "techniques": [
+        "Counterattack (Broadsword or Shortsword)",
+        "Feint (Broadsword or Shortsword)",
+        "Targeted Attack (Broadsword or Shortsword Swing/Arm)",
+        "Targeted Attack (Broadsword or Shortsword Swing/Neck)",
+        "Targeted Attack (Broadsword or Shortsword Swing/Skull)",
+        "Targeted Attack (Broadsword or Shortsword Thrust/Neck)",
+        "Targeted Attack (Broadsword or Shortsword Thrust/Vitals)"
+      ],
+      "cinematic_skills": [
+        "Mental Strength",
+        "Power Blow. Cinematic"
+      ],
+      "cinematic_techniques": [],
+      "perks": [
+        "Off-Hand Weapon Training (Shortsword)",
+        "Unusual Training (Dual-Weapon Attack, Both attacks must target the same foe)"
+      ],
+      "optional_traits": [],
+      "minimum_cost": 3,
+      "profile": "realistic",
+      "origin": "",
+      "period": "",
+      "original": {
+        "cost": "3 points"
+      }
+    },
+    {
+      "identifier": "martial-arts.188.pak-hok",
+      "source": "Martial Arts",
+      "page": "188",
+      "name": "Pak Hok",
+      "required_skills": [
+        "Karate",
+        "Philosophy (Buddhism)"
+      ],
+      "techniques": [
+        "Counterattack (Karate)",
+        "Exotic Hand Strike",
+        "Feint (Karate)",
+        "Hammer Fist",
+        "Kicking",
+        "Sweep (Karate)",
+        "Targeted Attack (Karate Hammer Fist/Face)",
+        "Uppercut"
+      ],
+      "cinematic_skills": [
+        "Power Blow",
+        "Pressure Points"
+      ],
+      "cinematic_techniques": [
+        "Eye-Pluck",
+        "Lethal Kick",
+        "Lethal Strike",
+        "Pressure-Point Strike"
+      ],
+      "perks": [
+        "Special Setup (No Hands > Karate Parry), allows parries with the body instead of the hands, with each replacing a hand parry",
+        "Technique Adaptation (Counterattack)"
+      ],
+      "optional_traits": [],
+      "minimum_cost": 3,
+      "profile": "realistic",
+      "origin": "",
+      "period": "",
+      "original": {
+        "cost": "3 points"
+      }
+    },
+    {
+      "identifier": "martial-arts.188.pankration",
+      "source": "Martial Arts",
+      "page": "188",
+      "name": "Pankration",
+      "required_skills": [
+        "Games (Pankration)",
+        "Judo",
+        "Karate",
+        "Wrestling"
+      ],
+      "techniques": [
+        "ArmLock",
+        "ElbowStrike",
+        "ExoticHandStrike",
+        "Ground Fighting (Judo or Wrestling)",
+        "Hammer Fist",
+        "Kicking",
+        "Knee Strike",
+        "Leg Grapple",
+        "Low Fighting (Wrestling)",
+        "Stamp Kick",
+        "Wrench (Limb)"
+      ],
+      "cinematic_skills": [
+        "Immovable Stance",
+        "Power Blow"
+      ],
+      "cinematic_techniques": [
+        "Backbreaker",
+        "Lethal Strike",
+        "Roll with Blow"
+      ],
+      "perks": [
+        "Iron Hands",
+        "Neck Control (Karate)",
+        "Sure-Footed (Slippery)",
+        "Sure-Footed (Uneven)"
+      ],
+      "optional_traits": [],
+      "minimum_cost": 5,
+      "profile": "realistic",
+      "origin": "",
+      "period": "",
+      "original": {
+        "cost": "5 points"
+      }
+    },
+    {
+      "identifier": "martial-arts.191.pollaxe-fighting",
+      "source": "Martial Arts",
+      "page": "191",
+      "name": "Pollaxe Fighting",
+      "required_skills": [
+        "Brawling",
+        "Games (Knightly Combat)",
+        "Polearm"
+      ],
+      "techniques": [
+        "Disarming (Polearm)",
+        "Feint (Polearm)",
+        "Hook (Polearm)",
+        "Knee Strike",
+        "Retain Weapon (Polearm)",
+        "Stamp Kick",
+        "Sweep (Polearm)"
+      ],
+      "cinematic_skills": [
+        "Power Blow"
+      ],
+      "cinematic_techniques": [],
+      "perks": [
+        "Grip Mastery (Dueling Halberd)",
+        "Unique Technique (Powder Spill)"
+      ],
+      "optional_traits": [],
+      "minimum_cost": 4,
+      "profile": "realistic",
+      "origin": "",
+      "period": "",
+      "original": {
+        "cost": "4 points"
+      }
+    },
+    {
+      "identifier": "martial-arts.191.praying-mantis-kung-fu",
+      "source": "Martial Arts",
+      "page": "191",
+      "name": "Praying Mantis Kung Fu",
+      "required_skills": [
+        "Judo",
+        "Karate",
+        "Karate Art"
+      ],
+      "techniques": [
+        "Arm Lock",
+        "Counterattack (Karate)",
+        "Ear Clap",
+        "Exotic Hand Strike",
+        "Eye-Poke",
+        "Hammer Fist",
+        "Kicking",
+        "Knee Strike",
+        "Targeted Attack (Judo Grapple/Arm)"
+      ],
+      "cinematic_skills": [
+        "Hypnotic Hands",
+        "Light Walk",
+        "Power Blow",
+        "Pressure Points",
+        "Pressure Secrets",
+        "Sensitivity"
+      ],
+      "cinematic_techniques": [
+        "Lethal Eye-Poke",
+        "Lethal Strike",
+        "Pressure-Point Strike",
+        "Roll with Blow"
+      ],
+      "perks": [
+        "Chi Resistance (Hypnotic Hands)",
+        "Iron Hands",
+        "Special Setup (Karate Parry > Arm Lock)",
+        "Style Adaptation (Varies)"
+      ],
+      "optional_traits": [],
+      "minimum_cost": 4,
+      "profile": "realistic",
+      "origin": "",
+      "period": "",
+      "original": {
+        "cost": "4 points"
+      }
+    },
+    {
+      "identifier": "martial-arts.206.professional-wrestling",
+      "source": "Martial Arts",
+      "page": "206",
+      "name": "Professional Wrestling",
+      "required_skills": [
+        "Brawling Art",
+        "Wrestling Art",
+        "Wrestling Sport"
+      ],
+      "techniques": [
+        "Breakfall",
+        "Choke Hold",
+        "Drop Kick",
+        "Elbow Drop",
+        "Head Butt",
+        "Stamp Kick",
+        "Wrench (Limb)"
+      ],
+      "cinematic_skills": [
+        "Breaking Blow",
+        "Power Blow"
+      ],
+      "cinematic_techniques": [
+        "Backbreaker",
+        "Hand Catch",
+        "Piledriver",
+        "Roll with Blow",
+        "Springing Attack (Brawling Art)"
+      ],
+      "perks": [
+        "Shtick (Varies)",
+        "Skill Adaptation (Varies)",
+        "Special Exercises (DR 1 with Tough Skin)",
+        "Unusual Training (Roll withBlow,Onlyonthespring-loadedringfloororagainstthe ropes)"
+      ],
+      "optional_traits": [],
+      "minimum_cost": 4,
+      "profile": "realistic",
+      "origin": "",
+      "period": "",
+      "original": {
+        "cost": "4 points"
+      }
+    },
+    {
+      "identifier": "martial-arts.160.saber",
+      "source": "Martial Arts",
+      "page": "160",
+      "name": "Saber",
+      "required_skills": [
+        "Games (Saber Fencing)",
+        "Saber Sport"
+      ],
+      "techniques": [
+        "Counterattack (Saber Sport)",
+        "Feint (Saber Sport)"
+      ],
+      "cinematic_skills": [],
+      "cinematic_techniques": [],
+      "perks": [],
+      "optional_traits": [],
+      "minimum_cost": 3,
+      "profile": "realistic",
+      "origin": "",
+      "period": "",
+      "original": {
+        "cost": "3 points"
+      }
+    },
+    {
+      "identifier": "martial-arts.185.sambo",
+      "source": "Martial Arts",
+      "page": "185",
+      "name": "Sambo",
+      "required_skills": [
+        "Judo",
+        "Karate",
+        "Wrestling"
+      ],
+      "techniques": [
+        "Arm Lock",
+        "Choke Hold",
+        "Disarming (Judo)",
+        "Elbow Strike",
+        "Ground Fighting (Wrestling)",
+        "Head Lock",
+        "Leg Lock",
+        "Leg Throw",
+        "Lower-Body Arm Lock",
+        "Lower-Body Head Lock",
+        "Lower-Body Leg Lock",
+        "Stamp Kick",
+        "Triangle Choke",
+        "Wrench (Limb)"
+      ],
+      "cinematic_skills": [
+        "Immovable Stance",
+        "Mental Strength",
+        "Power Blow"
+      ],
+      "cinematic_techniques": [
+        "Backbreaker",
+        "Piledriver"
+      ],
+      "perks": [
+        "Iron Legs",
+        "Power Grappling",
+        "Special Exercises (Striking ST +1)",
+        "Technique Adaptation (Ground Fighting)"
+      ],
+      "optional_traits": [],
+      "minimum_cost": 4,
+      "profile": "realistic",
+      "origin": "",
+      "period": "",
+      "original": {
+        "cost": "4 points"
+      }
+    },
+    {
+      "identifier": "martial-arts.160.schlager",
+      "source": "Martial Arts",
+      "page": "160",
+      "name": "Schläger",
+      "required_skills": [
+        "Broadsword Sport",
+        "Games (Schläger Fencing)"
+      ],
+      "techniques": [
+        "Feint (Broadsword Sport)",
+        "Targeted Attack (Broadsword Cut/Face)"
+      ],
+      "cinematic_skills": [],
+      "cinematic_techniques": [],
+      "perks": [],
+      "optional_traits": [],
+      "minimum_cost": 3,
+      "profile": "realistic",
+      "origin": "",
+      "period": "",
+      "original": {
+        "cost": "3 points"
+      }
+    },
+    {
+      "identifier": "martial-arts.194.shaolin-kung-fu",
+      "source": "Martial Arts",
+      "page": "194",
+      "name": "Shaolin Kung Fu",
+      "required_skills": [
+        "Judo",
+        "Karate",
+        "Meditation",
+        "Philosophy(Buddhism)",
+        "Staff"
+      ],
+      "techniques": [
+        "Arm Lock (Judo or Staff)",
+        "Armed Grapple (Staff)",
+        "Back Kick",
+        "Choke Hold (Staff)",
+        "Disarming (Staff)",
+        "Elbow Strike",
+        "Exotic Hand Strike",
+        "Feint (Karate or Staff)",
+        "HammerFist",
+        "JumpKick",
+        "Kicking",
+        "SpinningKick",
+        "Spinning Punch",
+        "Spinning Strike (Staff)",
+        "Stamp Kick",
+        "Sweep (Judo or Karate)"
+      ],
+      "cinematic_skills": [
+        "Blind Fighting",
+        "Body Control",
+        "Breaking Blow",
+        "Flying Leap",
+        "Hypnotic Hands",
+        "Immovable Stance",
+        "Kiai",
+        "Light Walk",
+        "Lizard Climb",
+        "Mental Strength",
+        "Power Blow",
+        "Pressure Points",
+        "Pressure Secrets",
+        "Push",
+        "Sensitivity"
+      ],
+      "cinematic_techniques": [
+        "Dual-Weapon Defense (Staff)",
+        "Fighting While Seated (Karate)",
+        "Flying Jump Kick",
+        "Grand Disarm(JudoorStaff)",
+        "LethalEye-Poke",
+        "LethalKick",
+        "Lethal Strike",
+        "Pole-Vault Kick",
+        "Pressure-Point Strike",
+        "Roll with Blow",
+        "Timed Defense",
+        "Whirlwind Attack (Karate or Staff)"
+      ],
+      "perks": [
+        "Chi Resistance (Any)",
+        "Cotton Stomach",
+        "Drunken Fighting",
+        "Iron Body Parts (Any)",
+        "Special Exercises (DR 1 with Tough Skin)",
+        "Special Exercises (Striking ST +1)",
+        "Style Adaptation (Any Chinese style)",
+        "Technique Mastery (Any kicking technique)"
+      ],
+      "optional_traits": [],
+      "minimum_cost": 6,
+      "profile": "realistic",
+      "origin": "",
+      "period": "",
+      "original": {
+        "cost": "6 points"
+      }
+    },
+    {
+      "identifier": "martial-arts.195.shortsword-fighting",
+      "source": "Martial Arts",
+      "page": "195",
+      "name": "Shortsword Fighting",
+      "required_skills": [
+        "Brawling",
+        "Judo",
+        "Shortsword"
+      ],
+      "techniques": [
+        "Arm Lock",
+        "Armed Grapple (Shortsword)",
+        "Bind Weapon (Shortsword)",
+        "Close Combat (Shortsword)",
+        "Disarming (Judo)",
+        "Eye- Gouging",
+        "Eye-Poke",
+        "Feint (Shortsword)",
+        "Ground Fighting (Shortsword)",
+        "Low Fighting (Shortsword)",
+        "Targeted Attack (Shortsword Swing/Arm)",
+        "Targeted Attack (Shortsword Swing/Neck)",
+        "Targeted Attack (Shortsword Thrust/Vitals)"
+      ],
+      "cinematic_skills": [],
+      "cinematic_techniques": [
+        "Dual-Weapon Attack (Shortsword)",
+        "Fighting While Seated (Shortsword)"
+      ],
+      "perks": [
+        "Grip Mastery (Shortsword)",
+        "Off-Hand Weapon Training (Shortsword)",
+        "Quick-Swap (Shortsword)",
+        "Skill Adaptation (Bind Weapon defaults to Shortsword)"
+      ],
+      "optional_traits": [],
+      "minimum_cost": 4,
+      "profile": "realistic",
+      "origin": "",
+      "period": "",
+      "original": {
+        "cost": "4 points"
+      }
+    },
+    {
+      "identifier": "martial-arts.170.shotokan",
+      "source": "Martial Arts",
+      "page": "170",
+      "name": "Shotokan",
+      "required_skills": [
+        "Karate",
+        "Karate Art",
+        "Savoir-Faire (Dojo)"
+      ],
+      "techniques": [
+        "Back Kick",
+        "Elbow Strike",
+        "Exotic Hand Strike",
+        "Feint (Karate)",
+        "Hammer Fist",
+        "Jump Kick",
+        "Kicking",
+        "Knee Strike",
+        "Spinning Kick",
+        "Stamp Kick"
+      ],
+      "cinematic_skills": [
+        "Breaking Blow",
+        "Immovable Stance",
+        "Kiai",
+        "Mental Strength",
+        "Pressure Points",
+        "Pressure Secrets"
+      ],
+      "cinematic_techniques": [
+        "Lethal Kick",
+        "Lethal Strike",
+        "Pressure-Point Strike"
+      ],
+      "perks": [
+        "Clinch (Karate)",
+        "Technique Adaptation (Feint)",
+        "Unusual Training (Breaking Blow, Only vs. well-braced objects out of combat)"
+      ],
+      "optional_traits": [],
+      "minimum_cost": 4,
+      "profile": "realistic",
+      "origin": "",
+      "period": "",
+      "original": {
+        "cost": "4 points"
+      }
+    },
+    {
+      "identifier": "martial-arts.210.smasha",
+      "source": "Martial Arts",
+      "page": "210",
+      "name": "Smasha",
+      "required_skills": [
+        "Boxing",
+        "Brawling",
+        "Wrestling"
+      ],
+      "techniques": [
+        "Aggressive Parry (Brawling)",
+        "Arm Lock",
+        "Choke Hold",
+        "Eye-Gouging",
+        "Eye-Poke",
+        "Eye-Rake",
+        "Head Butt",
+        "Kicking",
+        "Neck Snap",
+        "Stamp Kick",
+        "Targeted Attack (Boxing Punch/Neck)",
+        "Targeted Attack (Boxing Punch/Skull)",
+        "Targeted Attack (Brawling Kick/Groin)",
+        "Targeted Attack (Brawling Stamp Kick/Neck)",
+        "Targeted Attack (Brawling Two-Handed Punch/Neck)",
+        "Two-Handed Punch"
+      ],
+      "cinematic_skills": [
+        "Kiai",
+        "Power Blow",
+        "Pressure Points",
+        "Pressure Secrets"
+      ],
+      "cinematic_techniques": [
+        "Eye-Pluck",
+        "Pressure-Point Strike",
+        "Roll with Blow"
+      ],
+      "perks": [
+        "Clinch (Boxing or Brawling)",
+        "Iron Hands",
+        "Neck Control (Boxing or Brawling)",
+        "Special Exercises (DR 1 with Tough Skin)",
+        "Special Exercises (Striking ST +1)",
+        "Technique Adaptation (Aggressive Parry)"
+      ],
+      "optional_traits": [],
+      "minimum_cost": 4,
+      "profile": "cinematic",
+      "origin": "",
+      "period": "",
+      "original": {
+        "cost": "4 points"
+      }
+    },
+    {
+      "identifier": "martial-arts.192.sport-quarterstaff",
+      "source": "Martial Arts",
+      "page": "192",
+      "name": "Sport Quarterstaff",
+      "required_skills": [
+        "Staff Sport"
+      ],
+      "techniques": [
+        "Feint (Staff Sport)"
+      ],
+      "cinematic_skills": [],
+      "cinematic_techniques": [],
+      "perks": [],
+      "optional_traits": [],
+      "minimum_cost": 2,
+      "profile": "realistic",
+      "origin": "",
+      "period": "",
+      "original": {
+        "cost": "2 points"
+      }
+    },
+    {
+      "identifier": "martial-arts.205.submission-wrestling",
+      "source": "Martial Arts",
+      "page": "205",
+      "name": "Submission Wrestling",
+      "required_skills": [
+        "Games (Submission Wrestling)",
+        "Wrestling"
+      ],
+      "techniques": [
+        "Arm Lock",
+        "Choke Hold",
+        "Ground Fighting (Wrestling)",
+        "Leg Lock",
+        "Low Fighting (Wrestling)",
+        "Lower-Body Arm Lock",
+        "Lower-Body Leg Lock",
+        "Triangle Choke",
+        "Trip"
+      ],
+      "cinematic_skills": [],
+      "cinematic_techniques": [],
+      "perks": [
+        "PowerGrappling",
+        "SpecialExercises(Lifting ST +1)",
+        "Technique Adaptation (Ground Fighting)"
+      ],
+      "optional_traits": [],
+      "minimum_cost": 3,
+      "profile": "realistic",
+      "origin": "",
+      "period": "",
+      "original": {
+        "cost": "3 points"
+      }
+    },
+    {
+      "identifier": "martial-arts.198.sumo",
+      "source": "Martial Arts",
+      "page": "198",
+      "name": "Sumo",
+      "required_skills": [
+        "Games (Sumo)",
+        "Savoir-Faire (Dojo)",
+        "Sumo Wrestling"
+      ],
+      "techniques": [
+        "Feint (Sumo Wrestling)",
+        "Sweep (Sumo Wrestling)",
+        "Trip"
+      ],
+      "cinematic_skills": [
+        "Immovable Stance",
+        "Power Blow. Cinematic"
+      ],
+      "cinematic_techniques": [],
+      "perks": [
+        "Power Grappling",
+        "Special Exercises (DR 1 with Partial, Skull and Tough Skin)",
+        "Special Exercises (HP can exceed ST by 100%)"
+      ],
+      "optional_traits": [],
+      "minimum_cost": 4,
+      "profile": "realistic",
+      "origin": "",
+      "period": "",
+      "original": {
+        "cost": "4 points"
+      }
+    },
+    {
+      "identifier": "martial-arts.199.sword-and-buckler-play",
+      "source": "Martial Arts",
+      "page": "199",
+      "name": "Sword-And-Buckler Play",
+      "required_skills": [
+        "Brawling",
+        "Broadsword",
+        "Shield (Buckler)",
+        "Wrestling"
+      ],
+      "techniques": [
+        "Arm Lock",
+        "Armed Grapple (Buckler)",
+        "Bind Weapon (Broadsword)",
+        "Counterattack (Broadsword)",
+        "Disarming (Broadsword)",
+        "Feint (Broadsword or Buckler)",
+        "Kicking",
+        "Retain Weapon (Broadsword or Buckler)",
+        "Trip"
+      ],
+      "cinematic_skills": [],
+      "cinematic_techniques": [
+        "Dual-Weapon Attack (Broadsword orBuckler)",
+        "Dual-WeaponDefense(BroadswordorBuckler)"
+      ],
+      "perks": [
+        "Skill Adaptation (Bind Weapon defaults to Broadsword)",
+        "Special Setup (Brawling Parry > Arm Lock)",
+        "Sure-footed (Uneven)"
+      ],
+      "optional_traits": [],
+      "minimum_cost": 5,
+      "profile": "realistic",
+      "origin": "",
+      "period": "",
+      "original": {
+        "cost": "5 points"
+      }
+    },
+    {
+      "identifier": "martial-arts.200.tae-kwon-do",
+      "source": "Martial Arts",
+      "page": "200",
+      "name": "Tae Kwon Do",
+      "required_skills": [
+        "Jumping",
+        "Karate",
+        "KarateSport",
+        "Savoir-Faire(Dojo)"
+      ],
+      "techniques": [
+        "Axe Kick",
+        "Back Kick",
+        "Elbow Strike",
+        "Exotic Hand Strike",
+        "Jump Kick",
+        "Kicking",
+        "Spinning Kick",
+        "Spinning Punch",
+        "Sweep (Karate). Cinematic"
+      ],
+      "cinematic_skills": [],
+      "cinematic_techniques": [
+        "Flying Jump Kick"
+      ],
+      "perks": [
+        "Rapid Retraction (Kicks)",
+        "Technique Mastery (Any kicking technique)",
+        "Unusual Training (Breaking Blow, Only vs. well-braced objects out of combat)"
+      ],
+      "optional_traits": [],
+      "minimum_cost": 5,
+      "profile": "realistic",
+      "origin": "",
+      "period": "",
+      "original": {
+        "cost": "5 points"
+      }
+    },
+    {
+      "identifier": "martial-arts.201.taihojutsu",
+      "source": "Martial Arts",
+      "page": "201",
+      "name": "Taihojutsu",
+      "required_skills": [
+        "Jitte/Sai",
+        "Judo",
+        "Knot-Tying",
+        "Kusari",
+        "Staff"
+      ],
+      "techniques": [
+        "BindWeapon(Jitte/Sai)",
+        "Disarming(Jitte/Sai or Kusari)",
+        "Entangle (Kusari)",
+        "Hook (Staff)",
+        "Targeted Attack (Jitte/Sai Swing/Arm)",
+        "Targeted Attack (Kusari Swing/Arm)"
+      ],
+      "cinematic_skills": [
+        "Mental Strength",
+        "Pressure Points"
+      ],
+      "cinematic_techniques": [
+        "Binding",
+        "Pressure-Point Strike",
+        "Snap Weapon (Jitte/Sai)"
+      ],
+      "perks": [
+        "Form Mastery (Kusarijutte)",
+        "Style Adaptation (Kusarijutsu)",
+        "Teamwork (Taihojutsu)",
+        "Technique Adaptation (Disarming)"
+      ],
+      "optional_traits": [],
+      "minimum_cost": 6,
+      "profile": "realistic",
+      "origin": "",
+      "period": "",
+      "original": {
+        "cost": "6 points"
+      }
+    },
+    {
+      "identifier": "martial-arts.202.taijutsu",
+      "source": "Martial Arts",
+      "page": "202",
+      "name": "Taijutsu",
+      "required_skills": [
+        "Acrobatics",
+        "Judo",
+        "Karate",
+        "Karate Art",
+        "Savoir-Faire (Dojo)"
+      ],
+      "techniques": [
+        "Acrobatic Stand",
+        "Arm Lock",
+        "Breakfall (Acrobatics or Judo)",
+        "Choke Hold",
+        "Ear Clap",
+        "Elbow Strike",
+        "Evade (Acrobatics or Judo)",
+        "Exotic Hand Strike",
+        "Eye-Poke",
+        "Feint (Karate)",
+        "Kicking",
+        "Knee Strike",
+        "Targeted Attack (Karate Exotic Hand Strike/Neck)",
+        "Targeted Attack (Karate Kick/Groin)",
+        "Targeted Attack (Karate Punch/Neck)"
+      ],
+      "cinematic_skills": [
+        "Blind Fighting",
+        "Body Control",
+        "Breaking Blow",
+        "Flying Leap",
+        "Hypnotic Hands",
+        "Invisibility Art",
+        "Light Walk",
+        "Lizard Climb",
+        "Mental Strength",
+        "Power Blow",
+        "Pressure Points",
+        "Pressure Secrets",
+        "Sensitivity",
+        "Throwing Art"
+      ],
+      "cinematic_techniques": [
+        "Eye-Pluck",
+        "Hand-Clap Parry",
+        "Lethal Eye-Poke",
+        "Lethal Kick",
+        "Lethal Strike",
+        "Pressure-Point Strike",
+        "Roll with Blow",
+        "Timed Defense"
+      ],
+      "perks": [
+        "Acrobatic Feints",
+        "Improvised Weapons (Any)",
+        "Style Adaptation (Any Japanese armed style)",
+        "Technique Adaptation (Feint)",
+        "Unusual Training (Sensitivity, Only while at least one hand is in physical contact with the oppo- nent)"
+      ],
+      "optional_traits": [],
+      "minimum_cost": 6,
+      "profile": "realistic",
+      "origin": "",
+      "period": "",
+      "original": {
+        "cost": "6 points"
+      }
+    },
+    {
+      "identifier": "martial-arts.190.tapak-sutji-pentjak-silat",
+      "source": "Martial Arts",
+      "page": "190",
+      "name": "Tapak Sutji Pentjak Silat",
+      "required_skills": [
+        "Judo",
+        "Karate",
+        "Knife",
+        "Shortsword",
+        "Two-Handed Sword"
+      ],
+      "techniques": [
+        "Arm Lock",
+        "Breakfall",
+        "Counterattack (Karate, Knife, or Shortsword)",
+        "Exotic Hand Strike",
+        "Feint (Karate, Knife, Shortsword, or Two-Handed sword)",
+        "Jump Kick",
+        "Kicking",
+        "Low Fighting (Judo, Karate, Knife, or Shortsword)",
+        "Sweep (Judo or Karate)",
+        "Targeted Attack (Karate Kick/Leg)",
+        "Targeted Attack (Karate Punch/Arm)",
+        "Trip. Cinematic"
+      ],
+      "cinematic_skills": [],
+      "cinematic_techniques": [
+        "Springing Attack (Karate)"
+      ],
+      "perks": [
+        "Sure-Footed(Uneven)",
+        "TechniqueAdaptation(Low Fighting)"
+      ],
+      "optional_traits": [],
+      "minimum_cost": 6,
+      "profile": "realistic",
+      "origin": "",
+      "period": "",
+      "original": {
+        "cost": "6 points"
+      }
+    },
+    {
+      "identifier": "martial-arts.169.te",
+      "source": "Martial Arts",
+      "page": "169",
+      "name": "Te",
+      "required_skills": [
+        "Judo",
+        "Karate"
+      ],
+      "techniques": [
+        "Aggressive Parry",
+        "Back Kick",
+        "Counterattack (Karate)",
+        "Elbow Strike",
+        "Exotic Hand Strike",
+        "Hammer Fist",
+        "Kicking",
+        "Knee Strike",
+        "Leg Grapple",
+        "Sweep (Karate)",
+        "Targeted Attack (Karate Exotic Hand Strike/Vitals)",
+        "Targeted Attack (Karate Kick/Vitals)",
+        "Targeted Attack (Karate Punch/Neck)"
+      ],
+      "cinematic_skills": [
+        "Breaking Blow",
+        "Immovable Stance",
+        "Kiai",
+        "Mental Strength",
+        "Power Blow",
+        "Pressure Points",
+        "Pressure Secrets"
+      ],
+      "cinematic_techniques": [
+        "Dual-Weapon Attack (Karate)",
+        "Lethal Kick",
+        "Lethal Strike",
+        "Pressure-Point Strike",
+        "Targeted Attack (Lethal Kick/Vitals)",
+        "Targeted Attack (Lethal Strike/Vitals)"
+      ],
+      "perks": [
+        "Iron Body Parts (Any)",
+        "Special Exercises (Striking ST +1)",
+        "Unusual Training (Breaking Blow, Only vs. well- braced objects out of combat)"
+      ],
+      "optional_traits": [],
+      "minimum_cost": 3,
+      "profile": "realistic",
+      "origin": "",
+      "period": "",
+      "original": {
+        "cost": "3 points"
+      }
+    },
+    {
+      "identifier": "martial-arts.158.transitional-french-school",
+      "source": "Martial Arts",
+      "page": "158",
+      "name": "Transitional French School",
+      "required_skills": [
+        "Games (Sport Rapier)",
+        "Rapier",
+        "Rapier Art"
+      ],
+      "techniques": [
+        "Bind Weapon (Rapier)",
+        "Close Combat (Rapier)",
+        "Counterattack (Rapier)",
+        "Disarming (Rapier)",
+        "Feint (Rapier)",
+        "Retain Weapon (Rapier). 158 STYLES What noise is this? Give me my long sword, ho! – Capulet, Romeo and Juliet"
+      ],
+      "cinematic_skills": [
+        "Flying Leap"
+      ],
+      "cinematic_techniques": [
+        "Flying Lunge (Rapier)",
+        "Initial Carving (Rapier)"
+      ],
+      "perks": [],
+      "optional_traits": [],
+      "minimum_cost": 4,
+      "profile": "realistic",
+      "origin": "",
+      "period": "",
+      "original": {
+        "cost": "4 points"
+      }
+    },
+    {
+      "identifier": "martial-arts.201.tai-chi",
+      "source": "Martial Arts",
+      "page": "201",
+      "name": "T’ai Chi",
+      "required_skills": [
+        "Judo Art"
+      ],
+      "techniques": [
+        "Roll with Blow"
+      ],
+      "cinematic_skills": [
+        "Immovable Stance",
+        "Push"
+      ],
+      "cinematic_techniques": [
+        "Roll with Blow"
+      ],
+      "perks": [],
+      "optional_traits": [],
+      "minimum_cost": 2,
+      "profile": "realistic",
+      "origin": "",
+      "period": "",
+      "original": {
+        "cost": "2 points"
+      }
+    },
+    {
+      "identifier": "martial-arts.200.tai-chi-chuan",
+      "source": "Martial Arts",
+      "page": "200",
+      "name": "T’Ai Chi Chuan",
+      "required_skills": [
+        "Breath Control",
+        "Judo",
+        "Judo Art",
+        "Karate",
+        "Sumo Wrestling"
+      ],
+      "techniques": [
+        "Arm Lock",
+        "Hammer Fist",
+        "Sweep (Judo, Karate, or Sumo Wrestling)"
+      ],
+      "cinematic_skills": [
+        "Immovable Stance",
+        "Mental Strength",
+        "Pressure Points",
+        "Pressure Secrets",
+        "Push"
+      ],
+      "cinematic_techniques": [
+        "Pressure-Point Strike",
+        "Roll with Blow"
+      ],
+      "perks": [
+        "Unusual Training (Push, May not step or move while doing so)"
+      ],
+      "optional_traits": [],
+      "minimum_cost": 6,
+      "profile": "realistic",
+      "origin": "",
+      "period": "",
+      "original": {
+        "cost": "6 points"
+      }
+    },
+    {
+      "identifier": "martial-arts.157.victorian-singlestick",
+      "source": "Martial Arts",
+      "page": "157",
+      "name": "Victorian Singlestick",
+      "required_skills": [
+        "Broadsword Sport"
+      ],
+      "techniques": [
+        "Feint (Broadsword Sport)"
+      ],
+      "cinematic_skills": [],
+      "cinematic_techniques": [],
+      "perks": [],
+      "optional_traits": [],
+      "minimum_cost": 2,
+      "profile": "realistic",
+      "origin": "",
+      "period": "",
+      "original": {
+        "cost": "2 points"
+      }
+    },
+    {
+      "identifier": "martial-arts.197.viking-spear-fighting",
+      "source": "Martial Arts",
+      "page": "197",
+      "name": "Viking Spear Fighting",
+      "required_skills": [
+        "Shield",
+        "Spear",
+        "Thrown Weapon (Spear)"
+      ],
+      "techniques": [
+        "As Sojutsu (pp. 197-198). Cinematic Skills and Techniques: As Sojutsu, but add Dual-Weapon Attack (Thrown Spear)"
+      ],
+      "cinematic_skills": [],
+      "cinematic_techniques": [],
+      "perks": [
+        "Naval Training",
+        "Off-Hand Weapon Training (Thrown Spear)",
+        "Shield-Wall Training"
+      ],
+      "optional_traits": [],
+      "minimum_cost": 4,
+      "profile": "realistic",
+      "origin": "",
+      "period": "",
+      "original": {
+        "cost": "4 points"
+      }
+    },
+    {
+      "identifier": "martial-arts.182.weapon-training",
+      "source": "Martial Arts",
+      "page": "182",
+      "name": "Weapon Training",
+      "required_skills": [
+        "Brawling",
+        "Broadsword",
+        "Knife",
+        "Polearm",
+        "Shield",
+        "Shield (Buckler)",
+        "Shortsword",
+        "Spear",
+        "Staff",
+        "Two-Handed Sword",
+        "Wrestling"
+      ],
+      "techniques": [
+        "Arm Lock",
+        "Armed Grapple (Polearm, Spear, Staff, or Two-Handed Sword)",
+        "Disarming (Any skill in style)",
+        "Feint (Any weapon skill in style)",
+        "Hook (Polearm)",
+        "Sweep (Polearm, Spear, Staff, or Two-Handed Sword)"
+      ],
+      "cinematic_skills": [
+        "Kiai",
+        "Power Blow"
+      ],
+      "cinematic_techniques": [
+        "Dual-Weapon Attack (Shortsword)",
+        "Grand Disarm (Staff or Two-Handed Sword)",
+        "Whirlwind Attack (Staff or Two-Handed Sword)"
+      ],
+      "perks": [
+        "Form Mastery (Spear)",
+        "Grip Mastery (Two-Handed Sword)",
+        "Off-Hand Weapon Training (Shortsword)"
+      ],
+      "optional_traits": [],
+      "minimum_cost": 12,
+      "profile": "realistic",
+      "origin": "",
+      "period": "",
+      "original": {
+        "cost": "12 points"
+      }
+    },
+    {
+      "identifier": "martial-arts.203.wing-chun",
+      "source": "Martial Arts",
+      "page": "203",
+      "name": "Wing Chun",
+      "required_skills": [
+        "Karate",
+        "Shortsword",
+        "Wrestling"
+      ],
+      "techniques": [
+        "Arm Lock",
+        "Close Combat (Shortsword)",
+        "Counterattack (Karate or Shortsword)",
+        "Elbow Strike",
+        "Feint (Karate or Shortsword)",
+        "Jam",
+        "Knee Strike",
+        "Stamp Kick",
+        "Targeted Attack (Karate Kick/Leg)"
+      ],
+      "cinematic_skills": [
+        "Blind Fighting",
+        "Immovable Stance",
+        "Mental Strength",
+        "Power Blow",
+        "Pressure Points",
+        "Pressure Secrets",
+        "Sensitivity. STYLES 203"
+      ],
+      "cinematic_techniques": [
+        "Dual-Weapon Attack (Shortsword)",
+        "Dual-Weapon Defense (Karate or Shortsword)",
+        "LethalEye-Poke",
+        "LethalStrike",
+        "Pressure-Point Strike"
+      ],
+      "perks": [
+        "Off-Hand Weapon Training (Shortsword)",
+        "Special Setup (Karate Parry > Arm Lock)",
+        "Technique Adaptation (Counterattack)",
+        "Unusual Training (Sensitivity, Only while at least one hand is in physical contact with the opponent)"
+      ],
+      "optional_traits": [],
+      "minimum_cost": 4,
+      "profile": "realistic",
+      "origin": "",
+      "period": "",
+      "original": {
+        "cost": "4 points"
+      }
+    },
+    {
+      "identifier": "martial-arts.206.wushu",
+      "source": "Martial Arts",
+      "page": "206",
+      "name": "Wushu",
+      "required_skills": [
+        "Acrobatics",
+        "Jumping",
+        "Karate",
+        "Karate Art",
+        "Savoir- Faire (Dojo)"
+      ],
+      "techniques": [
+        "AcrobaticStand",
+        "AxeKick",
+        "BackKick",
+        "Evade",
+        "Exotic Hand Strike",
+        "Feint (Karate)",
+        "Jump Kick",
+        "Kicking",
+        "Spinning Kick",
+        "Spinning Punch",
+        "Sweep (Karate)"
+      ],
+      "cinematic_skills": [
+        "Breaking Blow",
+        "Flying Leap",
+        "Mental Strength",
+        "Power Blow",
+        "Pressure Points",
+        "Pressure Secrets"
+      ],
+      "cinematic_techniques": [
+        "Dual-Weapon Attack (Karate)",
+        "Dual-Weapon Defense (Karate)",
+        "Fighting While Seated (Karate)",
+        "Flying Jump Kick",
+        "Lethal Kick",
+        "Lethal Strike",
+        "Pole- Vault Kick",
+        "Pressure-Point Strike",
+        "Roll with Blow",
+        "Springing Attack (Karate)",
+        "Timed Defense"
+      ],
+      "perks": [
+        "Acrobatic Feints",
+        "Technique Adaptation (Spinning Attack)",
+        "Technique Mastery (Any Spinning Attack)",
+        "Unusual Training(“SplitKick”:Dual-WeaponAttack,Onlytokicktwo adjacent foes)"
+      ],
+      "optional_traits": [],
+      "minimum_cost": 6,
+      "profile": "realistic",
+      "origin": "",
+      "period": "",
+      "original": {
+        "cost": "6 points"
+      }
+    },
+    {
+      "identifier": "martial-arts.181.yabusame",
+      "source": "Martial Arts",
+      "page": "181",
+      "name": "Yabusame",
+      "required_skills": [
+        "Bow Sport",
+        "Riding (Horse)"
+      ],
+      "techniques": [
+        "Combat Riding",
+        "Hands-Free Riding",
+        "Horse Archery"
+      ],
+      "cinematic_skills": [
+        "Zen Archery"
+      ],
+      "cinematic_techniques": [],
+      "perks": [],
+      "optional_traits": [],
+      "minimum_cost": 3,
+      "profile": "realistic",
+      "origin": "",
+      "period": "",
+      "original": {
+        "cost": "3 points"
+      }
+    },
+    {
+      "identifier": "martial-arts.160.epee",
+      "source": "Martial Arts",
+      "page": "160",
+      "name": "Épée",
+      "required_skills": [
+        "Games (Epee Fencing)",
+        "Rapier Sport"
+      ],
+      "techniques": [
+        "Counterattack (Rapier Sport)",
+        "Feint (Rapier Sport)"
+      ],
+      "cinematic_skills": [],
+      "cinematic_techniques": [],
+      "perks": [],
+      "optional_traits": [],
+      "minimum_cost": 3,
+      "profile": "realistic",
+      "origin": "",
+      "period": "",
+      "original": {
+        "cost": "3 points"
+      }
+    }
+  ]
+}

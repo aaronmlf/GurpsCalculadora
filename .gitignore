@@ -1,0 +1,42 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg-info/
+dist/
+build/
+*.egg
+
+# Virtual environments
+venv/
+env/
+.venv/
+.env/
+/packaging/.build-venv/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Acervo local do GURPS (livros, mapas e imagens; nunca distribuir)
+/GURPS 4th Edition/
+*.pdf
+
+# Temporary files
+*.tmp
+*.log
+
+# Pacotes gerados (distribuicao)
+/GurpsCacul_Linux/
+/GurpsCacul_Windows/
+/GurpsCacul_Linux.zip
+/GurpsCacul_Windows.zip
+/GurpsCalculadora_Codigo_Fonte.zip

@@ -5,8 +5,11 @@ from tempfile import TemporaryDirectory
 import unittest
 from unittest.mock import patch
 
+from tests.tk_support import requires_tk
+from utils.ui_preferences import BATTLE_MAP_TOOL, TOOL_COUNT
 
-@unittest.skipUnless(os.environ.get("DISPLAY"), "requires a graphical display")
+
+@requires_tk
 class UnitGuiTests(unittest.TestCase):
     def setUp(self):
         from main import GURPSCalculator
@@ -499,7 +502,8 @@ class UnitGuiTests(unittest.TestCase):
         app._change_language('en_US')
         app.root.update()
         self.assertEqual(app.notebook.index(app.notebook.select()), 10)
-        self.assertEqual(len(app.notebook.tabs()), 16)
+        self.assertEqual(len(app.notebook.tabs()), TOOL_COUNT)
+        self.assertEqual(app.notebook.tab(BATTLE_MAP_TOOL, "text"), "Battle Map")
 
     def test_ranged_filter_preserves_current_overrides(self):
         app = self.app

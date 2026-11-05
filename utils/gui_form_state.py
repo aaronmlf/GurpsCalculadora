@@ -28,8 +28,7 @@ class InlineError:
     def __init__(self, widget):
         self.widget = widget
         self.grid = widget.grid_info()
-        color = '#b42318' if widget.winfo_toplevel().cget('background') == '#f2f4f7' else '#ff8585'
-        self.label = ttk.Label(widget.master, foreground=color, wraplength=155)
+        self.label = ttk.Label(widget.master, style='Error.TLabel', wraplength=155)
 
     def configure(self, text):
         self.label.configure(text=text)
@@ -120,6 +119,12 @@ class FormState:
             widget.validation_label.configure(text=error)
             if error:
                 self.errors[widget] = error
+                parent = widget.master
+                while parent is not None and parent is not self.tab:
+                    reveal = getattr(parent, 'oficina_reveal', None)
+                    if reveal is not None:
+                        reveal()
+                    parent = parent.master
         return not self.errors
 
     def edited(self, *_):
@@ -162,7 +167,8 @@ def capture_results(app):
     for name, box in vars(app).items():
         if isinstance(box, tk.Text) and hasattr(box, 'comparison'):
             saved[name] = (box.get('1.0', 'end-1c'), box.comparison.saved,
-                           getattr(box, 'stale', False), getattr(box, 'origin', ''), list(box.comparison.history))
+                           getattr(box, 'stale', False), getattr(box, 'origin', ''), list(box.comparison.history),
+                           getattr(box, 'oficina_details', False), getattr(box, 'oficina_highlights', ()))
     for form in getattr(app, '_form_states', []):
         form.close()
     return saved
@@ -170,13 +176,15 @@ def capture_results(app):
 
 def install_form_states(app, saved):
     app._form_states = [FormState(app, app.root.nametowidget(tab)) for tab in app.notebook.tabs()]
-    for name, (text, comparison, stale, origin, history) in saved.items():
+    for name, (text, comparison, stale, origin, history, details, highlights) in saved.items():
         box = getattr(app, name)
         box.delete('1.0', 'end')
         box.insert('1.0', text)
         box.edit_modified(False)
-        lines = [line.strip() for line in text.splitlines() if line.strip()]
-        box.summary_label.configure(text='  |  '.join(lines[:2]) if lines else t('ui_result_empty'))
+        box.oficina_highlights = highlights
+        box.present_result(text)
+        if hasattr(box, 'show_oficina_details'):
+            box.show_oficina_details(details)
         box._last_output = text
         box.stale, box.origin = stale, origin
         box.comparison.saved = comparison

@@ -2,6 +2,7 @@ import json
 from pathlib import Path
 import unittest
 
+from tools.release_inputs import read_version, resource_paths, source_paths
 from version import __version__
 
 
@@ -10,13 +11,19 @@ ROOT = Path(__file__).resolve().parents[1]
 
 class ReleaseMetadataTests(unittest.TestCase):
     def test_version_identification_and_json_packaging(self):
-        self.assertEqual(__version__, "1.6.0")
+        self.assertEqual(read_version(ROOT), __version__)
         spec = (ROOT / "packaging" / "GurpsCalculadora.spec").read_text(encoding="utf-8")
-        self.assertIn('for folder in ("i18n", "data")', spec)
-        self.assertIn('rglob("*.json")', spec)
-        self.assertIn('not path.is_symlink()', spec)
+        self.assertIn('resource_paths(project_root)', spec)
+        resources = set(resource_paths(ROOT))
+        self.assertEqual(resources, {
+            "i18n/en_US.json", "i18n/pt_BR.json", "data/armor.json", "data/extended_rules.json",
+            "data/glossary.json", "data/magic_table_stats.json", "data/melee_weapons.json",
+            "data/styles.json", "data/techniques.json", "data/vehicles.json", "data/weapons.json",
+        })
+        source = set(source_paths(ROOT))
+        self.assertTrue(resources <= source)
         for name in ("LEIA-ME_LINUX.txt", "LEIA-ME_WINDOWS.txt"):
-            self.assertIn("v1.6.0", (ROOT / "packaging" / name).read_text(encoding="utf-8"))
+            self.assertIn(f"packaging/{name}", source)
 
     def test_canonical_glossary_is_versioned_unique_and_referenced(self):
         glossary = json.loads((ROOT / "data" / "glossary.json").read_text(encoding="utf-8"))

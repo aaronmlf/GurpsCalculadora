@@ -137,6 +137,15 @@ class RangedAttackInput:
     defense_roll: Optional[int] = None
     damage_rolls: Optional[List[int]] = None
     follow_up_damage_rolls: Optional[List[int]] = None
+    map_distance_yards: Optional[float] = None
+
+    @property
+    def distance_in_yards(self) -> float:
+        # A battle map already measures in yards. Avoid an SI round trip
+        # moving exact boundaries (e.g. 7 yd) into the next range band.
+        if self.map_distance_yards is not None:
+            return self.map_distance_yards
+        return self.distance_m * METERS_TO_YARDS
 
 
 @dataclass
@@ -287,7 +296,8 @@ class RangedCombatCalculator:
             errors.append("invalid_profile")
         if attack.skill < 0:
             errors.append("invalid_skill")
-        if attack.distance_m < 0 or attack.target_speed_mps < 0:
+        if (not math.isfinite(attack.distance_in_yards) or not math.isfinite(attack.target_speed_mps)
+                or attack.distance_in_yards < 0 or attack.target_speed_mps < 0):
             errors.append("negative_distance_or_speed")
         if attack.shots_fired < 1:
             errors.append("invalid_shots")
@@ -298,8 +308,11 @@ class RangedCombatCalculator:
     def calculate(self, attack: RangedAttackInput) -> RangedAttackResult:
         errors = self._validate(attack)
         mode = self._effective_mode(attack)
-        distance = attack.distance_m * METERS_TO_YARDS
+        distance = attack.distance_in_yards
         speed = attack.target_speed_mps * METERS_TO_YARDS
+        if not math.isfinite(distance) or not math.isfinite(speed) or not math.isfinite(distance + speed):
+            return RangedAttackResult(False, list(dict.fromkeys(errors + ["negative_distance_or_speed"])),
+                                      attack.profile, False, 0, 0, "standard", False, [], 0, 0, 0)
         range_valid = distance >= mode.minimum_range and (
             mode.max_range is None or distance <= mode.max_range
         )
@@ -503,7 +516,7 @@ class RangedCombatCalculator:
                 int(muscle_match.group(2) or 0),
             )
         basic, dice = self._damage_total(expression, supplied)
-        if mode.half_damage_range is not None and attack.distance_m * METERS_TO_YARDS > mode.half_damage_range:
+        if mode.half_damage_range is not None and attack.distance_in_yards > mode.half_damage_range:
             basic //= 2
 
         dr_multiplier = 1
@@ -621,7 +634,7 @@ class RangedCombatCalculator:
         close_shotgun = (
             attack.weapon.projectiles_per_shot > 1
             and mode.half_damage_range is not None
-            and result.distance_yards < mode.half_damage_range * 0.1
+            and attack.distance_in_yards < mode.half_damage_range * 0.1
         )
         projectiles = attack.shots_fired * (1 if close_shotgun else max(1, attack.weapon.projectiles_per_shot))
         result.hits_before_defense = min(projectiles, 1 + outcome["margin"] // max(1, attack.weapon.recoil))

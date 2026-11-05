@@ -189,8 +189,8 @@ class CombatantState:
     dx: int = 10
     iq: int = 10
     ht: int = 10
-    basic_speed: float = 5.0
-    basic_move: int = 5
+    basic_speed: Optional[float] = 5.0
+    basic_move: Optional[int] = 5
     size_modifier: int = 0
     dodge: int = 8
     parry: int = 8
@@ -214,6 +214,19 @@ class CombatantState:
     grapples: Dict[str, Dict[str, Any]] = field(default_factory=dict)
     action_count: int = 0
     personal_seconds: int = 0
+    melee_weapon_id: str = ""
+    ranged_weapon_id: str = ""
+    will: Optional[int] = None
+    per: Optional[int] = None
+    team: str = ""
+    group: str = ""
+    resource_pools: Dict[str, Dict[str, Any]] = field(default_factory=dict)
+    unknown_defenses: List[str] = field(default_factory=list)
+    unknown_size_modifier: bool = False
+    source_id: str = ""
+    source_format: str = ""
+    source_version: str = ""
+    source_name: str = ""
 
     @classmethod
     def from_dict(cls, value: Mapping[str, Any]) -> "CombatantState":
@@ -249,6 +262,7 @@ class StateDelta:
     armor_dr_loss: Dict[str, int] = field(default_factory=dict)
     grapple_updates: Dict[str, Optional[Dict[str, Any]]] = field(default_factory=dict)
     notes: List[str] = field(default_factory=list)
+    resource_changes: Dict[str, int] = field(default_factory=dict)
 
     @classmethod
     def from_dict(cls, value: Mapping[str, Any]) -> "StateDelta":

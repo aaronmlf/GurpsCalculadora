@@ -3,8 +3,9 @@
 from __future__ import annotations
 
 from copy import deepcopy
-from dataclasses import asdict, dataclass, field
+from dataclasses import asdict, dataclass, field, replace
 import math
+import re
 from typing import Any, Dict, List, Optional
 
 from calculators.injury import RuleReference, StateDelta
@@ -17,6 +18,12 @@ MAGIC_SYSTEMS = {
     "path_book", "symbol", "realm", "syntactic", "spirit_assisted",
     "ritual_path_magic", "sorcery",
 }
+IMPLEMENTED_MAGIC_SYSTEMS = frozenset({'standard', 'ceremonial', 'clerical'})
+CASTING_CLASSES = frozenset({'regular', 'resisted', 'area', 'information', 'blocking', 'melee', 'missile'})
+
+
+def _known_cost(value) -> bool:
+    return type(value) in (int, float) and math.isfinite(value) and value >= 0
 
 
 @dataclass
@@ -78,6 +85,11 @@ class MagicSystemRecord:
     supports_maintenance: bool = True
     tags: List[str] = field(default_factory=list)
 
+    @property
+    def catalog_status(self) -> str:
+        return ('calculable' if self.identifier.removeprefix('magic.') in IMPLEMENTED_MAGIC_SYSTEMS
+                else 'reference_only')
+
 
 @dataclass
 class SpellRecord:
@@ -99,6 +111,24 @@ class SpellRecord:
     systems: List[str] = field(default_factory=lambda: ["standard"])
     profile: str = "basic"
     original: Dict[str, str] = field(default_factory=dict)
+    rule_model: str = ''
+
+    @property
+    def resistance_notation(self) -> str:
+        notation = re.search(r'(?:^|/)(R-.+)$', str(self.original.get('class', '')), flags=re.IGNORECASE)
+        return notation.group(1) if notation else ('R-' + self.resist_attribute.upper() if self.resist_attribute else '')
+
+    @property
+    def requires_resistance(self) -> bool:
+        return self.spell_class == 'resisted' or (self.spell_class in {'regular', 'area', 'information'}
+                                                and bool(self.resistance_notation))
+
+    @property
+    def catalog_status(self) -> str:
+        if self.spell_class not in CASTING_CLASSES:
+            return 'reference_only'
+        return ('calculable' if all(_known_cost(x) for x in (self.base_cost, self.casting_time_seconds))
+                else 'requires_parameters')
 
     @classmethod
     def from_dict(cls, value: Dict[str, Any]) -> "SpellRecord":
@@ -106,6 +136,10 @@ class SpellRecord:
         data['spell_class'] = data.get('spell_class', 'regular').lower().split('/')[0]
         data['spell_class'] = {'reg.': 'regular', 'inform.': 'information', 'block.': 'blocking'}.get(data['spell_class'], data['spell_class'])
         data['difficulty'] = {'Hard': 'H', 'Very Hard': 'VH'}.get(data.get('difficulty'), data.get('difficulty', 'H'))
+        notation = re.search(r'(?:^|/)R-(HT|Will|DX|IQ|ST)$', str(data.get('original', {}).get('class', '')),
+                             flags=re.IGNORECASE)
+        if notation and not data.get('resist_attribute'):
+            data['resist_attribute'] = notation.group(1).lower()
         data["effects"] = [item if isinstance(item, EffectPacket) else EffectPacket(**item)
                            for item in data.get("effects", [])]
         return cls(**data)
@@ -136,6 +170,13 @@ class CastingInput:
     cast_roll: Optional[int] = None
     resistance: Optional[ResistanceCheck] = None
     ceremony: Optional[CeremonialCasting] = None
+    is_mage: bool = True
+    target_visible: bool = True
+    same_day_castings: int = 0
+    physician_skill: int = 0
+    maintenance_only: bool = False
+    magic_resistance: int = 0
+    target_waives_resistance: bool = False
 
 
 @dataclass
@@ -153,6 +194,9 @@ class CastingResult:
     pending_effects: List[Dict[str, Any]]
     references: List[RuleReference]
     resource_delta: Dict[str, int] = field(default_factory=dict)
+    maintenance_cost: Optional[int] = None
+    maintenance_forecast: int = 0
+    duration_seconds: Optional[int] = None
 
     def to_dict(self) -> Dict[str, Any]:
         return asdict(self)
@@ -163,35 +207,63 @@ class SpellcastingEngine:
 
     def calculate(self, data: CastingInput) -> CastingResult:
         errors: List[str] = []
-        numeric = (data.spell.base_cost, data.spell.casting_time_seconds)
-        if any(not isinstance(value, (int, float)) or not math.isfinite(value) or value < 0 for value in numeric):
+        maintaining = data.maintenance_only
+        numeric = () if maintaining else (data.spell.base_cost, data.spell.casting_time_seconds)
+        if not all(_known_cost(value) for value in numeric):
             return CastingResult(False, ["spell_requires_parameters"], data.skill, 0, 0, None,
                 deepcopy(data.resistance), [], StateDelta(), [],
                 [{"kind": "spell_parameters", "original": deepcopy(data.spell.original)}],
                 [RuleReference(data.spell.source, data.spell.page)])
+        distances = (data.distance_yards, data.area_radius_yards, data.time_multiplier, data.energy_multiplier)
+        integers = (data.skill, data.magery, data.size_modifier, data.ritual_modifiers, data.custom_modifier,
+                    data.maintenance_cycles, data.same_day_castings, data.physician_skill, data.resources.fp,
+                    data.resources.energy_reserve, data.resources.external_energy, data.magic_resistance)
+        if (not all(_known_cost(value) for value in distances) or data.time_multiplier <= 0 or
+                any(type(value) is not int for value in integers) or
+                data.resistance is not None and (type(data.resistance.target) is not int or data.resistance.target < 0)):
+            return CastingResult(False, ['invalid_casting_input'], data.skill, 0, 0, None, None, [],
+                                 StateDelta(), [], [], [RuleReference(data.spell.source, data.spell.page)])
         if data.profile not in {"basic", "realistic", "cinematic"}:
             errors.append("invalid_profile")
         if min(data.resources.fp, data.resources.energy_reserve, data.resources.external_energy,
-               data.maintenance_cycles) < 0 or data.time_multiplier <= 0 or data.energy_multiplier < 0:
+               data.maintenance_cycles, data.magery, data.same_day_castings, data.physician_skill,
+               data.magic_resistance) < 0:
             errors.append("invalid_casting_input")
         if data.system not in MAGIC_SYSTEMS:
             errors.append("unknown_magic_system")
-        elif data.system not in {"standard", "clerical", "ceremonial"}:
+        elif data.system not in IMPLEMENTED_MAGIC_SYSTEMS:
             # Registration is not an implementation of a distinct magic system.
             errors.append("magic_system_resolver_not_implemented")
         if data.system not in data.spell.systems and data.system not in {"ritual_magic", "clerical", "ceremonial"}:
             errors.append("spell_not_available_in_system")
-        if data.profile == "basic" and (data.system not in {"standard", "clerical", "ceremonial"} or data.spell.profile != "basic"):
+        if data.profile == "basic" and (data.system not in IMPLEMENTED_MAGIC_SYSTEMS or data.spell.profile != "basic"):
             errors.append("alternative_magic_outside_profile")
-        if data.skill < 3 or data.area_radius_yards < 0 or data.distance_yards < 0:
+        if data.spell.spell_class not in CASTING_CLASSES:
+            errors.append('catalog_reference_only')
+        if data.skill < 3:
             errors.append("invalid_casting_input")
+        if (not maintaining and data.spell.requires_resistance and data.resistance is None and
+                not data.target_waives_resistance):
+            errors.append('spell_requires_resistance')
+        if not maintaining and data.spell.rule_model == 'minor_healing':
+            # Magic pp. 9, 91: baseline limit 3, or higher Magery when allowed.
+            limit = max(3, data.magery) if data.is_mage else 3
+            if not 1 <= data.spell.base_cost <= limit or int(data.spell.base_cost) != data.spell.base_cost:
+                errors.append('invalid_healing_energy')
         modifiers = data.ritual_modifiers + data.custom_modifier
         breakdown: List[Dict[str, Any]] = []
-        if data.spell.spell_class in {"regular", "resisted", "area"}:
-            range_mod = -max(0, data.distance_yards)
+        if not maintaining and data.spell.spell_class in {"regular", "resisted", "area"}:
+            # Magic p. 11: subtract distance. B9 rounds task results down;
+            # floor(skill - distance) = skill - ceil(distance). Ignore one
+            # representational ULP at whole-yard metric/imperial boundaries.
+            distance = data.distance_yards
+            range_mod = -math.ceil(math.nextafter(distance, -math.inf)) if distance else 0
             modifiers += range_mod
             breakdown.append({"key": "range", "value": range_mod, "source": "Magic", "page": "11"})
-        elif data.spell.spell_class == "information" and data.distance_yards:
+            if data.distance_yards > 0 and not data.target_visible:
+                modifiers -= 5
+                breakdown.append({'key': 'spell_target_not_visible', 'value': -5, 'source': 'Magic', 'page': '11'})
+        elif not maintaining and data.spell.spell_class == "information" and data.distance_yards:
             range_mod = long_distance_modifier(data.distance_yards)
             modifiers += range_mod
             breakdown.append({"key": "long_distance", "value": range_mod, "source": "Magic", "page": "14"})
@@ -201,20 +273,39 @@ class SpellcastingEngine:
             mana_mod = 0
         if data.mana_level == "no_mana":
             errors.append("magic_unavailable_without_mana")
+        if data.system in {'standard', 'ceremonial'} and data.mana_level in {'normal', 'low'} and not data.is_mage:
+            errors.append('mage_required_in_mana')
         modifiers += mana_mod
         if mana_mod:
             breakdown.append({"key": "mana", "value": mana_mod, "source": "Basic Set", "page": "235"})
+        if not maintaining and data.spell.rule_model == 'minor_healing' and data.same_day_castings:
+            penalty = -3 * data.same_day_castings
+            modifiers += penalty
+            breakdown.append({'key': 'healing_repeat', 'value': penalty, 'source': 'Magic', 'page': '91'})
+        resistance = None if maintaining or data.target_waives_resistance else deepcopy(data.resistance)
+        if not maintaining and data.magic_resistance:
+            if data.spell.spell_class in {'regular', 'resisted'} or (
+                    data.spell.spell_class != 'area' and (data.spell.requires_resistance or resistance is not None)):
+                modifiers -= data.magic_resistance
+                breakdown.append({'key': 'magic_resistance_casting', 'value': -data.magic_resistance,
+                                  'source': 'Magic', 'page': '14'})
+            if resistance is not None:
+                bonus = data.magic_resistance * (2 if data.spell.spell_class == 'area' else 1)
+                resistance.target += bonus
+                breakdown.append({'key': 'magic_resistance_defense', 'value': bonus,
+                                  'source': 'Magic', 'page': '14'})
         effective = data.skill + modifiers
-        if data.resistance is not None:
-            capped = supernatural_target(effective, data.resistance.target,
-                                         data.resistance.living_or_sapient)
+        if resistance is not None:
+            if data.spell.resist_attribute:
+                resistance.attribute = data.spell.resist_attribute
+            capped = supernatural_target(effective, resistance.target, resistance.living_or_sapient)
             if capped != effective:
                 breakdown.append({"key": "rule_of_16", "value": capped - effective,
                                   "source": "Basic Set", "page": "349"})
             effective = capped
         ritual_skill = data.skill + (-5 if data.mana_level == "low" else 0)
 
-        cost = max(0, data.spell.base_cost)
+        cost = 0 if maintaining else data.spell.base_cost
         if data.spell.spell_class == "area":
             cost *= max(1, data.area_radius_yards)
         elif data.spell.spell_class in {"regular", "resisted"} and data.size_modifier > 0:
@@ -228,15 +319,18 @@ class SpellcastingEngine:
             if reduction:
                 breakdown.append({"key": "high_skill_energy_reduction", "value": -reduction,
                                   "source": "Magic", "page": "8"})
-        maintenance = data.spell.maintenance_cost or 0
-        if data.maintenance_cycles:
-            if data.spell.maintenance_cost is None:
-                errors.append("spell_cannot_be_maintained")
+        maintenance = None
+        if _known_cost(data.spell.maintenance_cost):
             scale = max(1, data.area_radius_yards) if data.spell.spell_class == "area" else (
                 1 + max(0, data.size_modifier) if data.spell.spell_class in {"regular", "resisted"} else 1)
-            cost += max(0, math.ceil(maintenance * scale * data.energy_multiplier) - reduction) * data.maintenance_cycles
-        casting_time = max(1, math.ceil(data.spell.casting_time_seconds * max(0.01, data.time_multiplier)))
-        if data.system == "standard" and data.spell.spell_class not in {"missile", "blocking"} and ritual_skill >= 20:
+            maintenance = max(0, math.ceil(data.spell.maintenance_cost * scale * data.energy_multiplier) - reduction)
+        if (maintaining or data.maintenance_cycles) and maintenance is None:
+            errors.append('spell_cannot_be_maintained')
+        forecast = (maintenance or 0) * data.maintenance_cycles
+        if maintaining:
+            cost = maintenance or 0
+        casting_time = 0 if maintaining else max(1, math.ceil(data.spell.casting_time_seconds * max(0.01, data.time_multiplier)))
+        if not maintaining and data.system == "standard" and data.spell.spell_class not in {"missile", "blocking"} and ritual_skill >= 20:
             casting_time = max(1, math.ceil(casting_time / (2 ** max(1, (ritual_skill - 15) // 5))))
 
         available = data.resources.fp + data.resources.energy_reserve + data.resources.external_energy
@@ -249,7 +343,9 @@ class SpellcastingEngine:
 
         if data.system == "ceremonial":
             ceremony = data.ceremony
-            if ceremony is None:
+            if maintaining:
+                errors.append('ceremony_maintenance_separate')
+            elif ceremony is None:
                 errors.append("ceremony_requires_contributions")
             else:
                 amounts = [ceremony.caster_energy, ceremony.supporters, ceremony.opponents]
@@ -274,9 +370,9 @@ class SpellcastingEngine:
                 bonus = (3 + math.floor(excess) if excess >= 1 else
                          3 if excess >= .6 else 2 if excess >= .4 else 1 if excess >= .2 else 0)
                 effective += bonus
-                if data.resistance is not None:
-                    effective = supernatural_target(data.skill + modifiers + bonus, data.resistance.target,
-                                                     data.resistance.living_or_sapient)
+                if resistance is not None:
+                    effective = supernatural_target(data.skill + modifiers + bonus, resistance.target,
+                                                     resistance.living_or_sapient)
                     breakdown = [item for item in breakdown if item['key'] != 'rule_of_16']
                     capped_by = effective - (data.skill + modifiers + bonus)
                     if capped_by:
@@ -288,19 +384,43 @@ class SpellcastingEngine:
             casting_time *= 10
 
         pending: List[Dict[str, Any]] = []
-        if not data.spell.effects:
+        effects = [] if maintaining else deepcopy(data.spell.effects)
+        if not maintaining and data.spell.rule_model == 'minor_healing' and not errors:
+            effects = [EffectPacket(kind='heal_hp', value=int(data.spell.base_cost))]
+        if not maintaining and (not effects or any(effect.kind == 'narrative' for effect in effects)):
             pending.append({"kind": "gm_effect", "spell": data.spell.identifier})
         return CastingResult(
             valid=not errors, errors=list(dict.fromkeys(errors)), effective_skill=effective,
             energy_cost=cost, casting_time_seconds=casting_time, roll=None,
-            resistance=deepcopy(data.resistance), effects=deepcopy(data.spell.effects), state_delta=StateDelta(),
+            resistance=resistance, effects=effects, state_delta=StateDelta(),
             breakdown=breakdown, pending_effects=pending,
             references=[RuleReference(data.spell.source, data.spell.page), RuleReference("Magic", "7-14"),
                         RuleReference("Thaumatology", "19-214")],
+            maintenance_cost=maintenance, maintenance_forecast=forecast, duration_seconds=data.spell.duration_seconds,
         )
+
+    @staticmethod
+    def _debit(result: CastingResult, data: CastingInput, spent: int) -> None:
+        # Explicit ledger prevents ER/external energy from being silently free.
+        for pool in ('external_energy', 'energy_reserve', 'fp'):
+            amount = min(getattr(data.resources, pool), spent)
+            result.resource_delta[pool] = -amount
+            spent -= amount
+        result.state_delta.fp_change = result.resource_delta['fp']
+        if data.mana_level == 'very_high' and data.is_mage and result.state_delta.fp_change:
+            result.pending_effects.append({'kind': 'very_high_mana_fp_recovery', 'fp': -result.state_delta.fp_change})
+
+    def maintain(self, data: CastingInput) -> CastingResult:
+        """Renew one existing spell at the GM-confirmed end of its duration."""
+        result = self.calculate(replace(data, maintenance_only=True))
+        if result.valid:
+            self._debit(result, data, result.energy_cost)
+        return result
 
     def resolve(self, data: CastingInput, cast_roll: Optional[int] = None,
                 resistance_roll: Optional[int] = None) -> CastingResult:
+        if data.maintenance_only:
+            return self.maintain(data)
         result = self.calculate(data)
         if not result.valid:
             return result
@@ -308,25 +428,25 @@ class SpellcastingEngine:
         if roll_value is None:
             roll_value = roll_3d6()[0]
         result.roll = evaluate_success_roll(result.effective_skill, roll_value)
+        result.roll['roll'] = roll_value
         if data.system == "ceremonial" and roll_value >= 16:
             result.roll.update(success=False, critical_success=False,
                                critical_failure=roll_value >= 17,
                                margin=abs(roll_value - result.effective_skill))
+        if not result.roll['success'] and data.mana_level == 'very_high' and data.system in {'standard', 'ceremonial'}:
+            result.roll['critical_failure'] = True
+        if (result.roll['critical_failure'] and data.spell.rule_model == 'minor_healing' and
+                not data.same_day_castings and data.physician_skill >= 15 and data.mana_level != 'very_high'):
+            result.roll['critical_failure'] = False
         spent = result.energy_cost
         if data.system == "ceremonial":
             spent = data.ceremony.caster_energy
             result.resource_delta["ceremonial_assistants"] = -(result.energy_cost - spent)
-        elif result.roll["critical_success"]:
+        elif result.roll["critical_success"] and data.spell.spell_class != 'information':
             spent = 0
         elif not result.roll["success"] and not result.roll["critical_failure"] and data.spell.spell_class != "information":
             spent = min(1, spent)
-        # Explicit ledger prevents ER/external energy from being silently free.
-        remaining = spent
-        for pool in ("external_energy", "energy_reserve", "fp"):
-            amount = min(getattr(data.resources, pool), remaining)
-            result.resource_delta[pool] = -amount
-            remaining -= amount
-        result.state_delta.fp_change = result.resource_delta["fp"]
+        self._debit(result, data, spent)
         if not result.roll["success"]:
             result.effects = []
             result.pending_effects.append({"kind": "spell_failure", "critical": result.roll["critical_failure"]})

@@ -1,9 +1,9 @@
-import os
 import tkinter as tk
 from tkinter import ttk
 import unittest
 from types import SimpleNamespace
 
+from tests.tk_support import requires_tk
 from utils.gui_workspace import CatalogDialog, search_values, ResultComparison, record_details
 from utils.i18n import t
 
@@ -15,7 +15,7 @@ class SearchTests(unittest.TestCase):
         self.assertEqual(search_values(['Fire'], 'ice'), [])
 
 
-@unittest.skipUnless(os.environ.get('DISPLAY'), 'requires display')
+@requires_tk
 class CatalogTests(unittest.TestCase):
     def test_combined_filters_and_details(self):
         root = tk.Tk()

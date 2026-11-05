@@ -1,0 +1,12 @@
+# Files shipped inside every executable and in the source ZIP.
+data/armor.json
+data/extended_rules.json
+data/glossary.json
+data/magic_table_stats.json
+data/melee_weapons.json
+data/styles.json
+data/techniques.json
+data/vehicles.json
+data/weapons.json
+i18n/en_US.json
+i18n/pt_BR.json

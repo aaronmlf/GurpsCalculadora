@@ -1,13 +1,16 @@
 """Embedded and user-defined ranged weapon catalogs."""
 
 import json
+import math
 import os
 from pathlib import Path
 import platform
 import re
+from dataclasses import replace
 from typing import Any, Dict, Iterable, List, Optional
 
 from calculators.ranged_combat import WeaponRecord
+from utils.local_json import quarantine_json, write_atomic_json
 
 
 CATALOG_SCHEMA = "gurps-calculadora.weapon-catalog.v1"
@@ -15,6 +18,9 @@ CATALOG_SCHEMA = "gurps-calculadora.weapon-catalog.v1"
 
 def application_data_dir() -> Path:
     """Return a per-user writable folder without touching the installation."""
+    override = os.environ.get("GURPS_CALCULADORA_DATA_DIR")
+    if override and Path(override).is_absolute():
+        return Path(override)
     system = platform.system().lower()
     if system == "windows":
         base = Path(os.environ.get("APPDATA", Path.home()))
@@ -34,6 +40,8 @@ class WeaponCatalog:
         self.user_path = Path(user_path) if user_path else application_data_dir() / "weapons.json"
         self.builtin: List[WeaponRecord] = []
         self.custom: List[WeaponRecord] = []
+        self.load_warning: Optional[Path] = None
+        self._writes_blocked = False
         self._load_builtin()
         if load_user:
             self._load_user()
@@ -42,7 +50,7 @@ class WeaponCatalog:
     def _read_document(path: Path) -> Dict[str, Any]:
         try:
             document = json.loads(path.read_text(encoding="utf-8"))
-        except (OSError, json.JSONDecodeError) as exc:
+        except (ValueError, RecursionError) as exc:
             raise ValueError("invalid_catalog_json") from exc
         if not isinstance(document, dict) or document.get("schema") != CATALOG_SCHEMA:
             raise ValueError("invalid_catalog_schema")
@@ -60,6 +68,21 @@ class WeaponCatalog:
             record = WeaponRecord.from_dict(item)
             if not record.identifier or not record.name or not record.damage_modes:
                 raise ValueError("incomplete_weapon_record")
+            if (any(not isinstance(getattr(record, key), str)
+                    for key in ("identifier", "name", "source", "page", "tech_level", "category"))
+                    or any(not isinstance(values, list) or any(not isinstance(x, str) for x in values)
+                           for values in (record.skills, record.aliases, record.tags))
+                    or any(type(getattr(record, key)) is not int
+                           for key in ("accuracy", "recoil", "malfunction", "projectiles_per_shot"))
+                    or not isinstance(record.rate_of_fire_modes, list)
+                    or any(type(rate) not in (int, float) or not math.isfinite(rate) or rate <= 0
+                           for rate in record.rate_of_fire_modes)):
+                raise ValueError("invalid_weapon_record")
+            for mode in record.damage_modes:
+                if (not isinstance(mode.dice, str) or not isinstance(mode.damage_type, str)
+                        or not isinstance(mode.raw, str) or type(mode.armor_divisor) not in (int, float)
+                        or not math.isfinite(mode.armor_divisor) or mode.armor_divisor <= 0):
+                    raise ValueError("invalid_weapon_record")
             records.append(record)
         identifiers = [record.identifier for record in records]
         if len(identifiers) != len(set(identifiers)):
@@ -70,8 +93,19 @@ class WeaponCatalog:
         self.builtin = self._records(self._read_document(self.catalog_path))
 
     def _load_user(self) -> None:
-        if self.user_path.exists():
+        try:
             self.custom = self._records(self._read_document(self.user_path))
+        except FileNotFoundError:
+            return
+        except OSError:
+            self.load_warning = self.user_path
+            self._writes_blocked = True
+        except (ValueError, TypeError, KeyError, AttributeError, OverflowError, RecursionError):
+            try:
+                self.load_warning = quarantine_json(self.user_path)
+            except OSError:
+                self.load_warning = self.user_path
+                self._writes_blocked = True
 
     @property
     def weapons(self) -> List[WeaponRecord]:
@@ -113,15 +147,10 @@ class WeaponCatalog:
     def save_custom(self, weapon: WeaponRecord) -> None:
         if not weapon.identifier.startswith("custom."):
             safe = re.sub(r"[^a-z0-9]+", "-", weapon.name.casefold()).strip("-")
-            weapon.identifier = "custom." + (safe or "weapon")
+            weapon = replace(weapon, identifier="custom." + (safe or "weapon"))
         existing = {record.identifier: record for record in self.custom}
         existing[weapon.identifier] = weapon
-        self.custom = sorted(existing.values(), key=lambda item: item.identifier)
-        self.user_path.parent.mkdir(parents=True, exist_ok=True)
-        self.user_path.write_text(
-            json.dumps(self._document(self.custom), ensure_ascii=False, indent=2) + "\n",
-            encoding="utf-8",
-        )
+        self._commit(existing.values())
 
     def import_file(self, path: Path) -> int:
         imported = self._records(self._read_document(Path(path)))
@@ -130,17 +159,16 @@ class WeaponCatalog:
             if not weapon.identifier.startswith("custom."):
                 weapon.identifier = "custom.imported." + weapon.identifier
             existing[weapon.identifier] = weapon
-        self.custom = sorted(existing.values(), key=lambda item: item.identifier)
-        self.user_path.parent.mkdir(parents=True, exist_ok=True)
-        self.user_path.write_text(
-            json.dumps(self._document(self.custom), ensure_ascii=False, indent=2) + "\n",
-            encoding="utf-8",
-        )
+        self._commit(existing.values())
         return len(imported)
+
+    def _commit(self, records: Iterable[WeaponRecord]) -> None:
+        if self._writes_blocked:
+            raise PermissionError(str(self.user_path))
+        candidate = sorted(records, key=lambda item: item.identifier)
+        write_atomic_json(self.user_path, self._document(candidate))
+        self.custom = candidate
 
     def export_file(self, path: Path, records: Optional[Iterable[WeaponRecord]] = None) -> None:
         selected = list(records) if records is not None else list(self.custom)
-        Path(path).write_text(
-            json.dumps(self._document(selected), ensure_ascii=False, indent=2) + "\n",
-            encoding="utf-8",
-        )
+        write_atomic_json(path, self._document(selected))

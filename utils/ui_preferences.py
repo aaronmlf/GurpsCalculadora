@@ -3,15 +3,22 @@ import json
 import os
 from pathlib import Path
 import tempfile
+from utils.ui_theme import clean_theme_colors
+
+
+BATTLE_MAP_TOOL = 16  # Append tools; existing saved indices stay valid.
+TOOL_COUNT = BATTLE_MAP_TOOL + 1
 
 
 def clean_preferences(value):
     result = {'schema': 1, 'theme': 'dark', 'font_size': 10, 'favorites': [], 'recent': [],
-              'last_tool': 'home', 'window': '1024x768', 'sidebar_hidden': False, 'catalog_favorites': []}
+              'last_tool': 'home', 'window': '1024x768', 'sidebar_hidden': False,
+              'catalog_favorites': [], 'theme_colors': {}}
     if not isinstance(value, dict):
         return result
     if value.get('theme') in ('light', 'dark'):
         result['theme'] = value['theme']
+    result['theme_colors'] = clean_theme_colors(value.get('theme_colors'))
     if type(value.get('sidebar_hidden')) is bool:
         result['sidebar_hidden'] = value['sidebar_hidden']
     if type(value.get('font_size')) is int and 9 <= value['font_size'] <= 18:
@@ -19,12 +26,12 @@ def clean_preferences(value):
     for key in ('favorites', 'recent'):
         if isinstance(value.get(key), list):
             result[key] = list(dict.fromkeys(item for item in value[key]
-                                            if type(item) is int and 0 <= item < 16))[:16]
+                                            if type(item) is int and 0 <= item < TOOL_COUNT))[:TOOL_COUNT]
     if isinstance(value.get('catalog_favorites'), list):
         result['catalog_favorites'] = list(dict.fromkeys(item for item in value['catalog_favorites']
                                                         if isinstance(item, str) and 0 < len(item) < 300))[:1000]
     selected = value.get('last_tool')
-    if selected == 'home' or type(selected) is int and 0 <= selected < 16:
+    if selected == 'home' or type(selected) is int and 0 <= selected < TOOL_COUNT:
         result['last_tool'] = selected
     size = str(value.get('window', '')).split('x')
     if len(size) == 2 and all(s.isdigit() for s in size) and 800 <= int(size[0]) <= 3840 and 600 <= int(size[1]) <= 2160:

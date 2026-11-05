@@ -1,5 +1,39 @@
 # Interface — estado da entrega
 
+**Oficina, revisão estrutural.** Início com cartões de ações, favoritos, recentes
+e estado da sessão; lateral agrupada com ícones simples. Impactos, Força, Magia,
+Poderes e Psi, Veículos, Social e Batalhas passaram ao mesmo fluxo de parâmetros
+e resultado do Tiro. Resumos promovem resultados como lesão total, capacidade
+de carga e dano; os dados completos, cópia, comparação, histórico e exportação
+continuam disponíveis. Corpo a corpo e Trauma têm ações próximas dos parâmetros
+principais, com seções de equipamento e regras adicionais recolhíveis conforme
+o módulo. Dados separa a rolagem do total, da paginação e da exportação.
+
+Os layouts se ajustam ao tamanho da janela, sem reconstruir o formulário a cada
+redimensionamento. Ao calcular em um layout empilhado, o resultado é trazido
+para a área visível. As preferências de cores e os motores de regras foram
+preservados. Tudo continua em Tkinter; não há imagens dos mockups na aplicação.
+Validação da revisão: 382 testes no Linux, 79 casos direcionados verificados
+no Windows via Wine e testes de interface em PT-BR/EN, inclusive 800×600 com
+fonte 18. Os pacotes de teste têm `Oficina2` no nome. O binário Linux ficou
+cerca de 16 KB maior que o da primeira Oficina.
+
+**Oficina — 05/11/2026.** Barra superior com busca bilíngue (Ctrl+K), Dados,
+idioma, unidades e Aparência. A lateral recolhe as áreas não selecionadas; Início,
+favoritos, recentes, sessões e presets continuam acessíveis. Tiro tem campos
+essenciais e resultado lado a lado em janelas largas, empilhados nas estreitas,
+com opções recolhíveis. Os indicadores de habilidade e chance usam o resultado
+do cálculo existente.
+
+Aparência oferece tema claro/escuro, fonte, cores de fundo/painéis/destaque,
+prévia, cancelamento e restauração do padrão. As cores são validadas e persistem
+separadamente por tema; o texto acompanha a luminosidade de cada superfície.
+A interface segue em Tkinter, sem novas dependências ou imagens no aplicativo.
+Validação: 375 testes no Linux e 58 testes direcionados no Windows via Wine.
+Os dois executáveis de teste abriram normalmente e cresceram menos de 0,4%
+comparados aos da Preview 2. Os pacotes locais da Oficina ficam separados em
+`dist/`; a publicação anterior permanece intacta.
+
 Adição em 08/10/2026: **Mestre → Dados / Game Master → Dice** aceita até
 10 milhões de dados, mostra cada resultado em páginas de 100 dados, subtotal,
 modificador e total. Rolagens grandes e exportação completa em `.txt` usam

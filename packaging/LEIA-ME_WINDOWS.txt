@@ -1,36 +1,20 @@
-GURPS 4e Calculadora v1.6.0 — Windows 64 bits
-======================================
+GURPS 4e Calculadora — Windows x86-64
+===================================
 
-Compilacao de desenvolvimento revisada para Windows x64.
-Inclui escolha de unidades metricas/imperiais e revisao portugues/ingles.
-O plano v1.3-v1.6 ainda nao esta completo: os novos catalogos de magia,
-poderes e veiculos sao parciais. Consulte a auditoria no pacote de fontes.
-Compilacao e verificacoes realizadas sob Wine; validacao em Windows nativo
-ainda pendente. O executavel nao possui assinatura digital.
-Reparo de 2026-09-06: catalogos expandidos carregam sem falha de inicializacao.
-54 testes de calculos, catalogos e interface passaram no Python Windows sob Wine;
-a janela do executavel compilado tambem foi verificada.
-Magias com custo/tempo variavel pedem parametros; entradas psi incompletas
-permanecem referencias, sem converter custo em pontos para FP.
+1. Extraia todo o ZIP.
+2. Clique duas vezes no arquivo "GurpsCalculadora.exe".
 
-Como abrir:
-1. Extraia todo o conteudo do arquivo ZIP.
-2. Clique duas vezes em "GurpsCalculadora.exe".
+O programa não requer instalação de Python nem uso do Prompt de Comando.
+O executável não tem assinatura digital. Baixe somente da página oficial
+do projeto e confira a integridade antes de executar. Consulte o
+release.json para saber se a validação ocorreu em Windows nativo ou Wine.
 
-O programa e independente: nao requer Python nem uso do Prompt de Comando.
-Os catalogos de armas, armaduras, tecnicas, estilos, magia, poderes e veiculos ja estao incorporados ao executavel. Presets pessoais sao
-salvos na pasta de dados do usuario.
+A versão aparece no aplicativo. O menu Exibir permite mudar tema, cores,
+fonte e navegação. O programa tem interfaces em português e inglês e
+unidades métricas e imperiais. Os catálogos incorporados não incluem PDFs
+nem imagens dos livros. Preferências e presets são gravados na pasta de
+dados do usuário.
 
-Como o executavel nao possui assinatura digital comercial, o Windows pode
-mostrar um aviso do SmartScreen. Nesse caso, confira que o arquivo veio da
-pagina oficial do projeto e use "Mais informacoes" > "Executar assim mesmo".
-
-Nenhum PDF, mapa ou imagem dos livros esta incluido.
-
-Interface atualizada:
-- Inicio e menu lateral com favoritos e ferramentas recentes.
-- Exibir: tema claro/escuro, fonte, navegacao recolhivel e consulta da sessao.
-- Resultados: historico temporario, comparacao e exportacao.
-- Trocar idioma/unidades preserva o texto anterior sem rolar novamente.
-- Aplicar combate/trauma a sessao exige confirmacao da previa.
-- A revisao completa dos catalogos e das regras ainda nao esta certificada.
+English: Extract the complete ZIP and double-click "GurpsCalculadora.exe".
+No Python or command prompt is required. The executable is unsigned;
+download from the official project and check the published checksum.

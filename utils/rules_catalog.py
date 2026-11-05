@@ -13,6 +13,15 @@ from calculators.campaign import ElementRecord
 
 
 RULES_CATALOG_SCHEMA = "gurps-calculadora.extended-rules-catalog.v1"
+CATALOG_STATUSES = frozenset({'calculable', 'requires_parameters', 'reference_only'})
+
+
+def catalog_status(record) -> Optional[str]:
+    """An explicit status, never an assumption that an unknown record is usable."""
+    status = getattr(record, 'catalog_status', None)
+    if isinstance(status, str) and status in CATALOG_STATUSES:
+        return status
+    return 'reference_only' if getattr(record, 'reference_only', False) else None
 
 
 _FACTORIES = {
@@ -74,7 +83,7 @@ class ExtendedRulesCatalog:
         return list(self._collections[kind])
 
     def search(self, kind: str, query: str = "", source: Optional[str] = None,
-               profile: Optional[str] = None, tag: Optional[str] = None) -> List[Any]:
+               profile: Optional[str] = None, tag: Optional[str] = None, status: Optional[str] = None) -> List[Any]:
         needle = query.casefold().strip()
         result = []
         for record in self.records(kind):
@@ -88,6 +97,8 @@ class ExtendedRulesCatalog:
             if profile == "realistic" and record_profile == "cinematic":
                 continue
             if tag is not None and tag not in getattr(record, "tags", []):
+                continue
+            if status is not None and catalog_status(record) != status:
                 continue
             result.append(record)
         return sorted(result, key=lambda item: (item.name.casefold(), item.identifier))

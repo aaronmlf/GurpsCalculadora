@@ -357,6 +357,10 @@ class AbilityEditor(EditorWindow):
         result = self.app.ability_calc.calculate(self.build())
         self.output.configure(state='normal')
         self.output.delete('1.0', 'end')
+        if not result.valid:
+            self.output.insert('1.0', self.app._format_errors(result.errors))
+            self.output.configure(state='disabled')
+            return
         self.output.insert('1.0', t('ui_ability_cost', base=result.unmodified_cost, modifier=result.net_modifier_percent, final=result.modified_cost))
         for item in result.breakdown:
             self.output.insert('end', f'\n{item["key"]}: {item["value"]} — {item["source"]} p.{item["page"]}')

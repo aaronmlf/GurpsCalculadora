@@ -2,8 +2,9 @@
 set -eu
 
 cd "$(dirname "$0")/.."
-python3 -m venv packaging/.build-venv
-packaging/.build-venv/bin/python -m pip install --upgrade pip pyinstaller
-packaging/.build-venv/bin/python -m PyInstaller --noconfirm --clean packaging/GurpsCalculadora.spec
-
-echo "Executavel criado em dist/GurpsCalculadora"
+venv=packaging/.build-venv/linux
+if [ ! -x "$venv/bin/python" ]; then
+    python3 -m venv "$venv"
+fi
+"$venv/bin/python" -m pip install --disable-pip-version-check --no-deps -r packaging/requirements-build.txt
+exec "$venv/bin/python" tools/build_archives.py "$@"

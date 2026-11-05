@@ -1,18 +1,19 @@
 # -*- mode: python ; coding: utf-8 -*-
 from pathlib import Path
+import sys
 
 
 project_root = Path(SPECPATH).resolve().parent
+sys.path.insert(0, str(project_root))
+from tools.release_inputs import resource_paths
 
 a = Analysis(
     [str(project_root / "main.py")],
     pathex=[str(project_root)],
     binaries=[],
     datas=[
-        (str(path), str(path.parent.relative_to(project_root)))
-        for folder in ("i18n", "data")
-        for path in sorted((project_root / folder).rglob("*.json"))
-        if path.is_file() and not path.is_symlink()
+        (str(project_root / name), str(Path(name).parent))
+        for name in resource_paths(project_root)
     ],
     hiddenimports=[],
     hookspath=[],
@@ -40,7 +41,7 @@ exe = EXE(
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
-    upx=True,
+    upx=False,
     console=False,
     disable_windowed_traceback=False,
     argv_emulation=False,

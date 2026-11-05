@@ -9,12 +9,35 @@ import json
 import math
 import os
 from pathlib import Path
+import re
 from typing import Any, Dict, List, Optional
+import unicodedata
 
 from calculators.injury import RuleReference
 from calculators.battle_modifiers import class_superiority, position_after_round
 from calculators.battle_end import battle_end
 from utils.dice_roller import evaluate_success_roll, roll_3d6
+
+
+INFLUENCE_SKILLS = ('diplomacy', 'fast_talk', 'intimidation', 'savoir_faire', 'sex_appeal', 'streetwise')
+_INFLUENCE_ALIASES = {
+    'diplomacia': 'diplomacy', 'labia': 'fast_talk', 'conversa_rapida': 'fast_talk',
+    'intimidacao': 'intimidation', 'trato_social': 'savoir_faire', 'etiqueta': 'savoir_faire',
+    'seducao': 'sex_appeal', 'apelo_sexual': 'sex_appeal', 'atracao_sexual': 'sex_appeal',
+    'manha': 'streetwise', 'conhecimento_das_ruas': 'streetwise', 'street_wise': 'streetwise',
+}
+
+
+def canonical_influence_skill(name: str) -> str:
+    """Stable IDs for rule lookup; tolerate localized names and older presets."""
+    plain = unicodedata.normalize('NFKD', name.casefold())
+    plain = ''.join(char for char in plain if not unicodedata.combining(char))
+    display_name = re.sub(r'[^a-z0-9]+', '_', plain.split('(', 1)[0]).strip('_')
+    canonical = _INFLUENCE_ALIASES.get(display_name, display_name)
+    if canonical in INFLUENCE_SKILLS:
+        return canonical
+    key = re.sub(r'[^a-z0-9]+', '_', plain).strip('_')
+    return _INFLUENCE_ALIASES.get(key, key)
 
 
 @dataclass
@@ -271,14 +294,21 @@ class SocialEngineeringEngine:
             breakdown=[{"key": "appearance", "value": actor.appearance_modifier},
                        {"key": "reputation", "value": actor.reputation_modifier},
                        {"key": "charisma", "value": actor.charisma},
-                       {"key": "situation", "value": data.situational_modifier}],
+                       {"key": "disposition", "value": data.disposition_modifier},
+                       {"key": "situation", "value": data.situational_modifier},
+                       {"key": "group", "value": data.group_modifier},
+                       {"key": "cultural_familiarity", "value": 0 if actor.cultural_familiarity else -3}],
             references=[RuleReference("Basic Set", "494-561"), RuleReference("Social Engineering", "20-39")],
         )
 
     def resolve_influence(self, data: InfluenceInput, actor_roll: Optional[int] = None,
                           target_roll: Optional[int] = None) -> InfluenceResult:
         errors: List[str] = []
+        skill_key = canonical_influence_skill(data.skill)
         skill = data.actor.skills.get(data.skill)
+        if skill is None:
+            skill = next((level for name, level in data.actor.skills.items()
+                          if canonical_influence_skill(name) == skill_key), None)
         if skill is None:
             errors.append("unknown_influence_skill")
             skill = data.actor.iq - 5
@@ -302,9 +332,9 @@ class SocialEngineeringEngine:
         opposing = resistance - troll
         margin = actor_target - aroll - opposing
         success = margin > 0
-        band = ("very_good" if data.skill == "Sex Appeal" else "good") if success else "bad"
-        pending = [{"kind": "gm_social_consequence", "skill": data.skill, "margin": margin}]
-        if data.skill == "Diplomacy":
+        band = ("very_good" if skill_key == "sex_appeal" else "good") if success else "bad"
+        pending = [{"kind": "gm_social_consequence", "skill": skill_key, "margin": margin}]
+        if skill_key == "diplomacy":
             pending.append({"kind": "take_better_reaction_roll", "influence_band": band})
         return InfluenceResult(
             valid=not errors, errors=errors, actor_target=actor_target, target_resistance=resistance,

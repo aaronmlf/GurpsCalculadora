@@ -1,19 +1,178 @@
 """Shared desktop navigation, catalog selection and result presentation."""
 import tkinter as tk
-from tkinter import ttk, filedialog, messagebox
+from tkinter import ttk, filedialog, font, messagebox
 from pathlib import Path
 from dataclasses import asdict, is_dataclass
 import unicodedata
 
 from utils.i18n import t
+from utils.rules_catalog import catalog_status
+from utils.ui_preferences import BATTLE_MAP_TOOL
+
+
+_TOOL_KEYS = (
+    'tab_knockback', 'tab_slam', 'tab_falls', 'tab_collisions', 'tab_explosions',
+    'tab_falling_objects', 'tab_combat', 'tab_injury', 'tab_ranged', 'tab_strength',
+    'tab_magic', 'tab_powers', 'tab_vehicles', 'tab_social', 'tab_mass_combat',
+    'tab_gm_dice', 'tab_battle_map',
+)
+_WORKSPACE_GROUPS = (
+    ('ui_combat', (BATTLE_MAP_TOOL, 6, 8, 7, 9)), ('ui_powers', (10, 11)),
+    ('ui_impacts', (0, 1, 2, 3, 4, 5)), ('ui_vehicles', (12,)),
+    ('ui_campaign', (13, 14)),
+)
+_TOOL_GROUPS = {index: group for group, indices in _WORKSPACE_GROUPS for index in indices}
+_TOOL_GROUPS[15] = 'ui_game_master'
+_DOMAIN_GLYPHS = {'ui_combat': '×', 'ui_powers': '✦', 'ui_impacts': '↘',
+                  'ui_vehicles': '▰', 'ui_campaign': '▦'}
+
+
+def _fold_text(value):
+    return ''.join(c for c in unicodedata.normalize('NFKD', value.casefold())
+                   if not unicodedata.combining(c))
 
 
 def search_values(values, query):
-    def normalize(value):
-        return ''.join(c for c in unicodedata.normalize('NFKD', value.casefold())
-                       if not unicodedata.combining(c))
-    words = normalize(query).split()
-    return [value for value in values if all(word in normalize(value) for word in words)]
+    words = _fold_text(query).split()
+    return [value for value in values if all(word in _fold_text(value) for word in words)]
+
+
+class ToolChooser(tk.Toplevel):
+    """A small, bilingual index of the workspace's tools, independent of catalogs."""
+
+    def __init__(self, app):
+        super().__init__(app.main_frame)
+        self.app = app
+        self.title(t('ui_tool_search'))
+        self.transient(app.root)
+        self.geometry('520x380')
+        self.minsize(380, 285)
+
+        favorites = app.ui_preferences['favorites']
+        recent = app.ui_preferences['recent']
+        count = len(app.notebook.tabs())
+        order = dict.fromkeys((15, *favorites, *recent, *range(count)))
+        translations = app.i18n.translations.values()
+        self.entries = []
+        for index in order:
+            if not 0 <= index < min(count, len(_TOOL_KEYS)):
+                continue
+            key, group = _TOOL_KEYS[index], _TOOL_GROUPS[index]
+            label = app.notebook.tab(index, 'text')
+            domain = t(group)
+            names = tuple(_fold_text(name) for name in (label, *(table.get(key, '') for table in translations)))
+            name_text = ' '.join(names)
+            domain_text = _fold_text(' '.join((domain, *(table.get(group, '') for table in translations))))
+            display = label if label == domain else f'{label}  ·  {domain}'
+            self.entries.append((index, display, names, name_text, f'{name_text} {domain_text}'))
+
+        frame = ttk.Frame(self, padding=14)
+        frame.pack(fill='both', expand=True)
+        ttk.Label(frame, text=t('ui_tool_search_hint'), wraplength=350).pack(anchor='w', pady=(0, 6))
+        self.query = tk.StringVar(self)
+        self.entry = ttk.Entry(frame, textvariable=self.query)
+        self.entry.pack(fill='x', pady=(0, 8))
+
+        buttons = ttk.Frame(frame)
+        buttons.pack(side='bottom', fill='x', pady=(8, 0))
+        ttk.Button(buttons, text=t('ui_cancel'), command=self.destroy).pack(side='right')
+        self.open_button = ttk.Button(buttons, text=t('ui_open_tool'), command=self.confirm)
+        self.open_button.pack(side='right', padx=(0, 6))
+        self.empty = ttk.Label(frame)
+        self.empty.pack(side='bottom', anchor='w')
+
+        result = ttk.Frame(frame)
+        result.pack(fill='both', expand=True)
+        colors = app.colors
+        self.listbox = tk.Listbox(result, height=7, width=24, exportselection=False,
+                                  bg=colors.get('surface', colors['panel']),
+                                  fg=colors.get('panel_fg', colors['fg']),
+                                  selectbackground=colors['accent'],
+                                  selectforeground=colors.get('accent_fg', colors['bg']),
+                                  highlightthickness=0, relief='flat')
+        scroll = ttk.Scrollbar(result, command=self.listbox.yview)
+        self.listbox.configure(yscrollcommand=scroll.set)
+        scroll.pack(side='right', fill='y')
+        self.listbox.pack(side='left', fill='both', expand=True)
+
+        self.entry.bind('<Down>', lambda _event: self.move(1))
+        self.entry.bind('<Up>', lambda _event: self.move(-1))
+        self.listbox.bind('<Double-1>', self.confirm)
+        self.bind('<Return>', self.confirm)
+        self.bind('<Escape>', lambda _event: self.destroy())
+        self.query.trace_add('write', self.refresh)
+        self.refresh()
+        self.entry.focus_set()
+
+    def refresh(self, *_):
+        words = _fold_text(self.query.get()).split()
+        query = ' '.join(words)
+        matches = []
+        for index, label, names, name_text, terms in self.entries:
+            if all(word in terms for word in words):
+                rank = 0 if query in names else 1 if all(word in name_text for word in words) else 2
+                matches.append((rank, index, label))
+        if words:
+            matches.sort(key=lambda item: item[0])
+        self.filtered = [(index, label) for _, index, label in matches]
+        self.listbox.delete(0, 'end')
+        for _, label in self.filtered:
+            self.listbox.insert('end', label)
+        if self.filtered:
+            self.listbox.selection_set(0)
+            self.listbox.activate(0)
+        self.open_button.configure(state='normal' if self.filtered else 'disabled')
+        self.empty.configure(text='' if self.filtered else t('ui_tool_search_empty'))
+
+    def move(self, offset):
+        if self.filtered:
+            selected = self.listbox.curselection()
+            index = min(len(self.filtered) - 1, max(0, (selected[0] if selected else 0) + offset))
+            self.listbox.selection_clear(0, 'end')
+            self.listbox.selection_set(index)
+            self.listbox.activate(index)
+            self.listbox.see(index)
+        return 'break'
+
+    def confirm(self, event=None):
+        selected = self.listbox.curselection()
+        if selected:
+            index = self.filtered[selected[0]][0]
+            self.destroy()
+            self.app.choose_tool(index)
+        return 'break' if event is not None else None
+
+    def destroy(self):
+        if getattr(self.app, '_tool_chooser', None) is self:
+            self.app._tool_chooser = None
+        super().destroy()
+
+
+def select_workspace_tool(tree, index):
+    """Keep unrelated domains collapsed and reveal a programmatically chosen tool."""
+    iid = str(index)
+    if not tree.exists(iid):
+        return
+    parent = tree.parent(iid)
+    for group, _ in _WORKSPACE_GROUPS:
+        tree.item(group, open=(group == parent))
+    if tree.selection() != (iid,):
+        tree.selection_set(iid)
+    tree.focus(iid)
+    tree.see(iid)
+
+
+def short_tool_title(app, index):
+    return app.notebook.tab(index, 'text').split(' (', 1)[0]
+
+
+def workspace_tool_label(app, index):
+    prefixes = []
+    if index == 15:
+        prefixes.append('◇')
+    if index in app.ui_preferences['favorites']:
+        prefixes.append('★')
+    return '  '.join((*prefixes, short_tool_title(app, index)))
 
 
 class CatalogDialog(tk.Toplevel):
@@ -38,9 +197,9 @@ class CatalogDialog(tk.Toplevel):
         self.filters = {}
         filters = ttk.Frame(self)
         filters.pack(fill='x', padx=12, pady=6)
-        for field in ('source', 'college', 'spell_class', 'vehicle_type', 'tech_level', 'power', 'category', 'profile'):
-            options = sorted({str(getattr(record, field)) for record in self.records.values()
-                              if getattr(record, field, '') not in ('', None)})
+        for field in ('catalog_status', 'source', 'college', 'spell_class', 'vehicle_type', 'tech_level', 'power', 'category', 'profile'):
+            options = sorted({self._filter_value(record, field) for record in self.records.values()
+                              if self._filter_value(record, field)})
             if len(options) < 2:
                 continue
             index = len(self.filters)
@@ -88,7 +247,7 @@ class CatalogDialog(tk.Toplevel):
             [label + ' ' + ' '.join(getattr(self.records.get(label), 'aliases', []) or [])], self.query.get())]
         self.filtered = [label for label in self.filtered if all(
             variable.get() == t('ui_all') or
-            str(getattr(self.records.get(label), field, '')) == variable.get()
+            self._filter_value(self.records.get(label), field) == variable.get()
             for field, variable in self.filters.items())]
         if self.only_favorites.get():
             self.filtered = [label for label in self.filtered if self.favorite_key(label) in self.favorites]
@@ -98,6 +257,13 @@ class CatalogDialog(tk.Toplevel):
         self.count.configure(text=t('ui_count', count=len(self.filtered)))
         self.set_detail('' if self.filtered else t('ui_no_matches'))
         self.use.configure(state='disabled')
+
+    @staticmethod
+    def _filter_value(record, field):
+        if field == 'catalog_status':
+            status = catalog_status(record)
+            return t('catalog_status_' + status) if status else ''
+        return str(getattr(record, field, '') or '')
 
     def select(self, *_):
         selected = self.list.curselection()
@@ -207,33 +373,64 @@ def install_workspace(app, active=0):
     style = ttk.Style(app.root)
     style.layout('Workspace.TNotebook', [('Notebook.client', {'sticky': 'nswe'})])
     style.layout('Workspace.TNotebook.Tab', [])
-    style.configure('Workspace.Treeview', background=app.colors['panel'],
-                    fieldbackground=app.colors['panel'], foreground=app.colors['fg'], rowheight=25)
+    colors = app.colors
+    sidebar_color = colors.get('sidebar', colors['panel'])
+    sidebar_fg = colors.get('sidebar_fg', colors['fg'])
+    style.configure('Oficina.Sidebar.TFrame', background=sidebar_color)
+    style.configure('Oficina.Sidebar.TLabel', background=sidebar_color,
+                    foreground=sidebar_fg)
+    style.configure('Workspace.Treeview', background=sidebar_color,
+                    fieldbackground=sidebar_color, foreground=sidebar_fg, rowheight=25,
+                    borderwidth=0, bordercolor=sidebar_color,
+                    lightcolor=sidebar_color, darkcolor=sidebar_color)
+    style.map('Workspace.Treeview', background=[('selected', colors['accent'])],
+              foreground=[('selected', colors.get('accent_fg', colors['bg']))])
     notebook.configure(style='Workspace.TNotebook')
-    sidebar = ttk.Frame(app.main_frame, width=190)
+    sidebar = ttk.Frame(app.main_frame, style='Oficina.Sidebar.TFrame', padding=(6, 8))
     sidebar.pack(side='left', fill='y', before=notebook, padx=(0, 10))
-    ttk.Label(sidebar, text=t('ui_tools'), style='Title.TLabel').pack(anchor='w', pady=(0, 8))
-    tree = ttk.Treeview(sidebar, show='tree', selectmode='browse', height=20,
+    sidebar_header = ttk.Frame(sidebar, style='Oficina.Sidebar.TFrame')
+    app.workspace_sidebar_header = sidebar_header
+    sidebar_header.pack(fill='x', padx=3, pady=(0, 6))
+    ttk.Label(sidebar_header, text=t('ui_tools'), style='Oficina.Sidebar.TLabel').pack(side='left')
+    tree = ttk.Treeview(sidebar, show='tree', selectmode='browse', height=10,
                         style='Workspace.Treeview')
-    tree.column('#0', width=180, stretch=True)
+    size = app.ui_preferences['font_size']
+    domain_labels = {
+        key: f'{_DOMAIN_GLYPHS[key]}  {t("ui_impacts_short" if key == "ui_impacts" else key)}'
+        for key, _ in _WORKSPACE_GROUPS
+    }
+    domain_font = font.Font(root=app.root, family='Arial', size=size, weight='bold')
+    widest_domain = max(domain_font.measure(label) for label in domain_labels.values())
+    tree.column('#0', width=min(262, max(154, int(16.5 * size), widest_domain + 26)), stretch=True)
+    tree.tag_configure('domain', font=('Arial', size, 'bold'))
     scroll = ttk.Scrollbar(sidebar, command=tree.yview)
-    tree.configure(yscrollcommand=scroll.set)
-    scroll.pack(side='right', fill='y')
+    def update_scroll(first, last):
+        scroll.set(first, last)
+        needed = float(first) > 0 or float(last) < 1
+        if needed and not scroll.winfo_manager():
+            scroll.pack(side='right', fill='y', before=tree)
+        elif not needed and scroll.winfo_manager():
+            scroll.pack_forget()
+    tree.configure(yscrollcommand=update_scroll)
     tree.pack(fill='both', expand=True)
-    groups = [('ui_combat', [6, 8, 7, 9]), ('ui_powers', [10, 11]),
-              ('ui_impacts', [0, 1, 2, 3, 4, 5]), ('ui_vehicles', [12]), ('ui_campaign', [13, 14]),
-              ('ui_game_master', [15])]
-    for key, indices in groups:
-        tree.insert('', 'end', iid=key, text=t(key), open=True)
+    tree.insert('', 'end', iid='15', text=workspace_tool_label(app, 15), tags=('domain',))
+    for key, indices in _WORKSPACE_GROUPS:
+        tree.insert('', 'end', iid=key, text=domain_labels[key], open=False, tags=('domain',))
         for index in indices:
-            tree.insert(key, 'end', iid=str(index), text=notebook.tab(index, 'text'))
-    def navigate(*_):
-        selected = tree.selection()
-        if selected and selected[0].isdigit():
-            notebook.select(int(selected[0]))
-    tree.bind('<<TreeviewSelect>>', navigate)
-    tree.selection_set(str(active))
-    tree.see(str(active))
+            tree.insert(key, 'end', iid=str(index), text=workspace_tool_label(app, index))
+
+    def toggle_domain(iid):
+        if iid and tree.get_children(iid):
+            tree.item(iid, open=not tree.item(iid, 'open'))
+            return 'break'
+
+    def click_domain(event):
+        if 'indicator' not in tree.identify_element(event.x, event.y):
+            return toggle_domain(tree.identify_row(event.y))
+
+    tree.bind('<ButtonRelease-1>', click_domain, add='+')
+    tree.bind('<Return>', lambda _event: toggle_domain(tree.focus()), add='+')
+    select_workspace_tool(tree, active)
     notebook.select(active)
     app.navigation_tree = tree
 
@@ -261,25 +458,25 @@ def organize_result(box):
     """Keep the existing Text API so all legacy engine renderers still work."""
     if box.winfo_manager() != 'pack':
         return
+    card = getattr(box, 'oficina_card', False)
+    responsive = card or getattr(box, 'responsive_toolbar', False)
     toolbar = ttk.Frame(box.master)
     toolbar.pack(fill='x', before=box, padx=8, pady=4)
-    summary = ttk.Label(toolbar, text=t('ui_result_empty'), wraplength=500)
+    summary = ttk.Label(toolbar, text=t('ui_result_empty'), wraplength=180 if responsive else 500,
+                        style='ResultSummary.TLabel' if card else 'TLabel')
     summary.pack(anchor='w', fill='x')
     box.summary_label = summary
-    warning_color = '#8a4b00' if box.winfo_toplevel().cget('background') == '#f2f4f7' else '#ffbd69'
-    box.status_label = ttk.Label(toolbar, text='', foreground=warning_color, wraplength=650)
+    box.status_label = ttk.Label(toolbar, text='', style='Warning.TLabel',
+                                 wraplength=180 if responsive else 650)
     box.status_label.pack(anchor='w', fill='x')
     def copy():
         box.clipboard_clear()
         box.clipboard_append(box.get('1.0', 'end-1c'))
     actions = ttk.Frame(toolbar)
     actions.pack(fill='x', pady=4)
-    ttk.Button(actions, text=t('ui_copy'), command=copy).grid(row=0, column=0, sticky='ew', padx=2)
+    copy_button = ttk.Button(actions, text=t('ui_copy_short' if responsive else 'ui_copy'), command=copy)
     comparison = ResultComparison(box)
-    ttk.Button(actions, text=t('ui_keep_result'), command=comparison.keep).grid(row=0, column=1, sticky='ew', padx=2)
     comparison.button = ttk.Button(actions, text=t('ui_compare'), command=comparison.show, state='disabled')
-    comparison.button.grid(row=0, column=2, sticky='ew', padx=2)
-    ttk.Button(actions, text=t('ui_result_history'), command=comparison.show_history).grid(row=1, column=0, sticky='ew', padx=2, pady=4)
     def export():
         path = filedialog.asksaveasfilename(parent=box.winfo_toplevel(), defaultextension='.txt',
                                           filetypes=[(t('ui_text_file'), '*.txt')])
@@ -288,23 +485,94 @@ def organize_result(box):
                 Path(path).write_text(box.get('1.0', 'end-1c'), encoding='utf-8')
             except OSError as exc:
                 messagebox.showerror(t('common_error_title'), str(exc))
-    ttk.Button(actions, text=t('ui_export_result'), command=export).grid(row=1, column=1, sticky='ew', padx=2, pady=4)
-    for index in range(3):
-        actions.columnconfigure(index, weight=1)
+    if card:
+        more = ttk.Menubutton(actions, text=t('ui_result_actions'))
+        menu = tk.Menu(more, tearoff=0)
+        menu.add_command(label=t('ui_keep_result'), command=comparison.keep)
+        menu.add_command(label=t('ui_result_history'), command=comparison.show_history)
+        menu.add_command(label=t('ui_export_result'), command=export)
+        more.configure(menu=menu)
+        buttons = (copy_button, comparison.button, more)
+    else:
+        keep_button = ttk.Button(actions, text=t('ui_keep_result'), command=comparison.keep)
+        history_button = ttk.Button(actions, text=t('ui_result_history'), command=comparison.show_history)
+        export_button = ttk.Button(actions, text=t('ui_export_result'), command=export)
+        buttons = (copy_button, keep_button, comparison.button, history_button, export_button)
+    columns = 0
+
+    def layout_actions(count):
+        nonlocal columns
+        if columns == count:
+            return
+        columns = count
+        for column in range(3):
+            actions.columnconfigure(column, weight=int(column < columns))
+        for index, button in enumerate(buttons):
+            row, column = divmod(index, columns)
+            button.grid(row=row, column=column, sticky='ew', padx=2, pady=(4, 0) if row else 0)
+
+    layout_actions(1 if responsive else 3)
+    if responsive:
+        def fit_actions(event):
+            width = max(button.winfo_reqwidth() + 4 for button in buttons)
+            layout_actions(min(3, max(1, event.width // width)))
+
+        def fit_labels(event):
+            width = max(140, event.width - 6)
+            summary.configure(wraplength=width)
+            box.status_label.configure(wraplength=width)
+
+        actions.bind('<Configure>', fit_actions)
+        toolbar.bind('<Configure>', fit_labels)
     box.comparison = comparison
-    ttk.Label(toolbar, text=t('ui_breakdown')).pack(side='left')
+    if card:
+        scrollbar = getattr(box, 'oficina_scrollbar', None)
+
+        def show_details(visible):
+            box.oficina_details = visible
+            details.configure(text=t('ui_result_hide_details' if visible else 'ui_result_show_details'))
+            if visible:
+                if scrollbar is not None:
+                    scrollbar.pack(side='right', fill='y')
+                box.pack(fill='both', expand=True, pady=(0, 4))
+            else:
+                box.pack_forget()
+                if scrollbar is not None:
+                    scrollbar.pack_forget()
+
+        details = ttk.Button(toolbar, command=lambda: show_details(not box.oficina_details))
+        details.pack(fill='x', pady=(0, 4))
+        box.show_oficina_details = show_details
+        show_details(False)
+    else:
+        ttk.Label(toolbar, text=t('ui_breakdown')).pack(side='left')
+
+    def present(text):
+        lines = [line.strip() for line in text.splitlines() if line.strip()]
+        separator = '\n' if card else '  |  '
+        highlights = [line for line in getattr(box, 'oficina_highlights', ()) if line in lines] if card else []
+        summary.configure(text=separator.join((highlights or lines)[:2]) if lines else t('ui_result_empty'))
+        if card:
+            details.configure(state='normal' if lines else 'disabled')
+            copy_button.configure(state='normal' if lines else 'disabled')
+
+    box.present_result = present
+    present(box.get('1.0', 'end-1c'))
     box.configure(wrap='word', spacing1=3, spacing3=3)
     box.tag_configure('heading', font=('Arial', 11, 'bold'))
     def changed(*_):
         if not box.edit_modified():
             return
-        lines = [line.strip() for line in box.get('1.0', 'end-1c').splitlines() if line.strip()]
-        summary.configure(text='  |  '.join(lines[:2]) if lines else t('ui_result_empty'))
+        text = box.get('1.0', 'end-1c')
+        present(text)
         box.tag_remove('heading', '1.0', 'end')
         box.tag_add('heading', '1.0', '1.end')
         if hasattr(box, 'form_state'):
             box.form_state.result_changed(box)
         box.edit_modified(False)
+        layout = getattr(box, 'oficina_layout', None)
+        if layout is not None and not layout.wide and text.strip() and toolbar.winfo_ismapped():
+            layout.after_idle(lambda: layout.reveal(toolbar, align_top=True))
     box.bind('<<Modified>>', changed, add='+')
     # Users can select and copy, but cannot accidentally edit calculated output.
     box.bind('<Key>', lambda event: None if event.keysym in ('Left', 'Right', 'Up', 'Down', 'Home', 'End', 'Prior', 'Next') or (event.state & 4 and event.keysym.lower() in ('c', 'a')) else 'break')

@@ -12,6 +12,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 from calculators.collisions import CollisionsCalculator
+from calculators.injury import calculate_simple_injury
 from calculators.injury import RuleReference
 from calculators.ranged_combat import RangedAttackInput, RangedAttackResult, RangedCombatCalculator, WeaponRecord
 
@@ -305,21 +306,34 @@ class VehicleEngine:
         )
 
     def calculate_collision(self, data: VehicleCollisionInput) -> Dict[str, Any]:
-        return self.collisions.calculate_collision(
+        result = self.collisions.calculate_collision(
             data.first.record.st_hp, round(data.first.speed_yards_per_second),
             data.second.record.st_hp, round(data.second.speed_yards_per_second),
             collision_type=data.collision_type, surface_type=data.surface_type,
             object2_dr=data.second.record.dr,
         )
+        if result["valid"]:
+            result["object1_injury_result"] = calculate_simple_injury(
+                result["object2_damage_total"], "cr", data.first.record.st_hp, data.first.record.dr,
+                source="Basic Set", page="430-432",
+            ).to_dict()
+        return result
 
-    def calculate_attack(self, data: VehicleAttackInput) -> RangedAttackResult:
-        return self.ranged.calculate(RangedAttackInput(
+    @staticmethod
+    def _ranged_input(data: VehicleAttackInput) -> RangedAttackInput:
+        return RangedAttackInput(
             weapon=data.weapon, profile=data.profile, skill=data.gunner_skill,
             distance_m=data.distance_m, target_speed_mps=data.target_speed_mps,
             target_sm=data.target.record.size_modifier, aim_seconds=data.aim_seconds,
             targeting_system_bonus=data.targeting_bonus, shots_fired=data.shots_fired,
             target_dr=data.target.record.dr, target_hp=data.target.record.st_hp,
-        ))
+        )
+
+    def calculate_attack(self, data: VehicleAttackInput) -> RangedAttackResult:
+        return self.ranged.calculate(self._ranged_input(data))
+
+    def resolve_attack(self, data: VehicleAttackInput, **rolls) -> RangedAttackResult:
+        return self.ranged.resolve(self._ranged_input(data), **rolls)
 
 
 VEHICLE_CATALOG_SCHEMA = "gurps-calculadora.vehicle-catalog.v1"

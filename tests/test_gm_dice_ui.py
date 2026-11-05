@@ -1,6 +1,5 @@
 """Detailed GM rolls stay usable and independent of campaign/combat state."""
 from itertools import repeat
-import os
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from threading import Event
@@ -8,11 +7,13 @@ import time
 import unittest
 from unittest.mock import patch
 
+from tests.tk_support import requires_tk
 from utils.gm_dice import DiceRollError, roll_dice
+from utils.gm_dice_preferences import DiceExpressions
 from utils.ui_preferences import load_ui_preferences
 
 
-@unittest.skipUnless(os.environ.get('DISPLAY'), 'requires a graphical display')
+@requires_tk
 class GMDiceGuiTests(unittest.TestCase):
     def setUp(self):
         from main import GURPSCalculator
@@ -68,6 +69,64 @@ class GMDiceGuiTests(unittest.TestCase):
             self.assertEqual(str(panel.output['state']), 'disabled')
         self.assertEqual((app.combat_session.to_dict(), app.campaign_session.to_dict()), before)
 
+    def test_roll_controls_and_results_reflow_without_horizontal_clipping(self):
+        app = self.app
+        app.ui_preferences['font_size'] = 18
+        for language in ('pt_BR', 'en_US'):
+            with self.subTest(language=language):
+                app._change_language(language)
+                panel = app.gm_dice_panel
+                app.root.geometry('800x600')
+                app.root.update()
+                self.assertFalse(panel.wide)
+                self.assertGreater(panel.result.winfo_rooty(), panel.inputs.winfo_rooty())
+                self.assertFalse(panel.work.winfo_ismapped())
+                app.gm_dice_expression.set('104d1+20')
+                panel.roll_button.invoke()
+                app.root.update()
+                self.assertEqual(panel.total['text'], '124')
+                self.assertIn('#100=1', panel.output.get('1.0', 'end-1c'))
+                for button in (panel.roll_button, *panel.quick_buttons, panel.copy_button,
+                               panel.export_button, panel.clear_button, panel.previous,
+                               panel.next, panel.page_entry, panel.go):
+                    self.assertTrue(button.winfo_ismapped())
+                    self.assertGreaterEqual(button.winfo_rootx(), panel.canvas.winfo_rootx())
+                    self.assertLessEqual(button.winfo_rootx() + button.winfo_width(),
+                                         panel.canvas.winfo_rootx() + panel.canvas.winfo_width())
+                app.root.geometry('1500x900')
+                app.root.update()
+                self.assertTrue(panel.wide)
+                self.assertGreater(panel.result.winfo_rootx(), panel.inputs.winfo_rootx())
+                self.assertEqual(panel.total['text'], '124')
+                panel.next.invoke()
+                self.assertIn('#104=1', panel.output.get('1.0', 'end-1c'))
+
+    def test_action_rows_do_not_oscillate_on_a_one_pixel_resize(self):
+        from tkinter import ttk
+
+        from utils.ranged_layout import flow_buttons
+
+        root = self.app.root
+        toolbar = ttk.Frame(root, width=200, height=100)
+        toolbar.pack_propagate(False)
+        toolbar.place(x=0, y=0)
+        first = ttk.Button(toolbar, text='Copy total')
+        second = ttk.Button(toolbar, text='Export all')
+        flow_buttons(toolbar, [first, second])
+        root.update()
+        required = first.winfo_reqwidth() + second.winfo_reqwidth() + 16
+        toolbar.configure(width=required - 1)
+        root.update()
+        self.assertLess(first.winfo_rooty(), second.winfo_rooty())
+        for width in (required, required - 1) * 3:
+            toolbar.configure(width=width)
+            root.update()
+            self.assertLess(first.winfo_rooty(), second.winfo_rooty())
+        toolbar.configure(width=required + 20)
+        root.update()
+        self.assertEqual(first.winfo_rooty(), second.winfo_rooty())
+        toolbar.destroy()
+
     def test_language_change_preserves_roll_and_dice_navigation_preferences(self):
         app = self.app
         result = roll_dice('1d6-20', values=[1])
@@ -86,6 +145,86 @@ class GMDiceGuiTests(unittest.TestCase):
         self.assertEqual(saved['last_tool'], 15)
         self.assertIn(15, saved['favorites'])
 
+    def test_favorite_and_recent_expressions_reopen_without_rolling_and_copy_only_total(self):
+        app = self.app
+        panel = app.gm_dice_panel
+        app.gm_dice_expression.set('1 D 1 - 20')
+        panel.favorite_button.invoke()
+        panel.roll_button.invoke()
+        panel.copy_total_button.invoke()
+        self.assertEqual(app.root.clipboard_get(), '-19')
+        state = DiceExpressions.load(Path(self.directory.name) / 'dice_expressions.json')
+        self.assertEqual((state.favorites, state.recent), (('1d1-20',), ('1d1-20',)))
+        result = app.gm_dice_last_result
+        app._change_language('en_US')
+        panel = app.gm_dice_panel
+        with patch('utils.gm_dice_ui.roll_dice') as roller:
+            app.gm_dice_expression.set('104d6+20')
+            panel.recent_menu.invoke(0)
+            self.assertEqual(app.gm_dice_expression.get(), '1d1-20')
+            app.gm_dice_expression.set('3d6')
+            panel.favorite_menu.invoke(0)
+            self.assertEqual(app.gm_dice_expression.get(), '1d1-20')
+            roller.assert_not_called()
+        self.assertIs(app.gm_dice_last_result, result)
+        panel.favorite_button.invoke()
+        self.assertEqual(DiceExpressions.load(Path(self.directory.name) / 'dice_expressions.json').favorites, ())
+
+    def test_3d6_check_reuses_critical_rules_and_survives_language_rebuild(self):
+        app = self.app
+        session = app.combat_session.to_dict()
+        dialog = app.gm_dice_panel.open_check()
+        dialog.targets[0].set('16')
+        with patch('utils.gm_dice_ui.roll_3d6', return_value=(6, [2, 2, 2])) as roller:
+            dialog.roll_button.invoke()
+            self.assertIn('Sucesso crítico', dialog.output['text'])
+            self.assertIn('+10', dialog.output['text'])
+            app._change_language('en_US')
+            self.assertFalse(dialog.winfo_exists())
+            dialog = app.gm_dice_panel.open_check()
+            self.assertIn('Critical success', dialog.output['text'])
+            self.assertIn('2, 2, 2 = 6', dialog.output['text'])
+            roller.assert_called_once_with()
+        self.assertEqual(app.combat_session.to_dict(), session)
+        self.assertIsNone(app.gm_dice_last_result)
+
+    def test_quick_contest_resolves_margin_and_ties_and_rejects_bad_target(self):
+        app = self.app
+        dialog = app.gm_dice_panel.open_check(True)
+        dialog.targets[0].set('13')
+        dialog.targets[1].set('0')
+        with patch('utils.gm_dice_ui.roll_3d6') as roller:
+            dialog.roll_button.invoke()
+            roller.assert_not_called()
+        self.assertIn('1 e 999', dialog.error['text'])
+        self.assertTrue(dialog.entries[1].instate(['invalid']))
+        dialog.targets[1].set('12')
+        with patch('utils.gm_dice_ui.roll_3d6', side_effect=[(10, [3, 3, 4]), (9, [3, 3, 3]),
+                                                         (9, [3, 3, 3]), (11, [3, 4, 4]),
+                                                         (16, [6, 5, 5]), (13, [5, 4, 4])]):
+            dialog.roll_button.invoke()
+            self.assertIn('Empate', dialog.output['text'])
+            dialog.roll_button.invoke()
+            self.assertIn('Vencedor: Participante A (margem 3)', dialog.output['text'])
+            self.assertNotIn('invalid', dialog.entries[1].state())
+            dialog.roll_button.invoke()
+            self.assertIn('Vencedor: Participante B (margem 2)', dialog.output['text'])
+            self.assertIn('margem: -3', dialog.output['text'])
+
+    def test_save_error_keeps_completed_roll_and_can_retry_same_expression(self):
+        app = self.app
+        panel = app.gm_dice_panel
+        app.gm_dice_expression.set('3d1+10')
+        with patch.object(DiceExpressions, 'save', side_effect=OSError('read-only')):
+            panel.roll_button.invoke()
+        self.assertEqual(app.gm_dice_last_result.total, 13)
+        self.assertIn('read-only', panel.saved_feedback['text'])
+        self.assertEqual(app.gm_dice_expressions.recent, ('3d1+10',))
+        panel.roll_button.invoke()
+        self.assertFalse(app.gm_dice_save_error)
+        self.assertEqual(DiceExpressions.load(Path(self.directory.name) / 'dice_expressions.json').recent,
+                         ('3d1+10',))
+
     def test_million_dice_are_paged_without_a_million_line_widget(self):
         app = self.app
         app.gm_dice_expression.set('1000000d6+20')
@@ -100,6 +239,11 @@ class GMDiceGuiTests(unittest.TestCase):
         self.assertEqual(heartbeat, [True])
         self.assertEqual(app.gm_dice_last_result.total, 6_000_020)
         self.assertEqual(app.gm_dice_last_result.rolls.nbytes, 4_000_000)
+        history_path = Path(self.directory.name) / 'dice_expressions.json'
+        self.assertLess(history_path.stat().st_size, 300)
+        self.assertEqual(DiceExpressions.load(history_path).recent, ('1000000d6+20',))
+        self.assertEqual(dict(DiceExpressions.load(history_path).recent_totals), {'1000000d6+20': 6_000_020})
+        self.assertEqual(app.gm_dice_panel.recent_menu.entrycget(0, 'label'), '1000000d6+20 = 6000020')
         self.assertLess(len(app.gm_dice_panel.output.get('1.0', 'end')), 2500)
         app.gm_dice_page.set('10000')
         app.gm_dice_panel.go_to_page()
@@ -122,12 +266,16 @@ class GMDiceGuiTests(unittest.TestCase):
         with patch('utils.gm_dice_ui.roll_dice', side_effect=slow_roll):
             app.gm_dice_panel.roll()
             self.assertTrue(entered.wait(1))
+            app.root.update()
+            self.assertTrue(app.gm_dice_panel.work.winfo_ismapped())
             app._change_language('en_US')
             self.assertEqual(str(app.gm_dice_panel.roll_button['state']), 'disabled')
             app.gm_dice_panel.cancel_button.invoke()
             self.wait_for_job()
         self.assertIs(app.gm_dice_last_result, result)
+        self.assertEqual(app.gm_dice_expressions.recent, ())
         self.assertIn('Operation cancelled', app.gm_dice_panel.error['text'])
+        self.assertFalse(app.gm_dice_panel.work.winfo_ismapped())
 
     def test_export_contains_every_die_and_cancelled_export_preserves_destination(self):
         app = self.app

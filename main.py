@@ -26,6 +26,7 @@ Estrutura do projeto:
 import math
 import json
 import re
+import sys
 from copy import deepcopy
 from dataclasses import replace
 from pathlib import Path
@@ -49,8 +50,10 @@ from calculators.injury import (
     InjuryEngine,
     InjuryInput,
     OptionalInjuryRules,
+    StateDelta,
 )
 from calculators.combat_session import CombatSession
+from calculators.combat_library import CombatLibrary
 from calculators.melee_combat import (
     GrappleActionInput,
     GrapplingEngine,
@@ -62,9 +65,15 @@ from calculators.melee_combat import (
 from utils.i18n import get_i18n, t
 from utils.gui_workspace import install_workspace
 from utils.gui_form_state import capture_results, install_form_states, InlineError
+from utils.ranged_layout import (Disclosure, FieldError, FieldGrid, RangedWorkbench,
+                                 checkbutton as ranged_checkbutton, flow_buttons, wrap_label, wrap_toggle)
+from utils.impact_layout import ImpactForm
 from utils.ui_preferences import load_ui_preferences
+from utils.ui_theme import apply_theme, make_palette
 from utils.gui_hub import install_hub, remember_session, confirm_session
 from utils.gm_dice_ui import GMDicePanel
+from utils.ranged_handoff import RangedHitDraft
+from utils.vehicle_combat_ui import VehicleCombatPanel
 from utils.gui_editors import VehicleEditor, AbilityEditor, CastingAssistant
 from utils.units import UnitSystem
 from utils.unit_binding import UnitBinding
@@ -74,7 +83,7 @@ from utils.weapon_catalog import WeaponCatalog
 from utils.combat_catalog import ArmorCatalog, MeleeWeaponCatalog, StyleCatalog, TechniqueCatalog
 from utils.weapon_catalog import application_data_dir
 from calculators.strength import DamageBonusInput, EffortOption, StrengthCalculationInput, StrengthEngine, StrengthProfile
-from calculators.magic import MAGIC_SYSTEMS, CastingInput, ResourcePool, ResistanceCheck, SpellcastingEngine
+from calculators.magic import MAGIC_SYSTEMS, IMPLEMENTED_MAGIC_SYSTEMS, CastingInput, ResourcePool, ResistanceCheck, SpellcastingEngine
 from utils.gui_editors import CeremonialEditor, CampaignEditor
 from utils.battle_ui import BattleClassEditor, BattleAftermathEditor
 from utils.logistics_ui import LogisticsEditor
@@ -83,9 +92,9 @@ from calculators.powers import AbilityBuildInput, AbilityEngine, PsionicEngine, 
 from calculators.vehicles import VehicleCatalog, VehicleEngine, VehicleMovementInput, VehicleState, VehicleSession
 from calculators.campaign import (
     BattleInput, CampaignSession, CharacterSocialProfile, ElementRecord, ForceRecord, InfluenceInput,
-    MassCombatEngine, ReactionInput, SocialEngineeringEngine,
+    MassCombatEngine, ReactionInput, SocialEngineeringEngine, INFLUENCE_SKILLS,
 )
-from utils.rules_catalog import ExtendedRulesCatalog
+from utils.rules_catalog import ExtendedRulesCatalog, catalog_status
 from version import __version__
 
 # ─── Constantes de conversão ────────────────────────────────────────
@@ -126,6 +135,11 @@ class GURPSCalculator:
         self.technique_catalog = TechniqueCatalog()
         self.style_catalog = StyleCatalog()
         self.combat_session = CombatSession.load_or_new(application_data_dir() / "combat_session.json")
+        self.combat_library = CombatLibrary(application_data_dir() / "combat_library.json")
+        self._ranged_drafts = {}
+        self._injury_ranged_draft = None
+        self._injury_draft_resolved = False
+        self._injury_manual_form = None
         self.strength_calc = StrengthEngine()
         self.spell_calc = SpellcastingEngine()
         self.ability_calc = AbilityEngine()
@@ -164,6 +178,7 @@ class GURPSCalculator:
         # Cria menu e interface
         self._create_menu()
         self._rebuild_ui()
+        self._refresh_session_summary(sync_fields=True)
 
         # Atualiza título
         self._update_title()
@@ -273,6 +288,9 @@ class GURPSCalculator:
         self.ranged_required_st = tk.StringVar(value="9")
         self.ranged_skill = tk.StringVar(value="14")
         self.ranged_distance = tk.StringVar(value="25")
+        self.ranged_map_hint = tk.StringVar()
+        self._map_ranged_transfer = None
+        self.ranged_distance.trace_add("write", self._refresh_ranged_map_hint)
         self.ranged_speed = tk.StringVar(value="0")
         self.ranged_sm = tk.StringVar(value="0")
         self.ranged_aim_seconds = tk.StringVar(value="0")
@@ -306,8 +324,7 @@ class GURPSCalculator:
         self.ranged_advanced_visible = tk.BooleanVar(value=False)
 
         # ─── Sessão leve compartilhada ──────────────────────────────
-        self.session_actor_key = "combatant_a"
-        self.session_target_key = "combatant_b"
+        self.session_actor_key, self.session_target_key = self.combat_session.selected_pair()
         self.session_actor = tk.StringVar()
         self.session_target = tk.StringVar()
         self.session_summary = tk.StringVar()
@@ -427,12 +444,42 @@ class GURPSCalculator:
         self.magic_fp = tk.StringVar(value="10")
         self.magic_cost_override = tk.StringVar(value="")
         self.magic_time_override = tk.StringVar(value="")
+        self.magic_mana = tk.StringVar(value="normal")
+        self.magic_is_mage = tk.BooleanVar(value=True)
+        self.magic_visible = tk.BooleanVar(value=True)
+        self.magic_size = tk.StringVar(value="0")
+        self.magic_mod = tk.StringVar(value="0")
+        self.magic_reserve = tk.StringVar(value="0")
+        self.magic_external = tk.StringVar(value="0")
+        self.magic_cycles = tk.StringVar(value="0")
+        self.magic_healing_attempts = tk.StringVar(value="0")
+        self.magic_physician = tk.StringVar(value="0")
+        self.magic_magery = tk.StringVar(value="0")
+        self.magic_target_mr = tk.StringVar(value="0")
+        self.magic_waives_resistance = tk.BooleanVar(value=False)
+        self.magic_use_session = tk.BooleanVar(value=False)
+        self.magic_session_reserve = tk.StringVar()
 
         self.power_advantage = tk.StringVar()
         self.power_levels = tk.StringVar(value="1")
         self.power_psi = tk.StringVar()
         self.power_skill = tk.StringVar(value="12")
         self.power_distance = tk.StringVar(value="0")
+        self.power_level = tk.StringVar(value="1")
+        self.power_contact = tk.StringVar(value="skin")
+        self.power_talent = tk.StringVar(value="0")
+        self.power_repeats = tk.StringVar(value="0")
+        self.power_repeat_cost = tk.BooleanVar(value=True)
+        self.power_fp = tk.StringVar(value="10")
+        self.power_reserve = tk.StringVar(value="0")
+        self.power_target_willing = tk.BooleanVar(value=False)
+        self.power_target_restrained = tk.BooleanVar(value=False)
+        self.power_disadvantage_points = tk.StringVar(value="5")
+        self.power_use_session = tk.BooleanVar(value=False)
+        self.power_session_reserve = tk.StringVar()
+        self._session_reserve_maps = {}
+        self._session_reserve_actor = self.session_actor_key
+        self._supernatural_drafts = {}
         for prefix in ("magic", "power"):
             setattr(self, prefix + "_resisted", tk.BooleanVar(value=False))
             setattr(self, prefix + "_resistance", tk.StringVar(value="10"))
@@ -442,7 +489,7 @@ class GURPSCalculator:
         self.vehicle_duration = tk.StringVar(value="1")
         self.vehicle_environment = tk.StringVar(value="road")
 
-        self.social_skill = tk.StringVar(value="Diplomacy")
+        self.social_skill = tk.StringVar(value="diplomacy")
         self.social_skill_level = tk.StringVar(value="12")
         self.social_target_will = tk.StringVar(value="10")
         self.social_modifier = tk.StringVar(value="0")
@@ -474,43 +521,9 @@ class GURPSCalculator:
         self._sync_mass_fields()
 
     def _setup_theme(self):
-        """
-        Configura tema visual da aplicação.
-        
-        Usa tema escuro para melhor leitura durante sessões de jogo.
-        """
-        style = ttk.Style()
-        style.theme_use('clam')
-
-        self.colors = {
-            "bg": "#2b2b2b",      # Fundo principal
-            "fg": "#ffffff",      # Texto principal
-            "accent": "#4a9eff",  # Cor de destaque (títulos)
-            "success": "#4caf50", # Verde (sucesso)
-            "warning": "#ff9800", # Laranja (aviso)
-            "error": "#f44336",   # Vermelho (erro)
-            "panel": "#3c3c3c",   # Fundo de painéis
-            "button": "#4a9eff",  # Cor dos botões
-        }
-        if self.ui_preferences['theme'] == 'light':
-            self.colors.update(bg='#f2f4f7', fg='#17212b', panel='#ffffff',
-                               accent='#175c9e', button='#d5e7fa')
-
-        self.root.configure(bg=self.colors["bg"])
-        style.configure("TFrame", background=self.colors["bg"])
-        style.configure("TLabelframe", background=self.colors["bg"])
-        style.configure("TLabelframe.Label", background=self.colors["bg"], foreground=self.colors["fg"])
-        style.configure("TLabel", background=self.colors["bg"], foreground=self.colors["fg"])
-        style.configure("TButton", background=self.colors["button"], foreground=self.colors["fg"])
-        style.configure("TNotebook", background=self.colors["bg"])
-        style.configure("TNotebook.Tab", background=self.colors["panel"],
-                        foreground=self.colors["fg"], padding=[10, 5])
-        style.configure("TNotebook.Tab:selected", background=self.colors["accent"])
-        style.configure("TCheckbutton", background=self.colors["bg"], foreground=self.colors["fg"])
-        style.configure("TRadiobutton", background=self.colors["bg"], foreground=self.colors["fg"])
-        style.configure("Title.TLabel", font=("Arial", 14, "bold"),
-                        foreground=self.colors["accent"])
-        style.configure("Subtitle.TLabel", font=("Arial", 10))
+        """Apply the selected Oficina palette to Tk's existing widget set."""
+        self.colors = make_palette(self.ui_preferences['theme'], self.ui_preferences.get('theme_colors'))
+        apply_theme(self.root, self.colors)
 
     def _create_menu(self):
         """Cria menu principal da aplicação."""
@@ -560,6 +573,11 @@ class GURPSCalculator:
         Preserva valores das variáveis de entrada.
         """
         active = self.notebook.index(self.notebook.select()) if hasattr(self, 'notebook') else 0
+        self._session_boxes = []
+        self._session_reserve_boxes = {}
+        self.refresh_home_session = lambda: None
+        if getattr(self, "_combat_prep_window", None) is not None and self._combat_prep_window.winfo_exists():
+            self._combat_prep_window.destroy()
         saved_results = capture_results(self)
         for binding in getattr(self, '_unit_bindings', []):
             binding.close()
@@ -591,16 +609,66 @@ class GURPSCalculator:
         self._create_social_tab()
         self._create_mass_combat_tab()
         self._create_gm_dice_tab()
+        self._create_battle_map_tab()
         self._bind_unit_inputs()
         install_workspace(self, active)
         install_form_states(self, saved_results)
         self._build_menu()
         install_hub(self)
+        player = getattr(self, "_battle_map_player", None)
+        if player is not None and player.winfo_exists():
+            self._ensure_battle_map_panel()
+            self._battle_map_changed()
+
+    def _create_battle_map_tab(self):
+        self.battle_map_tab = ttk.Frame(self.notebook)
+        self.battle_map_panel = None
+        self.notebook.add(self.battle_map_tab, text=t("tab_battle_map"))
+        self.battle_map_tab.bind("<Map>", lambda _event: self._ensure_battle_map_panel(), add="+")
+
+    def _ensure_battle_map_panel(self):
+        if self.battle_map_panel is None:
+            from utils.battle_map_ui import BattleMapPanel
+            self.battle_map_panel = BattleMapPanel(self.battle_map_tab, self)
+            self.battle_map_panel.pack(fill=tk.BOTH, expand=True)
+        return self.battle_map_panel
+
+    def _battle_map_changed(self):
+        self._refresh_ranged_map_hint()
+        panel = getattr(self, "battle_map_panel", None)
+        if panel is not None and self.battle_map_tab.winfo_exists():
+            panel.refresh_from_session()
 
     def _create_gm_dice_tab(self):
-        content = self._scrollable_tab('tab_gm_dice')
-        self.gm_dice_panel = GMDicePanel(content, self)
-        self.gm_dice_panel.pack(fill=tk.BOTH, expand=True)
+        tab = ttk.Frame(self.notebook)
+        self.notebook.add(tab, text=t('tab_gm_dice'))
+        self.gm_dice_panel = GMDicePanel(tab, self)
+
+    def _oficina_tab(self, tab_key, title_key, subtitle_key=None):
+        """Use the same responsive workspace for independent calculators."""
+        tab = ttk.Frame(self.notebook)
+        self.notebook.add(tab, text=t(tab_key))
+        layout = RangedWorkbench(tab, self.colors['bg'])
+        layout.WIDE = max(720, 48 * self.ui_preferences['font_size'])
+        wrap_label(ttk.Label(layout.header, text=t(title_key), style='PageTitle.TLabel')).pack(fill=tk.X)
+        if subtitle_key:
+            wrap_label(ttk.Label(layout.header, text=t(subtitle_key), style='Muted.TLabel')).pack(
+                fill=tk.X, pady=(4, 0))
+        layout.inputs.oficina = layout
+        return layout
+
+    def _oficina_result(self, layout, title_key='ui_result_title', height=10):
+        panel = ttk.LabelFrame(layout.result, text=t(title_key), padding=10, style='Result.TLabelframe')
+        panel.pack(fill=tk.BOTH, expand=True)
+        box = tk.Text(panel, height=height, width=1, wrap=tk.WORD, padx=9, pady=8,
+                      font=('Consolas', 10), bg=self.colors['panel'], fg=self.colors['panel_fg'])
+        box.pack(fill=tk.BOTH, expand=True)
+        box.oficina_layout = layout
+        box.oficina_card = True
+        box.oficina_scrollbar = ttk.Scrollbar(panel, orient=tk.VERTICAL, command=box.yview)
+        box.configure(yscrollcommand=box.oficina_scrollbar.set)
+        layout.bind_scrolling()
+        return box
 
     def _bind_unit_inputs(self):
         imperial = self.result_units.get() == "imperial"
@@ -610,13 +678,16 @@ class GURPSCalculator:
         fields = {}
         for name in ("slam_attacker_velocity", "slam_defender_velocity", "coll_obj1_velocity",
                      "coll_obj2_velocity", "ranged_speed", "falls_distance", "exp_distance",
-                     "fo_distance", "ranged_distance"):
+                     "fo_distance", "ranged_distance", "vehicle_combat_distance"):
             speed = "velocity" in name or name == "ranged_speed"
             fields[str(getattr(self, name))] = (getattr(self, name), 1 / 0.9144 if imperial else 1,
                                               ("yd/s" if speed else "yd") if imperial else ("m/s" if speed else "m"))
         for name in ("melee_distance", "magic_distance", "magic_radius", "power_distance",
                      "ranged_half_damage", "ranged_max_range", "ranged_minimum_range"):
             fields[str(getattr(self, name))] = (getattr(self, name), 1 if imperial else 0.9144, "yd" if imperial else "m")
+        for name in ("vehicle_combat_speed_first", "vehicle_combat_speed_second"):
+            fields[str(getattr(self, name))] = (getattr(self, name), 1 if imperial else 0.9144,
+                                                "yd/s" if imperial else "m/s")
         def visit(parent):
             for child in parent.winfo_children():
                 if isinstance(child, ttk.Combobox):
@@ -633,10 +704,16 @@ class GURPSCalculator:
                         variable, factor, symbol = record
                         self._unit_bindings.append(UnitBinding(child, variable, factor, symbol))
                         grid = child.grid_info()
-                        if grid:
-                            for label in parent.grid_slaves(row=int(grid['row']), column=int(grid['column']) - 1):
-                                if isinstance(label, ttk.Label):
-                                    text = re.sub(r'\s*\((?:m/s|m|yd/s|yd|yards|jardas|meters|metros)\)', '', str(label.cget('text')))
+                        label = getattr(child, 'unit_label', None)
+                        labels = (label,) if label is not None else (
+                            parent.grid_slaves(row=int(grid['row']), column=int(grid['column']) - 1)
+                            if grid else ())
+                        for label in labels:
+                            if isinstance(label, ttk.Label):
+                                text = re.sub(r'\s*\((?:m/s|m|yd/s|yd|yards|jardas|meters|metros)\)', '', str(label.cget('text')))
+                                if getattr(child, 'unit_label', None) is label and text.endswith(':'):
+                                    label.configure(text=f"{text[:-1]} ({symbol}):")
+                                else:
                                     label.configure(text=f"{text} ({symbol})")
                 visit(child)
         visit(self.main_frame)
@@ -645,384 +722,130 @@ class GURPSCalculator:
     # KNOCKBACK TAB (p. 378)
     # ═════════════════════════════════════════════════════════════════
     def _create_knockback_tab(self):
-        """
-        Cria aba de Knockback.
-        
-        Regra: Basic Set, p. 378
-        - Apenas crushing e cutting causam knockback
-        - Knockback = floor(dano / (ST-2))
-        - Rolagem de equilíbrio: maior entre DX, Acrobatics, Judo
-        """
-        frame = self._scrollable_tab("tab_knockback")
+        layout = self._oficina_tab("tab_knockback", "knockback_title")
+        form = ImpactForm(layout, "p. 378")
+        damage = form.panel("knockback_damage_type")
+        form.choices(damage, self.kb_damage_type,
+                     ("knockback_crushing", "crushing"), ("knockback_cutting", "cutting"))
 
-        ttk.Label(frame, text=t("knockback_title"), style="Title.TLabel").pack(pady=10)
+        target = form.panel("impact_target")
+        form.spin(target, ("knockback_basic_damage", self.kb_basic_damage, 0, 10000),
+                  ("knockback_target_st", self.kb_target_st, 1, 10000),
+                  ("knockback_target_hp", self.kb_target_hp, 1, 10000),
+                  ("knockback_dr", self.kb_target_dr, 0, 10000), columns=2)
+        form.calculate("knockback_calculate", self._calculate_knockback)
 
-        input_frame = ttk.Frame(frame)
-        input_frame.pack(fill=tk.X, padx=20, pady=10)
-
-        ttk.Label(input_frame, text=t("knockback_damage_type")).grid(row=0, column=0, sticky=tk.W, pady=5)
-        ttk.Radiobutton(input_frame, text=t("knockback_crushing"),
-                         variable=self.kb_damage_type, value="crushing").grid(row=0, column=1, sticky=tk.W, pady=5)
-        ttk.Radiobutton(input_frame, text=t("knockback_cutting"),
-                         variable=self.kb_damage_type, value="cutting").grid(row=0, column=2, sticky=tk.W, pady=5)
-
-        ttk.Label(input_frame, text=t("knockback_basic_damage")).grid(row=1, column=0, sticky=tk.W, pady=5)
-        ttk.Spinbox(input_frame, from_=0, to=10000,
-                     textvariable=self.kb_basic_damage, width=10).grid(row=1, column=1, sticky=tk.W, pady=5)
-
-        ttk.Label(input_frame, text=t("knockback_target_st")).grid(row=2, column=0, sticky=tk.W, pady=5)
-        ttk.Spinbox(input_frame, from_=1, to=10000,
-                     textvariable=self.kb_target_st, width=10).grid(row=2, column=1, sticky=tk.W, pady=5)
-
-        ttk.Label(input_frame, text=t("knockback_target_hp")).grid(row=3, column=0, sticky=tk.W, pady=5)
-        ttk.Spinbox(input_frame, from_=1, to=10000,
-                     textvariable=self.kb_target_hp, width=10).grid(row=3, column=1, sticky=tk.W, pady=5)
-
-        ttk.Label(input_frame, text=t("knockback_dr")).grid(row=4, column=0, sticky=tk.W, pady=5)
-        ttk.Spinbox(input_frame, from_=0, to=10000,
-                     textvariable=self.kb_target_dr, width=10).grid(row=4, column=1, sticky=tk.W, pady=5)
-
-        ttk.Checkbutton(input_frame, text=t("knockback_perfect_balance"),
-                         variable=self.kb_perfect_balance).grid(row=5, column=0, columnspan=2, sticky=tk.W, pady=5)
-
-        ttk.Label(input_frame, text=t("knockback_skill")).grid(row=6, column=0, sticky=tk.W, pady=5)
-        ttk.Spinbox(input_frame, from_=1, to=10000,
-                     textvariable=self.kb_effective_skill, width=10).grid(row=6, column=1, sticky=tk.W, pady=5)
-
-        ttk.Button(input_frame, text=t("knockback_calculate"),
-                    command=self._calculate_knockback).grid(row=7, column=0, columnspan=3, pady=10)
-
-        result_frame = ttk.Frame(frame)
-        result_frame.pack(fill=tk.BOTH, expand=True, padx=20, pady=10)
-        ttk.Label(result_frame, text=t("knockback_result"), style="Subtitle.TLabel").pack(anchor=tk.W)
-        self.kb_result_text = tk.Text(result_frame, height=8, bg=self.colors["panel"],
-                                       fg=self.colors["fg"], font=("Consolas", 10))
-        self.kb_result_text.pack(fill=tk.BOTH, expand=True)
-
-        roll_frame = ttk.Frame(result_frame)
-        roll_frame.pack(fill=tk.X, pady=10)
-        ttk.Label(roll_frame, text=t("knockback_roll_label")).pack(side=tk.LEFT, padx=5)
-        ttk.Spinbox(roll_frame, from_=3, to=18,
-                     textvariable=self.kb_roll_result, width=5).pack(side=tk.LEFT, padx=5)
-        ttk.Button(roll_frame, text=t("knockback_roll_button"),
-                    command=self._roll_knockback).pack(side=tk.LEFT, padx=5)
-        ttk.Button(roll_frame, text=t("knockback_check_button"),
-                    command=self._check_knockback_roll).pack(side=tk.LEFT, padx=5)
+        balance = form.panel("impact_resistance")
+        form.spin(balance, ("knockback_skill", self.kb_effective_skill, 1, 10000),
+                  ("knockback_roll_label", self.kb_roll_result, 3, 18), columns=2)
+        form.check(balance, "knockback_perfect_balance", self.kb_perfect_balance)
+        form.actions(balance, ("knockback_roll_button", self._roll_knockback),
+                     ("knockback_check_button", self._check_knockback_roll))
+        self.kb_result_text = self._oficina_result(layout, "knockback_result", height=8)
 
     # ═════════════════════════════════════════════════════════════════
     # SLAM TAB (p. 371)
     # ═════════════════════════════════════════════════════════════════
     def _create_slam_tab(self):
-        """
-        Cria aba de Investida (Slam).
-        
-        Regra: Basic Set, p. 371
-        - Dano = (HP × velocidade) / 100
-        - Ambos levam dano
-        - Se dano ≥ 2× oponente, oponente cai automaticamente
-        """
-        frame = self._scrollable_tab("tab_slam")
+        layout = self._oficina_tab("tab_slam", "slam_title")
+        form = ImpactForm(layout, "p. 371")
+        combatants = form.paired()
+        attacker = form.panel("slam_attacker", combatants)
+        form.spin(attacker, ("slam_hp", self.slam_attacker_hp, 1, 10000),
+                  ("slam_velocity", self.slam_attacker_velocity, 0, 10000),
+                  ("slam_attacker_damage_bonus", self.slam_attacker_damage_bonus, -100, 100), columns=1)
+        defender = form.panel("slam_defender", combatants)
+        form.spin(defender, ("slam_hp", self.slam_defender_hp, 1, 10000),
+                  ("slam_velocity", self.slam_defender_velocity, 0, 10000), columns=1)
 
-        ttk.Label(frame, text=t("slam_title"), style="Title.TLabel").pack(pady=10)
-
-        input_frame = ttk.Frame(frame)
-        input_frame.pack(fill=tk.X, padx=20, pady=10)
-
-        # Atacante
-        ttk.Label(input_frame, text=t("slam_attacker"),
-                   style="Subtitle.TLabel").grid(row=0, column=0, columnspan=2, pady=5)
-        ttk.Label(input_frame, text=t("slam_hp")).grid(row=1, column=0, sticky=tk.W, pady=5)
-        ttk.Spinbox(input_frame, from_=1, to=10000,
-                     textvariable=self.slam_attacker_hp, width=10).grid(row=1, column=1, sticky=tk.W, pady=5)
-        ttk.Label(input_frame, text=t("slam_velocity")).grid(row=2, column=0, sticky=tk.W, pady=5)
-        ttk.Spinbox(input_frame, from_=0, to=10000,
-                     textvariable=self.slam_attacker_velocity, width=10).grid(row=2, column=1, sticky=tk.W, pady=5)
-
-        # Defensor
-        ttk.Label(input_frame, text=t("slam_defender"),
-                   style="Subtitle.TLabel").grid(row=3, column=0, columnspan=2, pady=5)
-        ttk.Label(input_frame, text=t("slam_hp")).grid(row=4, column=0, sticky=tk.W, pady=5)
-        ttk.Spinbox(input_frame, from_=1, to=10000,
-                     textvariable=self.slam_defender_hp, width=10).grid(row=4, column=1, sticky=tk.W, pady=5)
-        ttk.Label(input_frame, text=t("slam_velocity")).grid(row=5, column=0, sticky=tk.W, pady=5)
-        ttk.Spinbox(input_frame, from_=0, to=10000,
-                     textvariable=self.slam_defender_velocity, width=10).grid(row=5, column=1, sticky=tk.W, pady=5)
-
-        # Tipo de colisão
-        ttk.Label(input_frame, text=t("slam_collision_type")).grid(row=6, column=0, sticky=tk.W, pady=5)
-        ttk.Radiobutton(input_frame, text=t("slam_head_on"),
-                         variable=self.slam_collision_type, value="head_on").grid(row=6, column=1, sticky=tk.W, pady=5)
-        ttk.Radiobutton(input_frame, text=t("slam_rear_end"),
-                         variable=self.slam_collision_type, value="rear_end").grid(row=7, column=1, sticky=tk.W, pady=5)
-        ttk.Radiobutton(input_frame, text=t("slam_side_on"),
-                         variable=self.slam_collision_type, value="side_on").grid(row=8, column=1, sticky=tk.W, pady=5)
-
-        ttk.Label(input_frame, text=t("slam_attacker_damage_bonus")).grid(row=9, column=0, sticky=tk.W, pady=5)
-        ttk.Spinbox(input_frame, from_=-100, to=100,
-                     textvariable=self.slam_attacker_damage_bonus, width=10).grid(row=9, column=1, sticky=tk.W, pady=5)
-
-        ttk.Button(input_frame, text=t("slam_calculate"),
-                    command=self._calculate_slam).grid(row=10, column=0, columnspan=2, pady=10)
-
-        result_frame = ttk.Frame(frame)
-        result_frame.pack(fill=tk.BOTH, expand=True, padx=20, pady=10)
-        ttk.Label(result_frame, text=t("slam_result"), style="Subtitle.TLabel").pack(anchor=tk.W)
-        self.slam_result_text = tk.Text(result_frame, height=10, bg=self.colors["panel"],
-                                         fg=self.colors["fg"], font=("Consolas", 10))
-        self.slam_result_text.pack(fill=tk.BOTH, expand=True)
+        direction = form.panel("slam_collision_type")
+        form.choices(direction, self.slam_collision_type,
+                     ("slam_head_on", "head_on"), ("slam_rear_end", "rear_end"), ("slam_side_on", "side_on"))
+        form.calculate("slam_calculate", self._calculate_slam)
+        self.slam_result_text = self._oficina_result(layout, "slam_result", height=10)
 
     # ═════════════════════════════════════════════════════════════════
     # FALLS TAB (p. 430-431)
     # ═════════════════════════════════════════════════════════════════
     def _create_falls_tab(self):
-        """
-        Cria aba de Quedas.
-        
-        Regra: Basic Set, p. 430-431
-        - Velocidade da tabela de queda
-        - Dano = (HP × velocidade) / 100
-        - Superfícies duras: 2× HP
-        """
-        frame = self._scrollable_tab("tab_falls")
+        layout = self._oficina_tab("tab_falls", "falls_title")
+        form = ImpactForm(layout, "pp. 430–431")
+        impact = form.panel("impact_setup")
+        form.spin(impact, ("falls_distance", self.falls_distance, 1, 10000),
+                  ("falls_hp", self.falls_hp, 1, 10000), ("falls_dr", self.falls_dr, 0, 10000))
 
-        ttk.Label(frame, text=t("falls_title"), style="Title.TLabel").pack(pady=10)
-
-        input_frame = ttk.Frame(frame)
-        input_frame.pack(fill=tk.X, padx=20, pady=10)
-
-        ttk.Label(input_frame, text=t("falls_distance")).grid(row=0, column=0, sticky=tk.W, pady=5)
-        ttk.Spinbox(input_frame, from_=1, to=10000,
-                     textvariable=self.falls_distance, width=10).grid(row=0, column=1, sticky=tk.W, pady=5)
-
-        ttk.Label(input_frame, text=t("falls_hp")).grid(row=1, column=0, sticky=tk.W, pady=5)
-        ttk.Spinbox(input_frame, from_=1, to=10000,
-                     textvariable=self.falls_hp, width=10).grid(row=1, column=1, sticky=tk.W, pady=5)
-
-        ttk.Label(input_frame, text=t("falls_dr")).grid(row=2, column=0, sticky=tk.W, pady=5)
-        ttk.Spinbox(input_frame, from_=0, to=10000,
-                     textvariable=self.falls_dr, width=10).grid(row=2, column=1, sticky=tk.W, pady=5)
-
-        ttk.Label(input_frame, text=t("falls_surface_type")).grid(row=3, column=0, sticky=tk.W, pady=5)
-        ttk.Radiobutton(input_frame, text=t("falls_hard"),
-                         variable=self.falls_surface, value="hard").grid(row=3, column=1, sticky=tk.W, pady=5)
-        ttk.Radiobutton(input_frame, text=t("falls_soft"),
-                         variable=self.falls_surface, value="soft").grid(row=4, column=1, sticky=tk.W, pady=5)
-        ttk.Radiobutton(input_frame, text=t("falls_elastic"),
-                         variable=self.falls_surface, value="elastic").grid(row=5, column=1, sticky=tk.W, pady=5)
-        ttk.Radiobutton(input_frame, text=t("falls_water"),
-                         variable=self.falls_surface, value="water").grid(row=6, column=1, sticky=tk.W, pady=5)
-
-        ttk.Checkbutton(input_frame, text=t("falls_acrobatics"),
-                         variable=self.falls_acrobatics).grid(row=7, column=0, columnspan=2, sticky=tk.W, pady=5)
-        ttk.Checkbutton(input_frame, text=t("falls_swimming"),
-                         variable=self.falls_swimming).grid(row=8, column=0, columnspan=2, sticky=tk.W, pady=5)
-
-        ttk.Button(input_frame, text=t("falls_calculate"),
-                    command=self._calculate_falls).grid(row=9, column=0, columnspan=2, pady=10)
-
-        result_frame = ttk.Frame(frame)
-        result_frame.pack(fill=tk.BOTH, expand=True, padx=20, pady=10)
-        ttk.Label(result_frame, text=t("falls_result"), style="Subtitle.TLabel").pack(anchor=tk.W)
-        self.falls_result_text = tk.Text(result_frame, height=10, bg=self.colors["panel"],
-                                          fg=self.colors["fg"], font=("Consolas", 10))
-        self.falls_result_text.pack(fill=tk.BOTH, expand=True)
+        surface = form.panel("falls_surface_type")
+        form.choices(surface, self.falls_surface, ("falls_hard", "hard"), ("falls_soft", "soft"),
+                     ("falls_elastic", "elastic"), ("falls_water", "water"))
+        form.check(surface, "falls_acrobatics", self.falls_acrobatics)
+        form.check(surface, "falls_swimming", self.falls_swimming)
+        form.calculate("falls_calculate", self._calculate_falls)
+        self.falls_result_text = self._oficina_result(layout, "falls_result", height=10)
 
     # ═════════════════════════════════════════════════════════════════
     # COLLISIONS TAB (p. 430-431)
     # ═════════════════════════════════════════════════════════════════
     def _create_collisions_tab(self):
-        """
-        Cria aba de Colisões.
-        
-        Regra: Basic Set, p. 430-431
-        - Dano = (HP × velocidade) / 100
-        - Colisão frontal: soma das velocidades
-        - Colisão pelas costas: velocidade do mais rápido - mais lento
-        """
-        frame = self._scrollable_tab("tab_collisions")
+        layout = self._oficina_tab("tab_collisions", "collisions_title")
+        form = ImpactForm(layout, "pp. 430–431")
+        bodies = form.paired()
+        first = form.panel("collisions_object1", bodies)
+        form.spin(first, ("collisions_hp", self.coll_obj1_hp, 1, 10000),
+                  ("collisions_velocity", self.coll_obj1_velocity, 0, 10000), columns=1)
+        second = form.panel("collisions_object2", bodies)
+        form.spin(second, ("collisions_hp", self.coll_obj2_hp, 1, 10000),
+                  ("collisions_velocity", self.coll_obj2_velocity, 0, 10000),
+                  ("collisions_dr", self.coll_obj2_dr, 0, 10000), columns=1)
 
-        ttk.Label(frame, text=t("collisions_title"), style="Title.TLabel").pack(pady=10)
-
-        input_frame = ttk.Frame(frame)
-        input_frame.pack(fill=tk.X, padx=20, pady=10)
-
-        # Objeto 1
-        ttk.Label(input_frame, text=t("collisions_object1"),
-                   style="Subtitle.TLabel").grid(row=0, column=0, columnspan=2, pady=5)
-        ttk.Label(input_frame, text=t("collisions_hp")).grid(row=1, column=0, sticky=tk.W, pady=5)
-        ttk.Spinbox(input_frame, from_=1, to=10000,
-                     textvariable=self.coll_obj1_hp, width=10).grid(row=1, column=1, sticky=tk.W, pady=5)
-        ttk.Label(input_frame, text=t("collisions_velocity")).grid(row=2, column=0, sticky=tk.W, pady=5)
-        ttk.Spinbox(input_frame, from_=0, to=10000,
-                     textvariable=self.coll_obj1_velocity, width=10).grid(row=2, column=1, sticky=tk.W, pady=5)
-
-        # Objeto 2
-        ttk.Label(input_frame, text=t("collisions_object2"),
-                   style="Subtitle.TLabel").grid(row=0, column=2, columnspan=2, pady=5, padx=(30, 0))
-        ttk.Label(input_frame, text=t("collisions_hp")).grid(row=1, column=2, sticky=tk.W, pady=5, padx=(30, 0))
-        ttk.Spinbox(input_frame, from_=1, to=10000,
-                     textvariable=self.coll_obj2_hp, width=10).grid(row=1, column=3, sticky=tk.W, pady=5)
-        ttk.Label(input_frame, text=t("collisions_velocity")).grid(row=2, column=2, sticky=tk.W, pady=5, padx=(30, 0))
-        ttk.Spinbox(input_frame, from_=0, to=10000,
-                     textvariable=self.coll_obj2_velocity, width=10).grid(row=2, column=3, sticky=tk.W, pady=5)
-
-        ttk.Label(input_frame, text=t("collisions_dr")).grid(row=3, column=2, sticky=tk.W, pady=5, padx=(30, 0))
-        ttk.Spinbox(input_frame, from_=0, to=10000,
-                     textvariable=self.coll_obj2_dr, width=10).grid(row=3, column=3, sticky=tk.W, pady=5)
-
-        # Tipo de colisão
-        ttk.Label(input_frame, text=t("collisions_type")).grid(row=4, column=0, sticky=tk.W, pady=5)
-        ttk.Radiobutton(input_frame, text=t("collisions_head_on"),
-                         variable=self.coll_type, value="head_on").grid(row=4, column=1, sticky=tk.W, pady=5)
-        ttk.Radiobutton(input_frame, text=t("collisions_rear_end"),
-                         variable=self.coll_type, value="rear_end").grid(row=4, column=2, sticky=tk.W, pady=5, padx=(30, 0))
-        ttk.Radiobutton(input_frame, text=t("collisions_side_on"),
-                         variable=self.coll_type, value="side_on").grid(row=4, column=3, sticky=tk.W, pady=5)
-
-        # Tipo de superfície
-        ttk.Label(input_frame, text=t("collisions_surface")).grid(row=5, column=0, sticky=tk.W, pady=5)
-        ttk.Radiobutton(input_frame, text=t("collisions_surface_normal"),
-                         variable=self.coll_surface, value="normal").grid(row=5, column=1, sticky=tk.W, pady=5)
-        ttk.Radiobutton(input_frame, text=t("collisions_surface_hard"),
-                         variable=self.coll_surface, value="hard").grid(row=5, column=2, sticky=tk.W, pady=5, padx=(30, 0))
-        ttk.Radiobutton(input_frame, text=t("collisions_surface_elastic"),
-                         variable=self.coll_surface, value="elastic").grid(row=5, column=3, sticky=tk.W, pady=5)
-
-        # Objeto imóvel
-        ttk.Checkbutton(input_frame, text=t("collisions_immovable"),
-                         variable=self.coll_immovable).grid(row=6, column=0, columnspan=2, sticky=tk.W, pady=5)
-
-        ttk.Checkbutton(input_frame, text=t("collisions_breakable"),
-                         variable=self.coll_breakable).grid(row=6, column=2, columnspan=2, sticky=tk.W, pady=5, padx=(30, 0))
-
-        ttk.Button(input_frame, text=t("collisions_calculate"),
-                    command=self._calculate_collisions).grid(row=7, column=0, columnspan=4, pady=10)
-
-        result_frame = ttk.Frame(frame)
-        result_frame.pack(fill=tk.BOTH, expand=True, padx=20, pady=10)
-        ttk.Label(result_frame, text=t("collisions_result"), style="Subtitle.TLabel").pack(anchor=tk.W)
-        self.coll_result_text = tk.Text(result_frame, height=10, bg=self.colors["panel"],
-                                         fg=self.colors["fg"], font=("Consolas", 10))
-        self.coll_result_text.pack(fill=tk.BOTH, expand=True)
+        direction = form.panel("collisions_type")
+        form.choices(direction, self.coll_type, ("collisions_head_on", "head_on"),
+                     ("collisions_rear_end", "rear_end"), ("collisions_side_on", "side_on"))
+        obstacle = form.panel("collisions_surface")
+        form.check(obstacle, "collisions_immovable", self.coll_immovable)
+        form.choices(obstacle, self.coll_surface, ("collisions_surface_normal", "normal"),
+                     ("collisions_surface_hard", "hard"), ("collisions_surface_elastic", "elastic"))
+        form.check(obstacle, "collisions_breakable", self.coll_breakable)
+        form.calculate("collisions_calculate", self._calculate_collisions)
+        self.coll_result_text = self._oficina_result(layout, "collisions_result", height=10)
 
     # ═════════════════════════════════════════════════════════════════
     # EXPLOSIONS TAB (p. 414-415)
     # ═════════════════════════════════════════════════════════════════
     def _create_explosions_tab(self):
-        """
-        Cria aba de Explosões.
-        
-        Regra: Basic Set, p. 414-415
-        - Raio = dados de dano × 2
-        - Dano colateral = dano / (3 × distância)
-        - Fragmentação: raio = dados × 5
-        """
-        frame = self._scrollable_tab("tab_explosions")
-
-        ttk.Label(frame, text=t("explosions_title"), style="Title.TLabel").pack(pady=10)
-
-        input_frame = ttk.Frame(frame)
-        input_frame.pack(fill=tk.X, padx=20, pady=10)
-
-        ttk.Label(input_frame, text=t("explosions_basic_damage")).grid(row=0, column=0, sticky=tk.W, pady=5)
-        ttk.Spinbox(input_frame, from_=1, to=10000,
-                     textvariable=self.exp_basic_damage, width=10).grid(row=0, column=1, sticky=tk.W, pady=5)
-
-        ttk.Label(input_frame, text=t("explosions_fragmentation")).grid(row=1, column=0, sticky=tk.W, pady=5)
-        ttk.Spinbox(input_frame, from_=0, to=10000,
-                     textvariable=self.exp_fragmentation, width=10).grid(row=1, column=1, sticky=tk.W, pady=5)
-
-        ttk.Label(input_frame, text=t("explosions_distance")).grid(row=2, column=0, sticky=tk.W, pady=5)
-        ttk.Spinbox(input_frame, from_=0, to=10000,
-                     textvariable=self.exp_distance, width=10).grid(row=2, column=1, sticky=tk.W, pady=5)
-
-        ttk.Label(input_frame, text=t("explosions_dr")).grid(row=3, column=0, sticky=tk.W, pady=5)
-        ttk.Spinbox(input_frame, from_=0, to=10000,
-                     textvariable=self.exp_dr, width=10).grid(row=3, column=1, sticky=tk.W, pady=5)
-
-        ttk.Checkbutton(input_frame, text=t("explosions_direct_hit"),
-                         variable=self.exp_direct_hit).grid(row=4, column=0, columnspan=2, sticky=tk.W, pady=5)
-
-        ttk.Label(input_frame, text=t("explosions_target_sm")).grid(row=5, column=0, sticky=tk.W, pady=5)
-        ttk.Spinbox(input_frame, from_=-100, to=100,
-                     textvariable=self.exp_target_sm, width=10).grid(row=5, column=1, sticky=tk.W, pady=5)
-
-        ttk.Label(input_frame, text=t("explosions_posture_modifier")).grid(row=6, column=0, sticky=tk.W, pady=5)
-        ttk.Spinbox(input_frame, from_=-10, to=10,
-                     textvariable=self.exp_posture_modifier, width=10).grid(row=6, column=1, sticky=tk.W, pady=5)
-
-        ttk.Button(input_frame, text=t("explosions_calculate"),
-                    command=self._calculate_explosions).grid(row=7, column=0, columnspan=2, pady=10)
-
-        result_frame = ttk.Frame(frame)
-        result_frame.pack(fill=tk.BOTH, expand=True, padx=20, pady=10)
-        ttk.Label(result_frame, text=t("explosions_result"), style="Subtitle.TLabel").pack(anchor=tk.W)
-        self.exp_result_text = tk.Text(result_frame, height=10, bg=self.colors["panel"],
-                                        fg=self.colors["fg"], font=("Consolas", 10))
-        self.exp_result_text.pack(fill=tk.BOTH, expand=True)
+        layout = self._oficina_tab("tab_explosions", "explosions_title")
+        form = ImpactForm(layout, "pp. 414–415")
+        explosive = form.panel("impact_explosive")
+        form.spin(explosive, ("explosions_basic_damage", self.exp_basic_damage, 1, 10000),
+                  ("explosions_fragmentation", self.exp_fragmentation, 0, 10000), columns=2)
+        target = form.panel("impact_target")
+        form.spin(target, ("explosions_distance", self.exp_distance, 0, 10000),
+                  ("explosions_dr", self.exp_dr, 0, 10000),
+                  ("explosions_target_sm", self.exp_target_sm, -100, 100),
+                  ("explosions_posture_modifier", self.exp_posture_modifier, -10, 10), columns=2)
+        form.check(target, "explosions_direct_hit", self.exp_direct_hit)
+        form.calculate("explosions_calculate", self._calculate_explosions)
+        self.exp_result_text = self._oficina_result(layout, "explosions_result", height=10)
 
     # ═════════════════════════════════════════════════════════════════
     # FALLING OBJECTS TAB (p. 431)
     # ═════════════════════════════════════════════════════════════════
     def _create_falling_objects_tab(self):
-        """
-        Cria aba de Queda de Objetos.
-        
-        Regra: Basic Set, p. 431
-        - Mesma tabela de velocidade de queda
-        - Dano = (HP × velocidade) / 100
-        - SM do objeto afeta penalidades
-        """
-        frame = self._scrollable_tab("tab_falling_objects")
-
-        ttk.Label(frame, text=t("falling_objects_title"), style="Title.TLabel").pack(pady=10)
-
-        input_frame = ttk.Frame(frame)
-        input_frame.pack(fill=tk.X, padx=20, pady=10)
-
-        ttk.Label(input_frame, text=t("falling_objects_distance")).grid(row=0, column=0, sticky=tk.W, pady=5)
-        ttk.Spinbox(input_frame, from_=1, to=10000,
-                     textvariable=self.fo_distance, width=10).grid(row=0, column=1, sticky=tk.W, pady=5)
-
-        ttk.Label(input_frame, text=t("falling_objects_object_hp")).grid(row=1, column=0, sticky=tk.W, pady=5)
-        ttk.Spinbox(input_frame, from_=1, to=10000,
-                     textvariable=self.fo_object_hp, width=10).grid(row=1, column=1, sticky=tk.W, pady=5)
-
-        ttk.Label(input_frame, text=t("falling_objects_target_hp")).grid(row=2, column=0, sticky=tk.W, pady=5)
-        ttk.Spinbox(input_frame, from_=1, to=10000,
-                     textvariable=self.fo_target_hp, width=10).grid(row=2, column=1, sticky=tk.W, pady=5)
-
-        ttk.Label(input_frame, text=t("falling_objects_target_sm")).grid(row=3, column=0, sticky=tk.W, pady=5)
-        ttk.Spinbox(input_frame, from_=-100, to=100,
-                     textvariable=self.fo_target_sm, width=10).grid(row=3, column=1, sticky=tk.W, pady=5)
-
-        ttk.Label(input_frame, text=t("falling_objects_object_sm")).grid(row=4, column=0, sticky=tk.W, pady=5)
-        ttk.Spinbox(input_frame, from_=-100, to=100,
-                     textvariable=self.fo_object_sm, width=10).grid(row=4, column=1, sticky=tk.W, pady=5)
-
-        ttk.Label(input_frame, text=t("falling_objects_dropping_skill")).grid(row=5, column=0, sticky=tk.W, pady=5)
-        ttk.Spinbox(input_frame, from_=1, to=100,
-                     textvariable=self.fo_dropping_skill, width=10).grid(row=5, column=1, sticky=tk.W, pady=5)
-
-        ttk.Checkbutton(input_frame, text=t("falling_objects_target_aware"),
-                         variable=self.fo_target_aware).grid(row=6, column=0, columnspan=2, sticky=tk.W, pady=5)
-
-        ttk.Label(input_frame, text=t("falling_objects_target_dodge")).grid(row=7, column=0, sticky=tk.W, pady=5)
-        ttk.Spinbox(input_frame, from_=1, to=100,
-                     textvariable=self.fo_target_dodge, width=10).grid(row=7, column=1, sticky=tk.W, pady=5)
-
-        ttk.Checkbutton(input_frame, text=t("falling_objects_aimed"),
-                         variable=self.fo_aimed).grid(row=8, column=0, columnspan=2, sticky=tk.W, pady=5)
-
-        ttk.Button(input_frame, text=t("falling_objects_calculate"),
-                    command=self._calculate_falling_objects).grid(row=9, column=0, columnspan=2, pady=10)
-
-        result_frame = ttk.Frame(frame)
-        result_frame.pack(fill=tk.BOTH, expand=True, padx=20, pady=10)
-        ttk.Label(result_frame, text=t("falling_objects_result"), style="Subtitle.TLabel").pack(anchor=tk.W)
-        self.fo_result_text = tk.Text(result_frame, height=10, bg=self.colors["panel"],
-                                       fg=self.colors["fg"], font=("Consolas", 10))
-        self.fo_result_text.pack(fill=tk.BOTH, expand=True)
+        layout = self._oficina_tab("tab_falling_objects", "falling_objects_title")
+        form = ImpactForm(layout, "p. 431")
+        falling = form.panel("impact_object")
+        form.spin(falling, ("falling_objects_distance", self.fo_distance, 1, 10000),
+                  ("falling_objects_object_hp", self.fo_object_hp, 1, 10000),
+                  ("falling_objects_object_sm", self.fo_object_sm, -100, 100))
+        attack = form.panel("impact_attack")
+        form.spin(attack, ("falling_objects_dropping_skill", self.fo_dropping_skill, 1, 100))
+        form.check(attack, "falling_objects_aimed", self.fo_aimed)
+        target = form.panel("impact_target")
+        form.spin(target, ("falling_objects_target_hp", self.fo_target_hp, 1, 10000),
+                  ("falling_objects_target_sm", self.fo_target_sm, -100, 100),
+                  ("falling_objects_target_dodge", self.fo_target_dodge, 1, 100))
+        form.check(target, "falling_objects_target_aware", self.fo_target_aware)
+        form.calculate("falling_objects_calculate", self._calculate_falling_objects)
+        self.fo_result_text = self._oficina_result(layout, "falling_objects_result", height=10)
 
     # ═════════════════════════════════════════════════════════════════
     # COMBAT TAB (p. 368-376)
@@ -1045,8 +868,8 @@ class GURPSCalculator:
 
     def _session_labels(self):
         return {
-            "{}: {}".format("A" if key == "combatant_a" else "B", state.name): key
-            for key, state in self.combat_session.combatants.items()
+            f"{position:02d} · {self.combat_session.combatants[key].name}": key
+            for position, key in enumerate(self.combat_session.combatant_order, 1)
         }
 
     def _create_session_panel(self, parent):
@@ -1065,20 +888,25 @@ class GURPSCalculator:
         target_box.grid(row=1, column=1, sticky=tk.W, padx=3)
         for label in panel.grid_slaves(row=0, column=2):
             label.grid_configure(row=1, column=0)
-        actor_box.bind("<<ComboboxSelected>>", lambda _event: self._change_session_roles(labels, True))
-        target_box.bind("<<ComboboxSelected>>", lambda _event: self._change_session_roles(labels, False))
+        self._session_boxes.extend((actor_box, target_box))
+        actor_box.bind("<<ComboboxSelected>>", lambda _event: self._change_session_roles(self._session_labels(), True))
+        target_box.bind("<<ComboboxSelected>>", lambda _event: self._change_session_roles(self._session_labels(), False))
         ttk.Button(panel, text=t("session_advance_30"), command=lambda: self._advance_session_time(30)).grid(row=2, column=0, padx=2, pady=6)
         ttk.Button(panel, text=t("session_advance_60"), command=lambda: self._advance_session_time(60)).grid(row=2, column=1, padx=2)
         ttk.Button(panel, text=t("session_undo"), command=self._undo_session).grid(row=2, column=2, padx=2)
-        ttk.Button(panel, text=t("session_new"), command=self._new_session).grid(row=2, column=3, padx=2)
+        from utils.gui_hub import session_window
+        ttk.Button(panel, text=t("combat_prep_title"), command=lambda: session_window(self)).grid(row=2, column=3, padx=2)
         ttk.Label(panel, textvariable=self.session_summary, style="Subtitle.TLabel", wraplength=600).grid(
             row=3, column=0, columnspan=6, sticky=tk.W, padx=3, pady=(6, 0))
         self._refresh_session_summary(sync_fields=False)
+        if self.combat_session.load_warning:
+            ttk.Label(panel, text=t("local_data_warning", path=self.combat_session.load_warning),
+                      wraplength=600).grid(row=4, column=0, columnspan=6, sticky=tk.W, padx=3)
 
     def _create_combat_tab(self):
         content = self._scrollable_tab("tab_combat")
-        ttk.Label(content, text=t("melee_title"), style="Title.TLabel").pack(pady=(10, 4))
-        ttk.Label(content, text=t("melee_subtitle"), style="Subtitle.TLabel").pack(pady=(0, 6))
+        ttk.Label(content, text=t("melee_title"), style="PageTitle.TLabel").pack(anchor=tk.W, padx=14, pady=(10, 4))
+        ttk.Label(content, text=t("melee_subtitle"), style="Subtitle.TLabel").pack(anchor=tk.W, padx=14, pady=(0, 6))
         self._create_session_panel(content)
 
         selection = ttk.LabelFrame(content, text=t("melee_section_catalog"), padding=8)
@@ -1117,8 +945,7 @@ class GURPSCalculator:
         self._create_source_filter(selection, 5)
         search.bind("<Return>", lambda _event: self._filter_melee_weapons())
 
-        stats = ttk.LabelFrame(content, text=t("melee_section_stats"), padding=8)
-        stats.pack(fill=tk.X, padx=14, pady=5)
+        stats = self._extended_options(content, 'melee_stats', 'melee_section_stats')
         for column in (1, 3, 5):
             stats.columnconfigure(column, weight=1)
         self._grid_field(stats, 0, 0, "melee_weapon_name", self.melee_weapon_name)
@@ -1169,8 +996,7 @@ class GURPSCalculator:
         ttk.Label(situation, text=t("melee_defense")).grid(row=2, column=4, sticky=tk.W, padx=3, pady=3)
         defense_box = ttk.Combobox(situation, textvariable=self.melee_defense, values=list(defense_labels), state="readonly")
         defense_box.grid(row=2, column=5, sticky=tk.EW, padx=3, pady=3)
-        defense_box.bind("<<ComboboxSelected>>", lambda _event: setattr(
-            self, "melee_defense_key", defense_labels[self.melee_defense.get()]))
+        defense_box.bind("<<ComboboxSelected>>", self._change_melee_defense)
         self._grid_field(situation, 3, 0, "melee_defense_score", self.melee_defense_score)
         ttk.Checkbutton(situation, text=t("melee_target_aware"), variable=self.melee_target_aware).grid(
             row=3, column=2, columnspan=2, sticky=tk.W, padx=3, pady=3)
@@ -1220,8 +1046,7 @@ class GURPSCalculator:
         if self.melee_advanced_visible.get():
             toggle_advanced()
 
-        grappling = ttk.LabelFrame(content, text=t("grapple_section"), padding=8)
-        grappling.pack(fill=tk.X, padx=14, pady=5)
+        grappling = self._extended_options(content, 'melee_grappling', 'grapple_section')
         grappling.columnconfigure(1, weight=1)
         grapple_keys = [
             "grapple", "shift_grip", "break_free", "takedown", "pin", "choke", "strangle",
@@ -1247,17 +1072,19 @@ class GURPSCalculator:
         ttk.Button(grappling, text=t("grapple_resolve"), command=self._run_grapple).grid(row=0, column=5, padx=3)
         ttk.Button(grappling, text=t("grapple_apply"), command=self._apply_grapple_result).grid(row=0, column=6, padx=3)
 
-        buttons = ttk.Frame(content)
-        buttons.pack(fill=tk.X, padx=14, pady=8)
-        ttk.Button(buttons, text=t("common_calculate"), command=lambda: self._run_melee("calculate")).pack(side=tk.LEFT, padx=3)
-        ttk.Button(buttons, text=t("melee_roll_attack"), command=lambda: self._run_melee("attack")).pack(side=tk.LEFT, padx=3)
-        ttk.Button(buttons, text=t("melee_resolve"), command=lambda: self._run_melee("resolve")).pack(side=tk.LEFT, padx=3)
-        ttk.Button(buttons, text=t("session_apply"), command=self._apply_melee_result).pack(side=tk.LEFT, padx=3)
-        ttk.Button(buttons, text=t("melee_save_preset"), command=self._save_melee_preset).pack(side=tk.RIGHT, padx=3)
-        result_frame = ttk.LabelFrame(content, text=t("melee_result"), padding=8)
-        result_frame.pack(fill=tk.BOTH, expand=True, padx=14, pady=(2, 14))
-        self.melee_result_text = tk.Text(result_frame, height=18, bg=self.colors["panel"],
+        buttons = self._extended_actions(content, (
+            ("common_calculate", lambda: self._run_melee("calculate")),
+            ("melee_roll_attack", lambda: self._run_melee("attack")),
+            ("melee_resolve", lambda: self._run_melee("resolve")),
+            ("session_apply", self._apply_melee_result),
+            ("melee_save_preset", self._save_melee_preset),
+        ))
+        buttons.pack_configure(before=advanced_toggle, padx=14)
+        result_frame = ttk.LabelFrame(content, text=t("melee_result"), padding=8, style='Result.TLabelframe')
+        result_frame.pack(fill=tk.BOTH, expand=True, padx=14, pady=(2, 8), before=advanced_toggle)
+        self.melee_result_text = tk.Text(result_frame, height=12, width=1, bg=self.colors["panel"],
                                          fg=self.colors["fg"], font=("Consolas", 10), wrap=tk.WORD)
+        self.melee_result_text.oficina_card = True
         self.melee_result_text.pack(fill=tk.BOTH, expand=True)
         self.combat_result_text = self.melee_result_text
         self._filter_melee_weapons()
@@ -1272,6 +1099,7 @@ class GURPSCalculator:
         if label_key not in {'melee_weapon_name', 'melee_damage', 'melee_damage_type', 'melee_reach', 'melee_parry', 'injury_damage_type'}:
             entry.numeric_spec = {'integer': label_key not in {'melee_armor_divisor', 'injury_armor_divisor', 'melee_distance'}, 'optional': True}
             entry.validation_label = InlineError(entry)
+        return entry
 
     def _create_source_filter(self, parent, row):
         frame = ttk.Frame(parent)
@@ -1311,9 +1139,16 @@ class GURPSCalculator:
     # ═════════════════════════════════════════════════════════════════
     def _create_injury_tab(self):
         content = self._scrollable_tab("tab_injury")
-        ttk.Label(content, text=t("injury_title"), style="Title.TLabel").pack(pady=(10, 4))
-        ttk.Label(content, text=t("injury_subtitle"), style="Subtitle.TLabel").pack(pady=(0, 6))
+        ttk.Label(content, text=t("injury_title"), style="PageTitle.TLabel").pack(anchor=tk.W, padx=14, pady=(10, 4))
+        ttk.Label(content, text=t("injury_subtitle"), style="Subtitle.TLabel").pack(anchor=tk.W, padx=14, pady=(0, 6))
         self._create_session_panel(content)
+        self._injury_scroll_canvas = content.master
+        self._injury_handoff_banner = ttk.Frame(content.master.master, padding=(10, 4))
+        self._injury_handoff_message = wrap_label(ttk.Label(self._injury_handoff_banner, width=1, wraplength=320))
+        self._injury_handoff_message.pack(fill=tk.X)
+        self._injury_handoff_button = ttk.Button(self._injury_handoff_banner, text=t("handoff_clear"),
+                                                  command=self._clear_ranged_draft)
+        self._injury_handoff_button.pack(anchor=tk.W, pady=(3, 0))
         packet = ttk.LabelFrame(content, text=t("injury_section_packet"), padding=8)
         packet.pack(fill=tk.X, padx=14, pady=5)
         for column in (1, 3, 5):
@@ -1329,12 +1164,14 @@ class GURPSCalculator:
         profile_box.grid(row=0, column=1, sticky=tk.EW, padx=3, pady=3)
         profile_box.bind("<<ComboboxSelected>>", lambda _event: setattr(
             self, "injury_profile_key", profile_labels[self.injury_profile.get()]))
-        self._grid_field(packet, 0, 2, "injury_basic_damage", self.injury_basic_damage)
-        self._grid_field(packet, 0, 4, "injury_damage_type", self.injury_damage_type)
-        self._grid_field(packet, 1, 0, "injury_armor_divisor", self.injury_armor_divisor)
-        self._grid_field(packet, 1, 2, "injury_target_hp", self.injury_target_hp)
-        self._grid_field(packet, 1, 4, "injury_target_ht", self.injury_target_ht)
-        self._grid_field(packet, 2, 0, "injury_natural_dr", self.injury_natural_dr)
+        self._injury_locked_entries = [
+            self._grid_field(packet, row, col, key, getattr(self, key))
+            for row, col, key in (
+                (0, 2, "injury_basic_damage"), (0, 4, "injury_damage_type"),
+                (1, 0, "injury_armor_divisor"), (1, 2, "injury_target_hp"),
+                (1, 4, "injury_target_ht"), (2, 0, "injury_natural_dr"),
+            )
+        ]
         locations = list(self._melee_location_labels.values()) if hasattr(self, "_melee_location_labels") else ["torso", "vitals", "skull", "eye", "face", "neck", "groin", "arm", "leg", "hand", "foot"]
         self._injury_location_labels = {t("injury_location_" + key): key for key in locations}
         self.injury_location.set({value: key for key, value in self._injury_location_labels.items()}[self.injury_location_key])
@@ -1344,6 +1181,7 @@ class GURPSCalculator:
         location_box.grid(row=2, column=3, sticky=tk.EW, padx=3, pady=3)
         location_box.bind("<<ComboboxSelected>>", lambda _event: setattr(
             self, "injury_location_key", self._injury_location_labels[self.injury_location.get()]))
+        self._injury_locked_boxes = (profile_box, location_box)
         direction_labels = {t("injury_direction_front"): "front", t("injury_direction_back"): "back", t("injury_direction_side"): "side"}
         self._injury_direction_labels = direction_labels
         self.injury_direction.set({value: key for key, value in direction_labels.items()}[self.injury_direction_key])
@@ -1353,7 +1191,9 @@ class GURPSCalculator:
         direction_box.bind("<<ComboboxSelected>>", lambda _event: setattr(
             self, "injury_direction_key", direction_labels[self.injury_direction.get()]))
         ttk.Checkbutton(packet, text=t("injury_chinks"), variable=self.injury_chinks).grid(row=3, column=0, columnspan=2, sticky=tk.W)
-        ttk.Checkbutton(packet, text=t("injury_large_area"), variable=self.injury_large_area).grid(row=3, column=2, columnspan=2, sticky=tk.W)
+        self._injury_large_area_box = ttk.Checkbutton(packet, text=t("injury_large_area"), variable=self.injury_large_area)
+        self._injury_large_area_box.grid(row=3, column=2, columnspan=2, sticky=tk.W)
+        self._refresh_ranged_draft()
 
         armor = ttk.LabelFrame(content, text=t("injury_section_armor"), padding=8)
         armor.pack(fill=tk.X, padx=14, pady=5)
@@ -1376,8 +1216,20 @@ class GURPSCalculator:
         armor_search.bind("<Return>", lambda _event: self._filter_armor())
         self._filter_armor()
 
-        optional = ttk.LabelFrame(content, text=t("injury_section_optional"), padding=8)
-        optional.pack(fill=tk.X, padx=14, pady=5)
+        buttons = self._extended_actions(content, (
+            ("common_calculate", lambda: self._run_injury("calculate")),
+            ("injury_resolve_checks", lambda: self._run_injury("resolve")),
+            ("session_apply", self._apply_injury_result),
+        ))
+        buttons.pack_configure(padx=14)
+        result_frame = ttk.LabelFrame(content, text=t("injury_result"), padding=8, style='Result.TLabelframe')
+        result_frame.pack(fill=tk.BOTH, expand=True, padx=14, pady=(2, 8))
+        self.injury_result_text = tk.Text(result_frame, height=12, width=1, bg=self.colors["panel"],
+                                          fg=self.colors["fg"], font=("Consolas", 10), wrap=tk.WORD)
+        self.injury_result_text.oficina_card = True
+        self.injury_result_text.pack(fill=tk.BOTH, expand=True)
+
+        optional = self._extended_options(content, 'injury_rules', 'injury_section_optional')
         option_vars = [
             ("injury_rule_bleeding", self.injury_rule_bleeding),
             ("injury_rule_severe_bleeding", self.injury_rule_severe_bleeding),
@@ -1393,212 +1245,221 @@ class GURPSCalculator:
             ttk.Checkbutton(optional, text=t(key), variable=variable).grid(
                 row=index // 3, column=index % 3, sticky=tk.W, padx=6, pady=2)
 
-        buttons = ttk.Frame(content)
-        buttons.pack(fill=tk.X, padx=14, pady=8)
-        ttk.Button(buttons, text=t("common_calculate"), command=lambda: self._run_injury("calculate")).pack(side=tk.LEFT, padx=3)
-        ttk.Button(buttons, text=t("injury_resolve_checks"), command=lambda: self._run_injury("resolve")).pack(side=tk.LEFT, padx=3)
-        ttk.Button(buttons, text=t("session_apply"), command=self._apply_injury_result).pack(side=tk.LEFT, padx=3)
-        result_frame = ttk.LabelFrame(content, text=t("injury_result"), padding=8)
-        result_frame.pack(fill=tk.BOTH, expand=True, padx=14, pady=(2, 14))
-        self.injury_result_text = tk.Text(result_frame, height=18, bg=self.colors["panel"],
-                                          fg=self.colors["fg"], font=("Consolas", 10), wrap=tk.WORD)
-        self.injury_result_text.pack(fill=tk.BOTH, expand=True)
         self._refresh_session_summary(sync_fields=True)
 
     # ═════════════════════════════════════════════════════════════════
     # RANGED COMBAT TAB (Basic Set p. 364, 372-374, 548-550)
     # ═════════════════════════════════════════════════════════════════
     def _create_ranged_tab(self):
-        """Cria a interface rolável do motor de combate à distância."""
-        content = self._scrollable_tab('tab_ranged')
+        """Oficina de tiro: entradas essenciais, ações e resultado no mesmo espaço."""
+        tab = ttk.Frame(self.notebook)
+        self.notebook.add(tab, text=t("tab_ranged"))
+        layout = self.ranged_layout = RangedWorkbench(tab, self.colors["bg"])
+        wrap_label(ttk.Label(layout.header, text=t("ranged_title"), style="PageTitle.TLabel")).pack(
+            fill=tk.X, pady=(0, 4))
+        wrap_label(ttk.Label(layout.header, text=t("ranged_subtitle"), style="Subtitle.TLabel")).pack(fill=tk.X)
+        map_note = ttk.Frame(layout.inputs)
+        map_note.pack(fill=tk.X)
+        self.ranged_map_hint_label = wrap_label(ttk.Label(map_note, textvariable=self.ranged_map_hint))
+        self._refresh_ranged_map_hint()
 
-        ttk.Label(content, text=t("ranged_title"), style="Title.TLabel").pack(pady=(10, 4))
-        ttk.Label(content, text=t("ranged_subtitle"), style="Subtitle.TLabel").pack(pady=(0, 8))
+        def labeled(parent, key):
+            cell = ttk.Frame(parent)
+            cell.columnconfigure(0, weight=1)
+            label = wrap_label(ttk.Label(cell, text=t(key)))
+            label.grid(row=0, column=0, sticky=tk.EW, pady=(0, 2))
+            return cell, label
 
-        selection = ttk.LabelFrame(content, text=t("ranged_section_weapon"), padding=8)
-        selection.pack(fill=tk.X, padx=14, pady=5)
-        selection.columnconfigure(1, weight=1)
+        def combo(parent, label_key, variable, choices=None, key_attr=None):
+            cell, label = labeled(parent, label_key)
+            label.grid_configure(columnspan=2)
+            box = ttk.Combobox(cell, textvariable=variable, state="readonly", width=1)
+            box.grid(row=1, column=0, sticky=tk.EW)
+            if choices is not None:
+                labels = {t(key): value for key, value in choices}
+                reverse = {value: key for key, value in labels.items()}
+                variable.set(reverse[getattr(self, key_attr)])
+                box.configure(values=tuple(labels))
+                box.bind("<<ComboboxSelected>>", lambda _event: setattr(self, key_attr, labels[variable.get()]))
+            return cell, box
 
-        profile_labels = {
-            t("ranged_profile_basic"): "basic",
-            t("ranged_profile_realistic"): "realistic",
-            t("ranged_profile_cinematic"): "cinematic",
-        }
-        profile_reverse = {value: key for key, value in profile_labels.items()}
-        self.ranged_profile.set(profile_reverse[self.ranged_profile_key])
-        ttk.Label(selection, text=t("ranged_profile")).grid(row=0, column=0, sticky=tk.W, padx=4, pady=3)
-        profile_box = ttk.Combobox(selection, textvariable=self.ranged_profile,
-                                   values=list(profile_labels), state="readonly", width=32)
-        profile_box.grid(row=0, column=1, sticky=tk.EW, padx=4, pady=3)
-        profile_box.bind("<<ComboboxSelected>>",
-                         lambda _event: setattr(self, "ranged_profile_key", profile_labels[self.ranged_profile.get()]))
+        selection = ttk.LabelFrame(layout.inputs, text=t("ranged_section_weapon"), padding=8)
+        selection.pack(fill=tk.X, pady=(0, 8))
+        profile, _profile_box = combo(selection, "ranged_profile", self.ranged_profile, (
+            ("ranged_profile_basic", "basic"),
+            ("ranged_profile_realistic", "realistic"),
+            ("ranged_profile_cinematic", "cinematic"),
+        ), "ranged_profile_key")
+        profile.pack(fill=tk.X, padx=4, pady=(0, 5))
 
-        ttk.Label(selection, text=t("ranged_search")).grid(row=1, column=0, sticky=tk.W, padx=4, pady=3)
-        search_entry = ttk.Entry(selection, textvariable=self.ranged_search)
-        search_entry.grid(row=1, column=1, sticky=tk.EW, padx=4, pady=3)
-        ttk.Button(selection, text=t("ranged_search_button"), command=self._filter_ranged_weapons).grid(
-            row=1, column=2, padx=4, pady=3)
-
-        ttk.Label(selection, text=t("ranged_weapon")).grid(row=2, column=0, sticky=tk.W, padx=4, pady=3)
-        self.ranged_weapon_box = ttk.Combobox(selection, textvariable=self.ranged_weapon, state="readonly")
-        self.ranged_weapon_box.grid(row=2, column=1, columnspan=2, sticky=tk.EW, padx=4, pady=3)
-        self.ranged_weapon_box.bind("<<ComboboxSelected>>", self._load_selected_weapon)
+        search, search_label = labeled(selection, "ranged_search")
+        search.pack(fill=tk.X, padx=4, pady=(0, 5))
+        search_label.grid_configure(columnspan=2)
+        search_entry = ttk.Entry(search, textvariable=self.ranged_search, width=1)
+        search_entry.grid(row=1, column=0, sticky=tk.EW)
+        ttk.Button(search, text=t("ranged_search_button"), command=self._filter_ranged_weapons).grid(
+            row=1, column=1, padx=(6, 0))
         search_entry.bind("<Return>", lambda _event: self._filter_ranged_weapons())
+
+        weapon, self.ranged_weapon_box = combo(selection, "ranged_weapon", self.ranged_weapon)
+        weapon.pack(fill=tk.X, padx=4)
+        self.ranged_weapon_box.bind("<<ComboboxSelected>>", self._load_selected_weapon)
         self._populate_ranged_weapon_box(self.weapon_catalog.search())
+        if self.weapon_catalog.load_warning:
+            wrap_label(ttk.Label(selection, text=t("local_data_warning", path=self.weapon_catalog.load_warning))).pack(fill=tk.X)
 
-        stats = ttk.LabelFrame(content, text=t("ranged_section_stats"), padding=8)
-        stats.pack(fill=tk.X, padx=14, pady=5)
-        for column in (1, 3, 5):
-            stats.columnconfigure(column, weight=1)
+        def fields(parent, keys, reveal=None):
+            for name in keys:
+                label_key = "ranged_" + name
+                variable = getattr(self, label_key)
+                cell, label = labeled(parent, label_key)
+                entry = ttk.Entry(cell, textvariable=variable, width=1)
+                entry.grid(row=1, column=0, sticky=tk.EW)
+                entry.unit_label = label
+                if name not in {"weapon_name", "damage", "damage_type", "shots_stat"}:
+                    entry.numeric_spec = {
+                        "integer": name not in {"armor_divisor", "rof", "half_damage", "max_range",
+                                                "minimum_range", "distance", "speed"},
+                        "optional": True,
+                    }
+                    entry.validation_label = FieldError(entry, reveal)
+                parent.add(cell)
 
-        def field(parent, row, column, label_key, variable, width=13):
-            ttk.Label(parent, text=t(label_key)).grid(row=row, column=column, sticky=tk.W, padx=4, pady=3)
-            entry = ttk.Entry(parent, textvariable=variable, width=width)
-            entry.grid(
-                row=row, column=column + 1, sticky=tk.EW, padx=4, pady=3)
-            if label_key not in {'ranged_weapon_name', 'ranged_damage', 'ranged_damage_type', 'ranged_shots_stat'}:
-                entry.numeric_spec = {'integer': label_key not in {'ranged_armor_divisor', 'ranged_rof', 'ranged_half_damage', 'ranged_max_range', 'ranged_minimum_range', 'ranged_distance', 'ranged_speed'}, 'optional': True}
-                entry.validation_label = InlineError(entry)
+        essential = FieldGrid(layout.inputs, columns=2)
+        essential.pack(fill=tk.X, pady=(0, 4))
+        fields(essential, ("skill", "distance", "aim_seconds", "shots_fired"))
 
-        field(stats, 0, 0, "ranged_weapon_name", self.ranged_weapon_name, 24)
-        field(stats, 0, 2, "ranged_acc", self.ranged_acc)
-        field(stats, 0, 4, "ranged_damage", self.ranged_damage)
-        field(stats, 1, 0, "ranged_damage_type", self.ranged_damage_type)
-        field(stats, 1, 2, "ranged_armor_divisor", self.ranged_armor_divisor)
-        field(stats, 1, 4, "ranged_half_damage", self.ranged_half_damage)
-        field(stats, 2, 0, "ranged_max_range", self.ranged_max_range)
-        field(stats, 2, 2, "ranged_rof", self.ranged_rof)
-        field(stats, 2, 4, "ranged_projectiles", self.ranged_projectiles)
-        field(stats, 3, 0, "ranged_shots_stat", self.ranged_shots_stat)
-        field(stats, 3, 2, "ranged_bulk", self.ranged_bulk)
-        field(stats, 3, 4, "ranged_rcl", self.ranged_rcl)
-        field(stats, 4, 0, "ranged_malf", self.ranged_malf)
-        field(stats, 4, 2, "ranged_minimum_range", self.ranged_minimum_range)
-        field(stats, 4, 4, "ranged_required_st", self.ranged_required_st)
-
-        situation = ttk.LabelFrame(content, text=t("ranged_section_situation"), padding=8)
-        situation.pack(fill=tk.X, padx=14, pady=5)
-        for column in (1, 3, 5):
-            situation.columnconfigure(column, weight=1)
-        field(situation, 0, 0, "ranged_skill", self.ranged_skill)
-        field(situation, 0, 2, "ranged_distance", self.ranged_distance)
-        field(situation, 0, 4, "ranged_speed", self.ranged_speed)
-        field(situation, 1, 0, "ranged_sm", self.ranged_sm)
-        field(situation, 1, 2, "ranged_aim_seconds", self.ranged_aim_seconds)
-        ttk.Checkbutton(situation, text=t("ranged_braced"), variable=self.ranged_braced).grid(
-            row=1, column=4, columnspan=2, sticky=tk.W, padx=4, pady=3)
-        field(situation, 2, 0, "ranged_shots_fired", self.ranged_shots_fired)
-
-        maneuver_labels = {
-            t("ranged_maneuver_attack"): "attack",
-            t("ranged_maneuver_all_out"): "all_out_determined",
-            t("ranged_maneuver_move_attack"): "move_and_attack",
-            t("ranged_maneuver_pop_up"): "pop_up",
-        }
-        maneuver_reverse = {value: key for key, value in maneuver_labels.items()}
-        self.ranged_maneuver.set(maneuver_reverse[self.ranged_maneuver_key])
-        ttk.Label(situation, text=t("ranged_maneuver")).grid(row=2, column=2, sticky=tk.W, padx=4, pady=3)
-        maneuver_box = ttk.Combobox(situation, textvariable=self.ranged_maneuver,
-                                    values=list(maneuver_labels), state="readonly")
-        maneuver_box.grid(row=2, column=3, sticky=tk.EW, padx=4, pady=3)
-        maneuver_box.bind("<<ComboboxSelected>>",
-                          lambda _event: setattr(self, "ranged_maneuver_key", maneuver_labels[self.ranged_maneuver.get()]))
-
-        location_labels = {t("ranged_location_" + key): key for key in (
-            "torso", "vitals", "skull", "face", "eye", "groin", "arm", "leg", "hand", "foot", "weapon"
-        )}
-        location_reverse = {value: key for key, value in location_labels.items()}
-        self.ranged_location.set(location_reverse[self.ranged_location_key])
-        ttk.Label(situation, text=t("ranged_hit_location")).grid(row=2, column=4, sticky=tk.W, padx=4, pady=3)
-        location_box = ttk.Combobox(situation, textvariable=self.ranged_location,
-                                    values=list(location_labels), state="readonly")
-        location_box.grid(row=2, column=5, sticky=tk.EW, padx=4, pady=3)
-        location_box.bind("<<ComboboxSelected>>",
-                          lambda _event: setattr(self, "ranged_location_key", location_labels[self.ranged_location.get()]))
-        field(situation, 3, 0, "ranged_dodge", self.ranged_dodge)
-        ttk.Checkbutton(situation, text=t("ranged_target_aware"), variable=self.ranged_target_aware).grid(
-            row=3, column=2, columnspan=2, sticky=tk.W, padx=4, pady=3)
-        field(situation, 3, 4, "ranged_dr", self.ranged_dr)
-        field(situation, 4, 0, "ranged_target_hp", self.ranged_target_hp)
-        field(situation, 4, 2, "ranged_shooter_st", self.ranged_shooter_st)
-
-        ttk.Checkbutton(content, text=t("ranged_advanced"), variable=self.ranged_advanced_visible,
-                        command=self._toggle_ranged_advanced).pack(anchor=tk.W, padx=18, pady=4)
-        self.ranged_advanced_frame = ttk.LabelFrame(content, text=t("ranged_section_advanced"), padding=8)
-        self.ranged_advanced_frame.pack(fill=tk.X, padx=14, pady=5)
-        for column in (1, 3, 5):
-            self.ranged_advanced_frame.columnconfigure(column, weight=1)
-        field(self.ranged_advanced_frame, 0, 0, "ranged_scope", self.ranged_scope)
-        field(self.ranged_advanced_frame, 0, 2, "ranged_laser", self.ranged_laser)
-        field(self.ranged_advanced_frame, 0, 4, "ranged_targeting", self.ranged_targeting)
-        field(self.ranged_advanced_frame, 1, 0, "ranged_cover", self.ranged_cover)
-        field(self.ranged_advanced_frame, 1, 2, "ranged_visibility", self.ranged_visibility)
-        field(self.ranged_advanced_frame, 1, 4, "ranged_posture", self.ranged_posture)
-        field(self.ranged_advanced_frame, 2, 0, "ranged_custom_modifier", self.ranged_custom_modifier)
-        field(self.ranged_advanced_frame, 2, 2, "ranged_rangefinder", self.ranged_rangefinder)
-        field(self.ranged_advanced_frame, 2, 4, "ranged_precision_aiming", self.ranged_precision_aiming)
-        field(self.ranged_advanced_frame, 3, 0, "ranged_follow_up_aim", self.ranged_follow_up_aim)
-        field(self.ranged_advanced_frame, 3, 2, "ranged_fast_firing", self.ranged_fast_firing)
-        field(self.ranged_advanced_frame, 3, 4, "ranged_cinematic_modifier", self.ranged_cinematic_modifier)
-        ttk.Checkbutton(self.ranged_advanced_frame, text=t("ranged_cannot_see"),
-                        variable=self.ranged_cannot_see).grid(row=4, column=0, columnspan=2, sticky=tk.W, padx=4)
-        ttk.Checkbutton(self.ranged_advanced_frame, text=t("ranged_offhand"),
-                        variable=self.ranged_offhand).grid(row=4, column=2, columnspan=2, sticky=tk.W, padx=4)
-        ammunition_labels = {
-            t("ranged_ammunition_standard"): "standard",
-            t("ranged_ammunition_match"): "match",
-            t("ranged_ammunition_hollow_point"): "hollow_point",
-            t("ranged_ammunition_aphc"): "aphc",
-            t("ranged_ammunition_apds"): "apds",
-        }
-        ammunition_reverse = {value: key for key, value in ammunition_labels.items()}
-        self.ranged_ammunition.set(ammunition_reverse[self.ranged_ammunition_key])
-        ttk.Label(self.ranged_advanced_frame, text=t("ranged_ammunition")).grid(
-            row=4, column=4, sticky=tk.W, padx=4, pady=3)
-        ammunition_box = ttk.Combobox(self.ranged_advanced_frame, textvariable=self.ranged_ammunition,
-                                      values=list(ammunition_labels), state="readonly")
-        ammunition_box.grid(row=4, column=5, sticky=tk.EW, padx=4, pady=3)
-        ammunition_box.bind("<<ComboboxSelected>>", lambda _event: setattr(
-            self, "ranged_ammunition_key", ammunition_labels[self.ranged_ammunition.get()]
-        ))
-        ttk.Checkbutton(self.ranged_advanced_frame, text=t("ranged_minute_of_angle"),
-                        variable=self.ranged_minute_of_angle).grid(
-                            row=5, column=0, columnspan=3, sticky=tk.W, padx=4, pady=3)
-        ttk.Checkbutton(self.ranged_advanced_frame, text=t("ranged_aim_lost"),
-                        variable=self.ranged_aim_lost).grid(
-                            row=5, column=3, columnspan=3, sticky=tk.W, padx=4, pady=3)
-        if not self.ranged_advanced_visible.get():
-            self.ranged_advanced_frame.pack_forget()
-
-        actions = ttk.Frame(content)
-        actions.pack(fill=tk.X, padx=14, pady=8)
-        ttk.Button(actions, text=t("ranged_calculate"), command=lambda: self._run_ranged("calculate")).pack(side=tk.LEFT, padx=3)
-        ttk.Button(actions, text=t("ranged_roll_attack"), command=lambda: self._run_ranged("attack")).pack(side=tk.LEFT, padx=3)
-        ttk.Button(actions, text=t("ranged_resolve"), command=lambda: self._run_ranged("resolve")).pack(side=tk.LEFT, padx=3)
-        ttk.Button(actions, text=t("ranged_save_preset"), command=self._save_ranged_preset).pack(side=tk.RIGHT, padx=3)
-        ttk.Button(actions, text=t("ranged_import"), command=self._import_ranged_presets).pack(side=tk.RIGHT, padx=3)
-        ttk.Button(actions, text=t("ranged_export"), command=self._export_ranged_presets).pack(side=tk.RIGHT, padx=3)
-
-        result_frame = ttk.LabelFrame(content, text=t("ranged_result"), padding=8)
-        result_frame.pack(fill=tk.BOTH, expand=True, padx=14, pady=(3, 14))
-        self.ranged_result_text = tk.Text(result_frame, height=18, bg=self.colors["panel"],
-                                          fg=self.colors["fg"], font=("Consolas", 10), wrap=tk.WORD)
+        result_frame = ttk.LabelFrame(layout.result, padding=8)
+        result_frame.pack(fill=tk.BOTH, expand=True)
+        wrap_label(ttk.Label(result_frame, text=t("ranged_result"), style="Subtitle.TLabel")).pack(fill=tk.X, pady=(0, 4))
+        layout.create_metrics(result_frame)
+        layout.set_metrics(getattr(self, '_ranged_metrics', None))
+        handoff = ttk.Frame(result_frame)
+        handoff.pack(fill=tk.X, pady=(0, 5))
+        self._handoff_selected = tk.StringVar()
+        self._handoff_picker = ttk.Combobox(handoff, textvariable=self._handoff_selected, state="readonly", width=5)
+        self._handoff_button = ttk.Button(handoff, text=t("handoff_send"), command=self._open_ranged_draft)
+        flow_buttons(handoff, [ttk.Label(handoff, text=t("handoff_hit")), self._handoff_picker, self._handoff_button])
+        self._refresh_handoff_choices()
+        result_content = ttk.Frame(result_frame)
+        result_content.pack(fill=tk.BOTH, expand=True)
+        self.ranged_result_text = tk.Text(result_content, width=1, height=14, bg=self.colors["panel"],
+                                          fg=self.colors["fg"], font=("Consolas", 10), wrap=tk.WORD,
+                                          padx=8, pady=6, borderwidth=0)
+        self.ranged_result_text.responsive_toolbar = True
+        self.ranged_result_text.oficina_card = True
+        result_scrollbar = ttk.Scrollbar(result_content, orient=tk.VERTICAL, command=self.ranged_result_text.yview)
+        result_scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+        self.ranged_result_text.configure(yscrollcommand=result_scrollbar.set)
+        self.ranged_result_text.oficina_scrollbar = result_scrollbar
         self.ranged_result_text.pack(fill=tk.BOTH, expand=True)
 
+        def run(operation):
+            self._run_ranged(operation)
+            if not layout.wide and self.ranged_result_text.edit_modified():
+                layout.after_idle(lambda: layout.reveal(result_frame, align_top=True))
+
+        actions = ttk.Frame(layout.inputs)
+        actions.pack(fill=tk.X, pady=(0, 8))
+        flow_buttons(actions, [
+            ttk.Button(actions, text=t(key), command=lambda operation=operation: run(operation),
+                       style="Primary.TButton" if operation == "calculate" else "TButton")
+            for key, operation in (("ranged_calculate", "calculate"), ("ranged_roll_attack", "attack"),
+                                   ("ranged_resolve", "resolve"))
+        ])
+
+        if not hasattr(self, "_ranged_disclosure_state"):
+            self._ranged_disclosure_state = {"stats": False, "situation": False}
+
+        def section(key, caption):
+            def show(visible):
+                self._ranged_disclosure_state[key] = visible
+                disclosure.show(visible)
+
+            disclosure = Disclosure(layout.inputs, t(caption), lambda: show(not disclosure.expanded))
+            disclosure.pack(fill=tk.X, pady=(0, 5))
+            show(self._ranged_disclosure_state[key])
+            return disclosure.section, lambda: show(True) if not disclosure.expanded else None
+
+        stats, reveal_stats = section("stats", "ranged_show_stats")
+        stats_fields = FieldGrid(stats)
+        stats_fields.pack(fill=tk.X)
+        fields(stats_fields, (
+            "weapon_name", "acc", "damage", "damage_type", "armor_divisor", "half_damage",
+            "max_range", "rof", "projectiles", "shots_stat", "bulk", "rcl", "malf",
+            "minimum_range", "required_st",
+        ), reveal_stats)
+        preset_actions = ttk.Frame(stats)
+        preset_actions.pack(fill=tk.X, pady=(4, 0))
+        flow_buttons(preset_actions, [
+            ttk.Button(preset_actions, text=t(key), command=command) for key, command in (
+                ("ranged_save_preset", self._save_ranged_preset),
+                ("ranged_import", self._import_ranged_presets),
+                ("ranged_export", self._export_ranged_presets),
+            )
+        ])
+
+        situation, reveal_situation = section("situation", "ranged_show_situation")
+        situation_fields = FieldGrid(situation)
+        situation_fields.pack(fill=tk.X)
+        fields(situation_fields, ("speed", "sm", "dodge", "dr", "target_hp", "shooter_st"), reveal_situation)
+        maneuver, _maneuver_box = combo(situation, "ranged_maneuver", self.ranged_maneuver, (
+            ("ranged_maneuver_attack", "attack"),
+            ("ranged_maneuver_all_out", "all_out_determined"),
+            ("ranged_maneuver_move_attack", "move_and_attack"),
+            ("ranged_maneuver_pop_up", "pop_up"),
+        ), "ranged_maneuver_key")
+        maneuver.pack(fill=tk.X, padx=4, pady=3)
+        location, _location_box = combo(situation, "ranged_hit_location", self.ranged_location, (
+            ("ranged_location_" + key, key) for key in
+            ("torso", "vitals", "skull", "face", "eye", "groin", "arm", "leg", "hand", "foot", "weapon")
+        ), "ranged_location_key")
+        location.pack(fill=tk.X, padx=4, pady=3)
+        for name in ("braced", "target_aware"):
+            key = "ranged_" + name
+            ranged_checkbutton(situation, t(key), getattr(self, key)).pack(fill=tk.X, padx=4, pady=3)
+
+        def show_advanced(visible):
+            self.ranged_advanced_visible.set(visible)
+            self._toggle_ranged_advanced()
+
+        self._ranged_advanced_disclosure = Disclosure(
+            layout.inputs, t("ranged_advanced"), lambda: show_advanced(not self.ranged_advanced_visible.get()))
+        self._ranged_advanced_disclosure.pack(fill=tk.X, pady=(0, 5))
+        self.ranged_advanced_frame = self._ranged_advanced_disclosure.section
+        advanced = FieldGrid(self.ranged_advanced_frame)
+        advanced.pack(fill=tk.X)
+        fields(advanced, (
+            "scope", "laser", "targeting", "cover", "visibility", "posture", "custom_modifier",
+            "rangefinder", "precision_aiming", "follow_up_aim", "fast_firing", "cinematic_modifier",
+        ), lambda: show_advanced(True) if not self.ranged_advanced_visible.get() else None)
+        ammunition, _ammunition_box = combo(
+            self.ranged_advanced_frame, "ranged_ammunition", self.ranged_ammunition, (
+                ("ranged_ammunition_standard", "standard"),
+                ("ranged_ammunition_match", "match"),
+                ("ranged_ammunition_hollow_point", "hollow_point"),
+                ("ranged_ammunition_aphc", "aphc"),
+                ("ranged_ammunition_apds", "apds"),
+            ), "ranged_ammunition_key",
+        )
+        ammunition.pack(fill=tk.X, padx=4, pady=3)
+        for name in ("cannot_see", "offhand", "minute_of_angle", "aim_lost"):
+            key = "ranged_" + name
+            ranged_checkbutton(self.ranged_advanced_frame, t(key), getattr(self, key)).pack(fill=tk.X, padx=4, pady=3)
+        self._toggle_ranged_advanced()
+        layout.bind_scrolling()
+
     def _toggle_ranged_advanced(self):
-        if self.ranged_advanced_visible.get():
-            self.ranged_advanced_frame.pack(fill=tk.X, padx=14, pady=5, before=self.ranged_advanced_frame.master.winfo_children()[-2])
-        else:
-            self.ranged_advanced_frame.pack_forget()
+        self._ranged_advanced_disclosure.show(self.ranged_advanced_visible.get())
 
     def _populate_ranged_weapon_box(self, records):
         self._ranged_weapon_map = {
-            "{} — {} p.{}".format(record.name, record.source, record.page): record.identifier
+            "{} — {} p.{} [{}]".format(record.name, record.source, record.page, record.identifier): record.identifier
             for record in records
         }
         values = list(self._ranged_weapon_map)
         self.ranged_weapon_box.configure(values=values)
-        if values and not self.ranged_weapon.get():
+        if values and self.ranged_weapon.get() not in values:
             self.ranged_weapon.set(values[0])
             self._load_selected_weapon()
 
@@ -1629,12 +1490,36 @@ class GURPSCalculator:
         self.ranged_required_st.set("" if weapon.strength is None else str(weapon.strength))
 
     def _extended_form(self, tab_key, title_key):
-        content = self._scrollable_tab(tab_key)
-        ttk.Label(content, text=t(title_key), style="Title.TLabel").pack(pady=(10, 6))
+        layout = self._oficina_tab(tab_key, title_key)
+        content = layout.inputs
         form = ttk.LabelFrame(content, text=t("extended_inputs"), padding=8)
-        form.pack(fill=tk.X, padx=14, pady=5)
+        form.pack(fill=tk.X, pady=(0, 6))
         form.columnconfigure(1, weight=1)
         return content, form
+
+    def _extended_options(self, content, key, title_key):
+        state = getattr(self, '_oficina_options', None)
+        if state is None:
+            state = self._oficina_options = {}
+
+        def show(visible):
+            state[key] = visible
+            disclosure.show(visible)
+
+        disclosure = Disclosure(content, t(title_key), lambda: show(not disclosure.expanded))
+        disclosure.pack(fill=tk.X, pady=(3, 6))
+        disclosure.section.oficina_reveal = lambda: show(True) if not disclosure.expanded else None
+        show(state.get(key, False))
+        return disclosure.section
+
+    @staticmethod
+    def _extended_actions(parent, commands, *, primary=True):
+        row = ttk.Frame(parent)
+        row.pack(fill=tk.X, pady=(3, 6))
+        flow_buttons(row, [ttk.Button(row, text=t(key), command=command,
+                                      style='Primary.TButton' if primary and index == 0 else 'TButton')
+                           for index, (key, command) in enumerate(commands)])
+        return row
 
     @staticmethod
     def _form_entry(form, row, label, variable):
@@ -1652,16 +1537,27 @@ class GURPSCalculator:
                 pass
         if hasattr(variable, '_numeric_spec'):
             entry.numeric_spec = variable._numeric_spec
-            color = '#b42318' if entry.winfo_toplevel().cget('background') == '#f2f4f7' else '#ff8585'
-            entry.validation_label = ttk.Label(form, text='', foreground=color, wraplength=180)
+            entry.validation_label = ttk.Label(form, text='', style='Error.TLabel', wraplength=180)
             entry.validation_label.grid(row=row, column=2, sticky=tk.W, padx=4)
         return entry
 
     def _extended_result(self, content):
-        box = tk.Text(content, height=16, bg=self.colors["panel"], fg=self.colors["fg"],
-                      font=("Consolas", 10), wrap=tk.WORD)
-        box.pack(fill=tk.BOTH, expand=True, padx=14, pady=(5, 14))
-        return box
+        def adapt(parent):
+            for widget in parent.winfo_children():
+                grid = widget.grid_info()
+                if grid:
+                    if isinstance(widget, ttk.Label):
+                        widget.configure(wraplength=245 if int(grid.get('columnspan', 1)) > 1 else 145)
+                        widget.grid_configure(sticky='ew')
+                        wrap_label(widget)
+                    elif isinstance(widget, (ttk.Entry, ttk.Combobox)):
+                        widget.configure(width=8)
+                    elif isinstance(widget, ttk.Checkbutton):
+                        widget.grid_configure(sticky='ew')
+                        wrap_toggle(widget)
+                adapt(widget)
+        adapt(content)
+        return self._oficina_result(content.oficina)
 
     @staticmethod
     def _format_roll(roll):
@@ -1682,7 +1578,8 @@ class GURPSCalculator:
         return "; ".join(rendered) or "-"
 
     @staticmethod
-    def _show_result(box, lines):
+    def _show_result(box, lines, *, highlights=()):
+        box.oficina_highlights = highlights
         box.delete("1.0", tk.END)
         labels = {name: "summary_" + name.lower().replace(" ", "_") for name in (
             "Valid", "Skill", "Energy", "Time", "Roll", "Errors", "Error", "Base cost",
@@ -1714,6 +1611,10 @@ class GURPSCalculator:
         ttk.Combobox(form, textvariable=self.strength_task,
                      values=tuple(StrengthEngine.TASK_MULTIPLIERS) + ("striking", "throwing", "knockback_resistance", "grappling", "choke", "collision"),
                      state="readonly").grid(row=5, column=1, sticky=tk.EW, padx=4)
+        self._extended_actions(content, (("common_calculate", self._run_strength),
+                                         ("common_resolve", lambda: self._run_strength(True))))
+        form = self._extended_options(content, 'strength_extra', 'ui_more_options')
+        form.columnconfigure(1, weight=1)
         ttk.Checkbutton(form, text=t("strength_all_out_strong"), variable=self.strength_all_out).grid(row=6, column=0, sticky=tk.W, padx=4)
         ttk.Checkbutton(form, text=t("strength_mighty_blows"), variable=self.strength_mighty).grid(row=6, column=1, sticky=tk.W, padx=4)
         ttk.Label(form, text=t("strength_scope")).grid(row=7, column=0, sticky=tk.W, padx=4)
@@ -1732,10 +1633,8 @@ class GURPSCalculator:
             self._form_entry(form, row, t(key), variable)
         ttk.Checkbutton(form, text=t("strength_continuous"), variable=self.strength_continuous).grid(row=14, column=0, sticky=tk.W)
         ttk.Checkbutton(form, text=t("strength_carry"), variable=self.strength_carry).grid(row=14, column=1, sticky=tk.W)
-        ttk.Button(form, text=t("common_calculate"), command=self._run_strength).grid(row=15, column=0, pady=7)
-        ttk.Button(form, text=t("common_resolve"), command=lambda: self._run_strength(True)).grid(row=15, column=1, pady=7)
-        advanced = ttk.LabelFrame(content, text=t('ui_strength_skills'), padding=10)
-        advanced.pack(fill=tk.X, padx=14, pady=5)
+        advanced = self._extended_options(content, 'strength_skills', 'ui_strength_skills')
+        advanced.columnconfigure(1, weight=1)
         ttk.Checkbutton(advanced, text=t('ui_trained_lifting'), variable=self.strength_trained_lift).grid(row=0, column=0, columnspan=2, sticky=tk.W)
         self._form_entry(advanced, 1, t('ui_lifting_ht'), self.strength_lifting_ht)
         ttk.Checkbutton(advanced, text='Power Blow (Basic Set p. 215)', variable=self.strength_power_blow).grid(row=2, column=0, columnspan=2, sticky=tk.W)
@@ -1745,61 +1644,183 @@ class GURPSCalculator:
         ttk.Checkbutton(advanced, text=t('ui_power_blow_triple'), variable=self.strength_triple).grid(row=6, column=0, columnspan=2, sticky=tk.W)
         self.strength_result_text = self._extended_result(content)
 
+    def _localized_choices(self, form, row, label, canonical, labels):
+        ttk.Label(form, text=t(label), wraplength=190).grid(row=row, column=0, sticky=tk.W, padx=4, pady=3)
+        display = tk.StringVar(value=next((name for name, key in labels.items() if key == canonical.get()), ""))
+        # Keep a reference for the lifetime of this widget and retain the canonical ID on rebuild.
+        box = ttk.Combobox(form, textvariable=display, values=list(labels), state="readonly", width=12)
+        box.display_var = display
+        box.canonical_var = canonical
+        box.grid(row=row, column=1, sticky=tk.EW, padx=4, pady=3)
+        box.bind("<<ComboboxSelected>>", lambda _event: canonical.set(labels[display.get()]))
+        return box
+
+    def _catalog_input(self, form, row, label, variable, collection):
+        old_map = getattr(self, "_magic_map" if collection == "spells" else "_psi_map", {})
+        previous = old_map.get(variable.get())
+        records = sorted(self.extended_catalog.records(collection), key=lambda item: (
+            ("calculable", "requires_parameters", "reference_only").index(catalog_status(item)), item.name.casefold()))
+        mapping = {
+            f"{item.name} · {t('catalog_status_' + catalog_status(item))} — {item.source} p.{item.page}": item
+            for item in records
+        }
+        selected = next((key for key, item in mapping.items() if previous and item.identifier == previous.identifier),
+                        next(iter(mapping), ""))
+        variable.set(selected)
+        ttk.Label(form, text=t(label), wraplength=190).grid(row=row, column=0, sticky=tk.W, padx=4)
+        box = ttk.Combobox(form, textvariable=variable, values=list(mapping), state="readonly", width=12)
+        box.grid(row=row, column=1, sticky=tk.EW, padx=4, pady=3)
+        search = tk.StringVar()
+        ttk.Label(form, text=t("ui_catalog")).grid(row=row + 1, column=0, sticky=tk.W, padx=4)
+        entry = ttk.Entry(form, textvariable=search, width=12)
+        entry.grid(row=row + 1, column=1, sticky=tk.EW, padx=4, pady=3)
+        def filter_list(_event):
+            words = search.get().casefold().split()
+            box["values"] = tuple(key for key in mapping if all(word in key.casefold() for word in words))
+        entry.bind("<KeyRelease>", filter_list)
+        return mapping, box
+
+    def _session_resource_controls(self, content, prefix):
+        from utils.gui_hub import session_window
+        frame = ttk.Frame(content)
+        frame.pack(fill=tk.X, pady=4)
+        ttk.Checkbutton(frame, text=t("supernatural_session_fp"),
+                        variable=getattr(self, prefix + "_use_session")).pack(anchor=tk.W)
+        ttk.Label(frame, text=t("encounter_session_reserve"), wraplength=350).pack(anchor=tk.W, pady=(4, 1))
+        reserve = ttk.Combobox(frame, textvariable=getattr(self, prefix + "_session_reserve"),
+                               state="readonly", width=12)
+        reserve.pack(fill=tk.X)
+        self._session_reserve_boxes[prefix] = reserve
+        self._refresh_session_reserves()
+        ttk.Button(frame, text=t("combat_prep_title"), command=lambda: session_window(self)).pack(anchor=tk.W, pady=3)
+        ttk.Label(frame, textvariable=self.session_summary, wraplength=390).pack(fill=tk.X)
+
     def _create_magic_tab(self):
         content, form = self._extended_form("tab_magic", "magic_title")
-        self._magic_map = {f"{item.name} — {item.source} p.{item.page}": item for item in self.extended_catalog.records("spells")}
-        values = list(self._magic_map)
-        if values and not self.magic_spell.get(): self.magic_spell.set(values[0])
-        ttk.Label(form, text=t("magic_spell")).grid(row=0, column=0, sticky=tk.W, padx=4)
-        ttk.Combobox(form, textvariable=self.magic_spell, values=values, state="readonly").grid(row=0, column=1, sticky=tk.EW, padx=4)
-        for row, label, var in ((1, t("magic_system"), self.magic_system), (2, t("rules_profile"), self.magic_profile)):
-            ttk.Label(form, text=label).grid(row=row, column=0, sticky=tk.W, padx=4, pady=3)
-            vals = tuple(sorted(MAGIC_SYSTEMS)) if row == 1 else ("basic", "realistic", "cinematic")
-            ttk.Combobox(form, textvariable=var, values=vals, state="readonly").grid(row=row, column=1, sticky=tk.EW, padx=4)
-        self._form_entry(form, 3, t("magic_skill"), self.magic_skill)
-        self._form_entry(form, 4, t("common_distance"), self.magic_distance)
-        self._form_entry(form, 5, t("magic_radius"), self.magic_radius)
-        self._form_entry(form, 6, t("magic_fp"), self.magic_fp)
-        self._form_entry(form, 7, t("magic_cost_override"), self.magic_cost_override)
-        self._form_entry(form, 8, t("magic_time_override"), self.magic_time_override)
-        ttk.Button(form, text=t("common_calculate"), command=lambda: self._run_magic(False)).grid(row=9, column=0, pady=7)
-        ttk.Button(form, text=t("common_resolve"), command=lambda: self._run_magic(True)).grid(row=9, column=1, pady=7)
-        ttk.Button(content, text=t('ui_casting_assistant'), command=lambda: CastingAssistant(self)).pack(anchor=tk.W, padx=14, pady=5)
-        self._resistance_controls(content, "magic")
-        ttk.Button(content, text=t('ui_ceremony_title'), command=lambda: CeremonialEditor(self)).pack(anchor=tk.W, padx=14, pady=5)
+        self._magic_map, spell_box = self._catalog_input(form, 0, "magic_spell", self.magic_spell, "spells")
+        self._localized_choices(form, 2, "magic_system", self.magic_system, {
+            f"{t('value_' + key)} · {t('catalog_status_calculable' if key in IMPLEMENTED_MAGIC_SYSTEMS else 'catalog_status_reference_only')}": key
+            for key in sorted(MAGIC_SYSTEMS, key=lambda key: (key not in IMPLEMENTED_MAGIC_SYSTEMS, key))
+        })
+        self._localized_choices(form, 3, "rules_profile", self.magic_profile,
+                                {t("rules_profile_" + key): key for key in ("basic", "realistic", "cinematic")})
+        self._form_entry(form, 4, t("magic_skill"), self.magic_skill)
+        self._form_entry(form, 5, t("magic_edge_distance"), self.magic_distance)
+        self._form_entry(form, 6, t("magic_radius"), self.magic_radius)
+        self._form_entry(form, 7, t("magic_fp"), self.magic_fp)
+        self._extended_actions(content, (("common_calculate", lambda: self._run_magic(False)),
+                                         ("common_resolve", lambda: self._run_magic(True)),
+                                         ("magic_renew", lambda: self._run_magic(True, maintain=True))))
+        self._extended_actions(content, (('ui_casting_assistant', lambda: CastingAssistant(self)),
+                                         ('ui_ceremony_title', lambda: CeremonialEditor(self)),
+                                         ("session_apply", lambda: self._apply_supernatural("magic"))), primary=False)
+        options = self._extended_options(content, 'magic_extra', 'ui_more_options')
+        costs = ttk.Frame(options)
+        costs.pack(fill=tk.X)
+        for col in (0, 1):
+            costs.columnconfigure(col, weight=1, uniform="casting")
+        self._form_entry(costs, 0, t("magic_cost_override"), self.magic_cost_override)
+        self._form_entry(costs, 1, t("magic_time_override"), self.magic_time_override)
+        self._localized_choices(costs, 2, "magic_mana", self.magic_mana,
+                                {t("magic_mana_" + key): key for key in ("no_mana", "low", "normal", "high", "very_high")})
+        ttk.Checkbutton(costs, text=t("magic_is_mage"), variable=self.magic_is_mage).grid(row=3, column=0, sticky=tk.W)
+        ttk.Checkbutton(costs, text=t("magic_target_visible"), variable=self.magic_visible).grid(row=3, column=1, sticky=tk.W)
+        for row, (key, var) in enumerate((
+            ("magic_target_sm", self.magic_size), ("magic_custom_mod", self.magic_mod),
+            ("supernatural_reserve", self.magic_reserve), ("magic_external", self.magic_external),
+            ("magic_cycles", self.magic_cycles), ("magic_healing_attempts", self.magic_healing_attempts),
+            ("magic_physician", self.magic_physician), ("magic_magery", self.magic_magery),
+            ("magic_target_mr", self.magic_target_mr),
+        ), 4):
+            self._form_entry(costs, row, t(key), var)
+        ttk.Checkbutton(options, text=t("magic_waives_resistance"), variable=self.magic_waives_resistance).pack(anchor=tk.W)
+        self._session_resource_controls(options, "magic")
+        self._resistance_controls(options, "magic")
+        def spell_changed(_event):
+            self.magic_cost_override.set("")
+            self.magic_time_override.set("")
+            self.magic_resisted.set(self._magic_map[self.magic_spell.get()].requires_resistance)
+            self._refresh_resistance_label("magic")
+        spell_box.bind("<<ComboboxSelected>>", spell_changed)
+        self._refresh_resistance_label("magic")
         self.magic_result_text = self._extended_result(content)
 
     def _create_powers_tab(self):
         content, form = self._extended_form("tab_powers", "powers_title")
         self._advantage_map = {f"{item.name} — {item.source} p.{item.page}": item for item in self.extended_catalog.records("advantages")}
-        self._psi_map = {f"{item.name} — {item.source} p.{item.page}": item for item in self.extended_catalog.records("psi_abilities")}
         if not self.power_advantage.get(): self.power_advantage.set(next(iter(self._advantage_map)))
-        if not self.power_psi.get(): self.power_psi.set(next(iter(self._psi_map)))
         ttk.Label(form, text=t("powers_advantage")).grid(row=0, column=0, sticky=tk.W, padx=4)
         ttk.Combobox(form, textvariable=self.power_advantage, values=list(self._advantage_map), state="readonly").grid(row=0, column=1, sticky=tk.EW, padx=4)
         self._form_entry(form, 1, t("powers_levels"), self.power_levels)
-        ttk.Button(form, text=t("powers_build"), command=self._run_ability).grid(row=2, column=0, columnspan=2, pady=5)
-        ttk.Label(form, text=t("powers_psi_ability")).grid(row=3, column=0, sticky=tk.W, padx=4)
-        ttk.Combobox(form, textvariable=self.power_psi, values=list(self._psi_map), state="readonly").grid(row=3, column=1, sticky=tk.EW, padx=4)
-        self._form_entry(form, 4, t("powers_skill"), self.power_skill)
-        self._form_entry(form, 5, t("common_distance"), self.power_distance)
-        ttk.Button(form, text=t("common_calculate"), command=lambda: self._run_psi(False)).grid(row=6, column=0, pady=5)
-        ttk.Button(form, text=t("common_resolve"), command=self._run_psi).grid(row=6, column=1, pady=5)
-        ttk.Button(content, text=t('ui_ability_editor'), command=lambda: AbilityEditor(self)).pack(anchor=tk.W, padx=14, pady=5)
-        self._resistance_controls(content, "power")
+        self._extended_actions(content, (('powers_build', self._run_ability),
+                                         ('ui_ability_editor', lambda: AbilityEditor(self))))
+        form = ttk.LabelFrame(content, text=t('ui_psi_panel'), padding=8)
+        form.pack(fill=tk.X, pady=(6, 0))
+        form.columnconfigure(1, weight=1)
+        self._psi_map, psi_box = self._catalog_input(form, 0, "powers_psi_ability", self.power_psi, "psi_abilities")
+        self._form_entry(form, 2, t("powers_skill"), self.power_skill)
+        self._form_entry(form, 3, t("common_distance"), self.power_distance)
+        self._form_entry(form, 4, t("psi_level"), self.power_level)
+        self._localized_choices(form, 5, "psi_contact", self.power_contact,
+                                {t("psi_contact_" + key): key for key in ("none", "touch", "skin")})
+        self._extended_actions(content, (("common_calculate", lambda: self._run_psi(False)),
+                                         ("common_resolve", self._run_psi),
+                                         ("session_apply", lambda: self._apply_supernatural("power"))))
+        options = self._extended_options(content, 'psi_resistance', 'ui_more_options')
+        powers = ttk.Frame(options)
+        powers.pack(fill=tk.X)
+        for col in (0, 1):
+            powers.columnconfigure(col, weight=1, uniform="psi")
+        for row, (key, var) in enumerate((
+            ("psi_talent", self.power_talent), ("psi_repeats", self.power_repeats),
+            ("magic_fp", self.power_fp), ("supernatural_reserve", self.power_reserve),
+        )):
+            self._form_entry(powers, row, t(key), var)
+        ttk.Checkbutton(options, text=t("psi_repeat_cost"), variable=self.power_repeat_cost).pack(anchor=tk.W)
+        surgery = ttk.LabelFrame(options, text="Mental Surgery", padding=6)
+        surgery.pack(fill=tk.X, pady=3)
+        surgery.columnconfigure(1, weight=1)
+        ttk.Checkbutton(surgery, text=t("psi_target_willing"), variable=self.power_target_willing).grid(row=0, column=0, sticky=tk.W)
+        ttk.Checkbutton(surgery, text=t("psi_target_restrained"), variable=self.power_target_restrained).grid(row=1, column=0, sticky=tk.W)
+        self._form_entry(surgery, 2, t("psi_disadvantage_points"), self.power_disadvantage_points)
+        self._session_resource_controls(options, "power")
+        self._resistance_controls(options, "power")
+        def psi_changed(_event=None):
+            self._refresh_resistance_label("power")
+            if self._psi_map[self.power_psi.get()].operational_model == "mental_surgery":
+                surgery.pack(fill=tk.X, pady=3, before=options.winfo_children()[-1])
+            else:
+                surgery.pack_forget()
+        psi_box.bind("<<ComboboxSelected>>", psi_changed)
+        psi_changed()
         self.powers_result_text = self._extended_result(content)
 
     def _resistance_controls(self, content, prefix):
         frame = ttk.LabelFrame(content, text=t("ui_resistance_title"), padding=10)
-        frame.pack(fill=tk.X, padx=14, pady=5)
+        frame.pack(fill=tk.X, pady=5)
+        for col in (0, 1):
+            frame.columnconfigure(col, weight=1, uniform="resistance")
         ttk.Checkbutton(frame, text=t("ui_resistance_enabled"),
-                        variable=getattr(self, prefix + "_resisted")).grid(row=0, column=0, sticky=tk.W)
+                        variable=getattr(self, prefix + "_resisted")).grid(row=0, column=0, columnspan=2, sticky=tk.EW)
         self._form_entry(frame, 1, t("ui_resistance_target"), getattr(self, prefix + "_resistance"))
-        ttk.Checkbutton(frame, text=t("ui_resistance_living"),
+        ttk.Checkbutton(frame, text=t("psi_living_sapient" if prefix == "power" else "ui_resistance_living"),
                         variable=getattr(self, prefix + "_living_target")).grid(row=2, column=0, columnspan=2, sticky=tk.W)
+        label = ttk.Label(frame, wraplength=390)
+        label.grid(row=3, column=0, columnspan=2, sticky=tk.W)
+        setattr(self, "_" + prefix + "_resistance_label", label)
 
-    def _resistance_input(self, prefix):
-        if not getattr(self, prefix + "_resisted").get():
+    def _refresh_resistance_label(self, prefix):
+        if prefix == "magic":
+            record = self._magic_map[self.magic_spell.get()]
+            notation = record.resistance_notation
+        else:
+            record = self._psi_map[self.power_psi.get()]
+            notation = record.resist_attribute.upper() if record.resist_attribute else ""
+        label = getattr(self, "_" + prefix + "_resistance_label")
+        label.configure(text=t("supernatural_resist_as", attribute=notation) if notation else "")
+
+    def _resistance_input(self, prefix, required=False):
+        if not required and not getattr(self, prefix + "_resisted").get():
             return None
         return ResistanceCheck(target=int(getattr(self, prefix + "_resistance").get()),
                                living_or_sapient=getattr(self, prefix + "_living_target").get())
@@ -1816,6 +1837,11 @@ class GURPSCalculator:
 
     def _create_vehicles_tab(self):
         content, form = self._extended_form("tab_vehicles", "vehicles_title")
+        # Give both columns a usable width when the optional combat panel is
+        # expanded. Otherwise a wide dropdown can collapse the movement labels.
+        for col in (0, 1):
+            form.columnconfigure(col, weight=1, uniform="vehicle_movement")
+        self.vehicle_movement_form = form
         if getattr(self.vehicle_session, 'recovered_file', None):
             ttk.Label(content, text=t('ui_session_recovered', path=str(self.vehicle_session.recovered_file)),
                       wraplength=700).pack(fill=tk.X, padx=14)
@@ -1827,21 +1853,23 @@ class GURPSCalculator:
         ttk.Label(form, text=t("vehicles_environment")).grid(row=2, column=0, sticky=tk.W, padx=4)
         ttk.Combobox(form, textvariable=self.vehicle_environment,
                      values=tuple(VehicleEngine.TERRAIN_MULTIPLIERS), state="readonly").grid(row=2, column=1, sticky=tk.EW, padx=4)
-        ttk.Button(form, text=t("common_calculate"), command=self._run_vehicle).grid(row=3, column=0, columnspan=2, pady=7)
-        ttk.Button(content, text=t('ui_vehicle_editor'), command=lambda: VehicleEditor(self)).pack(anchor=tk.W, padx=14, pady=5)
-        ttk.Button(content, text=t('ui_vehicle_apply'), command=self._apply_vehicle_movement).pack(anchor=tk.W, padx=14, pady=5)
-        ttk.Button(content, text=t('ui_vehicle_undo'), command=self._undo_vehicle_movement).pack(anchor=tk.W, padx=14, pady=5)
+        self._extended_actions(content, (("common_calculate", self._run_vehicle),
+                                         ('ui_vehicle_editor', lambda: VehicleEditor(self))))
+        self._extended_actions(content, (('ui_vehicle_apply', self._apply_vehicle_movement),
+                                         ('ui_vehicle_undo', self._undo_vehicle_movement)), primary=False)
+        self.vehicle_combat_panel = VehicleCombatPanel(self, content)
         self.vehicles_result_text = self._extended_result(content)
 
     def _create_social_tab(self):
         content, form = self._extended_form("tab_social", "social_title")
         ttk.Button(content, text=t('ui_campaign_editor'), command=lambda: CampaignEditor(self)).pack(anchor=tk.W, padx=14, pady=5)
-        self._form_entry(form, 0, t("social_skill"), self.social_skill)
+        self._localized_choices(form, 0, "social_skill", self.social_skill,
+                                {t("social_skill_" + key): key for key in INFLUENCE_SKILLS})
         self._form_entry(form, 1, t("social_skill_level"), self.social_skill_level)
         self._form_entry(form, 2, t("social_target_will"), self.social_target_will)
         self._form_entry(form, 3, t("social_modifier"), self.social_modifier)
-        ttk.Button(form, text=t("social_reaction"), command=self._run_reaction).grid(row=4, column=0, pady=7)
-        ttk.Button(form, text=t("social_influence"), command=self._run_influence).grid(row=4, column=1, pady=7)
+        self._extended_actions(content, (("social_reaction", self._run_reaction),
+                                         ("social_influence", self._run_influence)))
         self.social_result_text = self._extended_result(content)
 
     def _create_mass_combat_tab(self):
@@ -1857,8 +1885,6 @@ class GURPSCalculator:
         self._form_entry(form, 7, t('mass_defender_pb'), self.mass_defender_position)
         ttk.Checkbutton(form, text=t('mass_encounter'), variable=self.mass_encounter).grid(row=8, column=0, columnspan=2, sticky=tk.W)
         ttk.Button(form, text=t('mass_classes_title'), command=lambda: BattleClassEditor(self)).grid(row=9, column=0, columnspan=2, pady=5)
-        ttk.Button(form, text=t("common_calculate"), command=lambda: self._run_mass_combat(False)).grid(row=10, column=0, pady=7)
-        ttk.Button(form, text=t("common_resolve"), command=self._run_mass_combat).grid(row=10, column=1, pady=7)
         self._mass_choice_displays = []
         for row, side in enumerate(('attacker', 'defender'), 11):
             canonical = getattr(self, 'mass_' + side + '_choice')
@@ -1869,6 +1895,12 @@ class GURPSCalculator:
             box = ttk.Combobox(form, textvariable=display, values=tuple(labels), state='readonly', width=28)
             box.grid(row=row, column=1, sticky=tk.EW, pady=3)
             box.bind('<<ComboboxSelected>>', lambda event, c=canonical, d=display, m=labels: c.set(m[d.get()]))
+        self._extended_actions(content, (("common_calculate", lambda: self._run_mass_combat(False)),
+                                         ("common_resolve", self._run_mass_combat)))
+        self._extended_actions(content, (('mass_apply_round', self._apply_mass_round),
+                                         ('ui_campaign_undo', self._undo_mass_campaign)), primary=False)
+        form = self._extended_options(content, 'mass_context', 'ui_battle_strategy_panel')
+        form.columnconfigure(1, weight=1)
         ttk.Label(form, text=t('mass_choices_help'), wraplength=480).grid(row=13, column=0, columnspan=2, sticky=tk.W, pady=6)
         for row,(side,key) in enumerate(((s,k) for s in ('attacker','defender') for k in ('recon_superiority','raid_logistics','desperate')),14):
             ttk.Checkbutton(form,text=t('mass_'+side+'_'+key),variable=self.mass_raid_flags[side][key]).grid(row=row,column=0,columnspan=2,sticky=tk.W)
@@ -1895,19 +1927,16 @@ class GURPSCalculator:
             box=ttk.Combobox(form,textvariable=display,values=tuple(choices),state='readonly')
             box.grid(row=row,column=1,sticky=tk.EW)
             box.bind('<<ComboboxSelected>>',lambda event,c=canonical,d=display,m=choices:c.set(m[d.get()]))
-        actions = ttk.Frame(content)
-        actions.pack(fill=tk.X, padx=14, pady=5)
-        for row, key, action in ((0, 'mass_apply_round', self._apply_mass_round),
-                                 (1, 'mass_finish_battle', self._finish_mass_battle),
-                                 (2, 'ui_campaign_undo', self._undo_mass_campaign)):
-            ttk.Button(actions, text=t(key), command=action).grid(row=row, column=0, sticky=tk.W, pady=3)
+        ttk.Button(form, text=t('mass_update_context'), command=self._update_mass_context).grid(
+            row=36, column=0, columnspan=2, sticky=tk.W, pady=3)
+        campaign = self._extended_options(content, 'mass_logistics', 'ui_battle_campaign_panel')
+        for commands in (
+            (('mass_aftermath_title', self._open_mass_aftermath), ('mass_finish_battle', self._finish_mass_battle)),
+            tuple(('log_ui_' + side, lambda s=side: LogisticsEditor(self, s)) for side in ('attacker', 'defender')),
+            tuple(('replacement_' + side, lambda s=side: self._open_replacements(s)) for side in ('attacker', 'defender')),
+        ):
+            self._extended_actions(campaign, commands, primary=False)
         self.mass_result_text = self._extended_result(content)
-        ttk.Button(actions, text=t('mass_aftermath_title'), command=self._open_mass_aftermath).grid(row=3, column=0, sticky=tk.W, pady=3)
-        for row, side in enumerate(('attacker','defender'),4):
-            ttk.Button(actions,text=t('log_ui_'+side),command=lambda s=side:LogisticsEditor(self,s)).grid(row=row,column=0,sticky=tk.W,pady=3)
-        for row, side in enumerate(('attacker','defender'),6):
-            ttk.Button(actions,text=t('replacement_'+side),command=lambda s=side:self._open_replacements(s)).grid(row=row,column=0,sticky=tk.W,pady=3)
-        ttk.Button(actions,text=t('mass_update_context'),command=self._update_mass_context).grid(row=8,column=0,sticky=tk.W,pady=3)
 
     def _update_mass_context(self):
         try:
@@ -1983,11 +2012,124 @@ class GURPSCalculator:
                 maneuver="all_out_strong" if self.strength_all_out.get() else "attack"))
             lines += [t("strength_damage_result", original=damage.original_damage, final=damage.final_damage),
                       t("strength_errors", value=self._format_errors(result.errors + damage.errors))]
-            self._show_result(self.strength_result_text, lines)
+            self._show_result(self.strength_result_text, lines, highlights=(lines[1], lines[3]) if result.valid else ())
         except ValueError as exc:
             self._show_result(self.strength_result_text, [t("strength_errors", value=str(exc))])
 
-    def _run_magic(self, resolve):
+    def _selected_session_reserve(self, prefix):
+        value = getattr(self, prefix + "_session_reserve").get()
+        return self._session_reserve_maps.get(prefix, {}).get(value)
+
+    def _refresh_session_reserves(self):
+        actor = self.combat_session.combatants[self.session_actor_key]
+        same_actor = self._session_reserve_actor == self.session_actor_key
+        entries = {t("encounter_reserve_manual"): None}
+        entries.update({f"{pool['label']} · {pool['current']}/{pool['maximum']} [{identifier}]": identifier
+                        for identifier, pool in actor.resource_pools.items()})
+        # Refresh even a not-yet-built tab's display so a role change
+        # cannot carry a choice over to a different participant.
+        for prefix in ("magic", "power"):
+            selected = self._selected_session_reserve(prefix) if same_actor else None
+            self._session_reserve_maps[prefix] = entries
+            label = next((label for label, identifier in entries.items() if identifier == selected), next(iter(entries)))
+            getattr(self, prefix + "_session_reserve").set(label)
+            box = self._session_reserve_boxes.get(prefix)
+            if box is not None:
+                box.configure(values=tuple(entries), state="readonly" if actor.resource_pools else "disabled")
+        self._session_reserve_actor = self.session_actor_key
+
+    def _supernatural_pool(self, prefix):
+        use_session = getattr(self, prefix + "_use_session").get()
+        actor = self.combat_session.combatants[self.session_actor_key]
+        identifier = self._selected_session_reserve(prefix) if use_session else None
+        reserve = (max(0, actor.resource_pools[identifier]["current"]) if identifier in actor.resource_pools
+                   else int(getattr(self, prefix + "_reserve").get()))
+        return ResourcePool(
+            fp=max(0, actor.current_fp) if use_session else int(getattr(self, prefix + "_fp").get()),
+            energy_reserve=reserve,
+            external_energy=int(self.magic_external.get()) if prefix == "magic" else 0,
+        )
+
+    def _supernatural_lines(self, result):
+        lines = self._resistance_lines(result)
+        for item in result.breakdown:
+            if item["key"] == "rule_of_16":
+                continue
+            key = "supernatural_mod_" + item["key"]
+            name = t(key)
+            lines.append(f"{name if name != key else item['key']}: {item['value']:+g} · {item['source']} p.{item['page']}")
+        if result.resource_delta:
+            lines.append(t("supernatural_spent", fp=-result.resource_delta.get("fp", 0),
+                           reserve=-result.resource_delta.get("energy_reserve", 0),
+                           external=-result.resource_delta.get("external_energy", 0),
+                           group=-result.resource_delta.get("ceremonial_assistants", 0)))
+        if result.resistance and result.resistance.roll is not None:
+            lines.append(t("supernatural_resistance_roll", roll=result.resistance.roll))
+        for effect in result.effects:
+            if effect.kind == "heal_hp":
+                lines.append(t("magic_heal_effect", value=effect.value))
+            if effect.metadata.get("action") in {"emotion_sense", "mental_surgery"}:
+                lines.append(t("psi_effect_" + effect.metadata["action"]))
+        for pending in result.pending_effects:
+            kind = pending["kind"]
+            if kind == "very_high_mana_fp_recovery":
+                lines.append(t("supernatural_recover_fp", fp=pending["fp"]))
+            elif kind == "gm_effect":
+                lines.append(t("supernatural_gm_effect"))
+            elif kind in {"spell_failure", "psi_failure"} and pending.get("critical"):
+                lines.append(t("supernatural_gm_critical"))
+        lines.append(t("common_references") + " " + "; ".join(f"{item.source} p.{item.page}" for item in result.references))
+        return lines
+
+    def _remember_supernatural(self, prefix, result, label):
+        if result.valid and getattr(self, prefix + "_use_session").get():
+            target = self.combat_session.combatants[self.session_target_key]
+            healing = 0
+            if not target.dead and target.injury_tolerance == "living":
+                healing = min(max(0, target.max_hp - target.current_hp),
+                              sum(int(effect.value) for effect in result.effects if effect.kind == "heal_hp"))
+            reserve_id = self._selected_session_reserve(prefix)
+            reserve_change = result.resource_delta.get("energy_reserve", 0) if reserve_id else 0
+            self._supernatural_drafts[prefix] = (self.session_actor_key, self.session_target_key,
+                                                self.combat_session.to_dict(), result.state_delta.fp_change,
+                                                healing, label, reserve_id, reserve_change)
+
+    def _apply_supernatural(self, prefix):
+        draft = self._supernatural_drafts.get(prefix)
+        box = self.magic_result_text if prefix == "magic" else self.powers_result_text
+        if draft is None:
+            messagebox.showinfo(t("session_title"), t("supernatural_resolve_for_session"))
+            return
+        actor_id, target_id, snapshot, fp, healing, label, reserve_id, reserve_change = draft
+        if ((actor_id, target_id, snapshot) != (self.session_actor_key, self.session_target_key, self.combat_session.to_dict())
+                or getattr(box, "stale", False) or not getattr(self, prefix + "_use_session").get()
+                or reserve_id != self._selected_session_reserve(prefix)):
+            messagebox.showwarning(t("session_title"), t("ui_session_stale"))
+            return
+        actor, target = (self.combat_session.combatants[key] for key in (actor_id, target_id))
+        if not (fp or healing or reserve_change):
+            messagebox.showinfo(t("session_title"), t("session_nothing_to_apply"))
+            return
+        preview = t("supernatural_apply_preview", actor=actor.name, fp=fp, target=target.name, hp=healing)
+        resources = {}
+        if reserve_id and reserve_change:
+            resources[reserve_id] = reserve_change
+            preview += "\n" + t("encounter_reserve_change", label=actor.resource_pools[reserve_id]["label"],
+                                 amount=reserve_change)
+        if not messagebox.askyesno(t("session_title"), preview):
+            return
+        try:
+            self.combat_session.apply_action(actor_id, target_id, StateDelta(hp_change=healing),
+                                             StateDelta(fp_change=fp, resource_changes=resources),
+                                             label, advance_action=False)
+        except (OSError, ValueError) as exc:
+            messagebox.showerror(t("session_title"), t("local_data_save_error", error=exc))
+            return
+        self._session_changed()
+        box.insert(tk.END, "\n\n" + t("session_applied"))
+
+    def _run_magic(self, resolve, maintain=False):
+        self._supernatural_drafts.pop("magic", None)
         try:
             spell = self._magic_map[self.magic_spell.get()]
             if self.magic_cost_override.get().strip():
@@ -1995,35 +2137,79 @@ class GURPSCalculator:
             if self.magic_time_override.get().strip():
                 spell = replace(spell, casting_time_seconds=float(self.magic_time_override.get()))
             data = CastingInput(spell=spell, system=self.magic_system.get(), profile=self.magic_profile.get(),
-                                skill=int(self.magic_skill.get()), distance_yards=float(self.magic_distance.get()),
-                                area_radius_yards=float(self.magic_radius.get()), resources=ResourcePool(fp=int(self.magic_fp.get())),
-                                resistance=self._resistance_input("magic"), ceremony=getattr(self, '_magic_ceremony', None))
+                                skill=int(self.magic_skill.get()), distance_yards=self._optional_number(self.magic_distance, float, 0),
+                                area_radius_yards=self._optional_number(self.magic_radius, float, 1),
+                                resources=self._supernatural_pool("magic"), size_modifier=int(self.magic_size.get()),
+                                resistance=self._resistance_input("magic", spell.requires_resistance and not maintain),
+                                ceremony=getattr(self, '_magic_ceremony', None), is_mage=self.magic_is_mage.get(),
+                                target_visible=self.magic_visible.get(), custom_modifier=int(self.magic_mod.get()),
+                                mana_level=self.magic_mana.get(), maintenance_cycles=int(self.magic_cycles.get()),
+                                same_day_castings=int(self.magic_healing_attempts.get()), physician_skill=int(self.magic_physician.get()),
+                                magery=int(self.magic_magery.get()), magic_resistance=int(self.magic_target_mr.get()),
+                                target_waives_resistance=self.magic_waives_resistance.get(),
+                                maintenance_only=maintain)
             result = self.spell_calc.resolve(data) if resolve else self.spell_calc.calculate(data)
-            self._show_result(self.magic_result_text, [f"Valid: {result.valid}", f"Skill: {result.effective_skill}",
-                f"Energy: {result.energy_cost}", f"Time: {result.casting_time_seconds}s", f"Roll: {self._format_roll(result.roll)}",
-                f"Errors: {self._format_errors(result.errors)}",
+            if resolve:
+                self._remember_supernatural("magic", result, "spell_maintenance" if maintain else "spell_cast")
+            lines = [f"Valid: {result.valid}", f"Skill: {result.effective_skill}",
+                f"Energy: {result.energy_cost}", f"Time: {result.casting_time_seconds}s",
                 t("magic_source_parameters", energy=spell.original.get('energy', spell.base_cost),
-                  time=spell.original.get('casting_time', spell.casting_time_seconds), source=spell.source, page=spell.page)] + self._resistance_lines(result))
-        except ValueError as exc: self._show_result(self.magic_result_text, [f"Error: {exc}"])
+                  time=spell.original.get('casting_time', spell.casting_time_seconds), source=spell.source, page=spell.page)]
+            if maintain:
+                lines.insert(0, t("magic_renew_note"))
+            if result.roll:
+                lines.append(f"Roll: {result.roll.get('roll', '—')} · {self._format_roll(result.roll)}")
+            if result.maintenance_cost is not None:
+                lines.append(t("magic_upkeep_result", cost=result.maintenance_cost, forecast=result.maintenance_forecast))
+            if result.duration_seconds:
+                lines.append(t("magic_duration_result", seconds=result.duration_seconds))
+            if result.errors:
+                lines.append(f"Errors: {self._format_errors(result.errors)}")
+            self._show_result(self.magic_result_text, lines + self._supernatural_lines(result))
+        except (ValueError, OverflowError, KeyError):
+            self._show_result(self.magic_result_text, [t("supernatural_invalid_input")])
 
     def _run_ability(self):
+        self._supernatural_drafts.pop("power", None)
         try:
             result = self.ability_calc.calculate(AbilityBuildInput(
                 self._advantage_map[self.power_advantage.get()], levels=int(self.power_levels.get())))
-            self._show_result(self.powers_result_text, [f"Base cost: {result.unmodified_cost}",
-                f"Modifier: {result.net_modifier_percent:+d}%", f"Final cost: {result.modified_cost}"])
-        except ValueError as exc: self._show_result(self.powers_result_text, [f"Error: {exc}"])
+            lines = [f"Base cost: {result.unmodified_cost}", f"Modifier: {result.net_modifier_percent:+d}%",
+                     f"Final cost: {result.modified_cost}"] if result.valid else [
+                         f"Valid: {result.valid}", f"Errors: {self._format_errors(result.errors)}"]
+            self._show_result(self.powers_result_text, lines)
+        except (ValueError, OverflowError, KeyError):
+            self._show_result(self.powers_result_text, [t("supernatural_invalid_input")])
 
     def _run_psi(self, resolve=True):
+        self._supernatural_drafts.pop("power", None)
         try:
+            ability = self._psi_map[self.power_psi.get()]
             data = PsiUseInput(
-                self._psi_map[self.power_psi.get()], skill=int(self.power_skill.get()),
-                distance_yards=float(self.power_distance.get()), resources=ResourcePool(fp=10),
-                resistance=self._resistance_input("power"))
+                ability, skill=int(self.power_skill.get()), level=int(self.power_level.get()),
+                distance_yards=self._optional_number(self.power_distance, float, 0), resources=self._supernatural_pool("power"),
+                resistance=self._resistance_input("power", bool(ability.resist_attribute)), contact=self.power_contact.get(),
+                talent=int(self.power_talent.get()), repeated_attempts=int(self.power_repeats.get()),
+                repeat_cost_due=self.power_repeat_cost.get(), target_living_sapient=self.power_living_target.get(),
+                target_willing=self.power_target_willing.get(), target_restrained=self.power_target_restrained.get(),
+                changed_disadvantage_points=int(self.power_disadvantage_points.get()))
             result = self.psi_calc.resolve(data) if resolve else self.psi_calc.calculate(data)
-            self._show_result(self.powers_result_text, [f"Valid: {result.valid}", f"Skill: {result.effective_skill}",
-                f"FP: {result.fp_cost}", f"Roll: {self._format_roll(result.roll)}", f"Errors: {self._format_errors(result.errors)}"] + self._resistance_lines(result))
-        except ValueError as exc: self._show_result(self.powers_result_text, [f"Error: {exc}"])
+            if resolve:
+                self._remember_supernatural("power", result, "psi_use")
+            lines = [f"Valid: {result.valid}", f"Skill: {result.effective_skill}", f"FP: {result.fp_cost}"]
+            if result.character_point_cost is not None:
+                lines.append(t("psi_point_cost", points=result.character_point_cost))
+            if result.activation_time_seconds is not None:
+                lines.append(f"Time: {result.activation_time_seconds}s")
+            elif result.valid:
+                lines.append(t("psi_unspecified_time"))
+            if result.roll:
+                lines.append(f"Roll: {result.roll['roll']} · {self._format_roll(result.roll)}")
+            if result.errors:
+                lines.append(f"Errors: {self._format_errors(result.errors)}")
+            self._show_result(self.powers_result_text, lines + self._supernatural_lines(result))
+        except (ValueError, OverflowError, KeyError):
+            self._show_result(self.powers_result_text, [t("supernatural_invalid_input")])
 
     def _run_vehicle(self):
         try:
@@ -2087,8 +2273,11 @@ class GURPSCalculator:
             actor, target = self._social_profiles()
             result = self.social_calc.resolve_influence(InfluenceInput(
                 actor, target, self.social_skill.get(), modifier=int(self.social_modifier.get()), expanded=True))
-            self._show_result(self.social_result_text, [f"Valid: {result.valid}", f"Success: {result.success}",
-                f"Margin: {result.margin}", f"Reaction: {result.reaction_band}", f"Errors: {self._format_errors(result.errors)}"])
+            lines = [f"Valid: {result.valid}", f"Success: {result.success}",
+                     f"Margin: {result.margin}", f"Reaction: {result.reaction_band}", f"Errors: {self._format_errors(result.errors)}"]
+            for pending in result.pending_effects:
+                lines.append(t("social_pending_" + pending["kind"]))
+            self._show_result(self.social_result_text, lines)
         except ValueError as exc: self._show_result(self.social_result_text, [f"Error: {exc}"])
 
     def _run_mass_combat(self, resolve=True):
@@ -2402,14 +2591,16 @@ class GURPSCalculator:
             )
 
             self.slam_result_text.delete(1.0, tk.END)
+            damage_lines = (
+                t('slam_attacker_damage', expression=result['attacker_damage_dice'], value=result['attacker_damage_total']),
+                t('slam_defender_damage', expression=result['defender_damage_dice'], value=result['defender_damage_total']),
+            )
+            self.slam_result_text.oficina_highlights = damage_lines
             # Converter resultado de volta para metros
             collision_vel_m = UnitSystem(self.result_units.get()).display(result["collision_velocity"], "yards_per_second")
             self.slam_result_text.insert(tk.END,
                 f"{t('result_collision_velocity', value=collision_vel_m)}\n")
-            self.slam_result_text.insert(tk.END,
-                f"{t('slam_attacker_damage', expression=result['attacker_damage_dice'], value=result['attacker_damage_total'])}\n")
-            self.slam_result_text.insert(tk.END,
-                f"{t('slam_defender_damage', expression=result['defender_damage_dice'], value=result['defender_damage_total'])}\n")
+            self.slam_result_text.insert(tk.END, '\n'.join(damage_lines) + '\n')
             self.slam_result_text.insert(
                 tk.END, f"\n{t('slam_' + result['outcome'])}\n"
             )
@@ -2434,6 +2625,8 @@ class GURPSCalculator:
             )
 
             self.falls_result_text.delete(1.0, tk.END)
+            injury = t('result_total_injury', value=result['total_injury'])
+            self.falls_result_text.oficina_highlights = (injury,)
             velocity_m = round(result["velocity"] * YARDS_TO_METERS, 1)
             self.falls_result_text.insert(tk.END,
                 f"{t('result_distance', meters=self.falls_distance.get(), yards=distance_yards)}\n")
@@ -2445,8 +2638,7 @@ class GURPSCalculator:
                 f"{t('result_penetrating_damage', value=result['penetrating_damage'])}\n")
             self.falls_result_text.insert(tk.END,
                 f"{t('result_blunt_trauma', value=result['blunt_trauma'])}\n")
-            self.falls_result_text.insert(tk.END,
-                f"{t('result_total_injury', value=result['total_injury'])}\n")
+            self.falls_result_text.insert(tk.END, injury + '\n')
             if result["surface_type"] == "water":
                 self.falls_result_text.insert(tk.END,
                     f"{t('falls_swimming_modifier', value=result['swimming_modifier'])}\n")
@@ -2475,13 +2667,15 @@ class GURPSCalculator:
             )
 
             self.coll_result_text.delete(1.0, tk.END)
+            damage_lines = (
+                t('collisions_object1_damage', expression=result['object1_damage_dice'], value=result['object1_damage_total']),
+                t('collisions_object2_damage', expression=result['object2_damage_dice'], value=result['object2_damage_total']),
+            )
+            self.coll_result_text.oficina_highlights = damage_lines
             collision_vel_m = UnitSystem(self.result_units.get()).display(result["collision_velocity"], "yards_per_second")
             self.coll_result_text.insert(tk.END,
                 f"{t('result_collision_velocity', value=collision_vel_m)}\n")
-            self.coll_result_text.insert(tk.END,
-                f"{t('collisions_object1_damage', expression=result['object1_damage_dice'], value=result['object1_damage_total'])}\n")
-            self.coll_result_text.insert(tk.END,
-                f"{t('collisions_object2_damage', expression=result['object2_damage_dice'], value=result['object2_damage_total'])}\n")
+            self.coll_result_text.insert(tk.END, '\n'.join(damage_lines) + '\n')
             if result["damage_cap"] is not None:
                 self.coll_result_text.insert(tk.END,
                     f"{t('collisions_damage_cap', value=result['damage_cap'])}\n")
@@ -2507,6 +2701,8 @@ class GURPSCalculator:
             )
 
             self.exp_result_text.delete(1.0, tk.END)
+            injury = t('result_total_injury', value=result['injury'])
+            self.exp_result_text.oficina_highlights = (injury,)
             blast_radius_m = round(result["blast_radius"] * YARDS_TO_METERS, 1)
             self.exp_result_text.insert(tk.END,
                 f"{t('explosions_blast_radius', meters=blast_radius_m, yards=result['blast_radius'])}\n")
@@ -2518,8 +2714,7 @@ class GURPSCalculator:
                 f"{t('explosions_fragment_hits', value=result['fragment_hits'])}\n")
             self.exp_result_text.insert(tk.END,
                 f"{t('explosions_fragment_injury', value=result['fragment_injury_total'])}\n")
-            self.exp_result_text.insert(tk.END,
-                f"{t('result_total_injury', value=result['injury'])}\n")
+            self.exp_result_text.insert(tk.END, injury + '\n')
 
         except Exception as e:
             messagebox.showerror(t("common_error_title"), str(e))
@@ -2554,10 +2749,10 @@ class GURPSCalculator:
             if result["target_can_dodge"]:
                 self.fo_result_text.insert(tk.END,
                     f"{t('falling_objects_dodge_roll', roll=result['dodge_roll'], defense=result['target_dodge'])}\n")
-            self.fo_result_text.insert(tk.END,
-                f"{t('falling_objects_outcome_' + result['outcome'])}\n")
-            self.fo_result_text.insert(tk.END,
-                f"{t('result_basic_damage', expression=result['damage_dice'], value=result['damage_total'])}\n")
+            outcome_lines = (t('falling_objects_outcome_' + result['outcome']),
+                             t('result_basic_damage', expression=result['damage_dice'], value=result['damage_total']))
+            self.fo_result_text.oficina_highlights = outcome_lines
+            self.fo_result_text.insert(tk.END, '\n'.join(outcome_lines) + '\n')
             if result["move_penalty"] > 0:
                 self.fo_result_text.insert(tk.END,
                     f"{t('falling_objects_move_limit')}\n")
@@ -2570,20 +2765,44 @@ class GURPSCalculator:
 
     # ─── Sessão compartilhada ────────────────────────────────────
     def _change_session_roles(self, labels, actor_changed):
-        if actor_changed:
-            self.session_actor_key = labels[self.session_actor.get()]
+        variable = self.session_actor if actor_changed else self.session_target
+        identifier = labels.get(variable.get())
+        if identifier is not None:
+            self._select_encounter_role("actor" if actor_changed else "target", identifier)
+
+    def _select_encounter_role(self, role, identifier):
+        if identifier not in self.combat_session.combatants:
+            return
+        actor, target = self.session_actor_key, self.session_target_key
+        if role == "actor":
+            actor, target = identifier, actor if identifier == target else target
+        elif role == "target":
+            actor, target = target if identifier == actor else actor, identifier
         else:
-            self.session_target_key = labels[self.session_target.get()]
-        if self.session_actor_key == self.session_target_key:
-            other = next(key for key in self.combat_session.combatants if key != self.session_actor_key)
-            if actor_changed:
-                self.session_target_key = other
-            else:
-                self.session_actor_key = other
-        reverse = {value: key for key, value in labels.items()}
-        self.session_actor.set(reverse[self.session_actor_key])
-        self.session_target.set(reverse[self.session_target_key])
-        self._refresh_session_summary(sync_fields=True)
+            raise ValueError("invalid_encounter_role")
+        self.session_actor_key, self.session_target_key = self.combat_session.selected_pair(actor, target)
+        self._session_changed()
+
+    def _swap_encounter_roles(self):
+        self._select_encounter_role("actor", self.session_target_key)
+
+    def _change_melee_defense(self, _event=None):
+        self.melee_defense_key = self._melee_defense_labels[self.melee_defense.get()]
+        self._load_target_defense()
+        self._last_melee_result = None
+        self._last_grapple_result = None
+
+    def _load_target_defense(self):
+        target = self.combat_session.combatants[self.session_target_key]
+        defense = self.melee_defense_key
+        value = None if defense in target.unknown_defenses else getattr(target, defense)
+        self.melee_defense_score.set("" if value is None else str(value))
+
+    def _session_defense(self, target, aware=True):
+        explicit = self._optional_number(self.melee_defense_score, int)
+        if explicit is None and aware and self.melee_defense_key in target.unknown_defenses:
+            raise ValueError(t("encounter_defense_required", defense=t("melee_defense_" + self.melee_defense_key)))
+        return explicit
 
     def _refresh_session_summary(self, sync_fields=True):
         actor = self.combat_session.combatants[self.session_actor_key]
@@ -2601,14 +2820,20 @@ class GURPSCalculator:
                 self.melee_attacker_st.set(str(actor.st))
                 self.melee_target_hp.set(str(target.current_hp))
                 self.melee_target_ht.set(str(target.ht))
-                self.melee_defense_score.set(str({
-                    "dodge": target.dodge, "parry": target.parry, "block": target.block,
-                }.get(self.melee_defense_key, target.dodge)))
+                self._load_target_defense()
             if hasattr(self, "injury_target_hp"):
                 self.injury_target_hp.set(str(target.current_hp))
                 self.injury_target_ht.set(str(target.ht))
+                self.injury_natural_dr.set(str(target.armor.natural_dr))
+            self._refresh_session_reserves()
         if hasattr(self, "injury_armor_summary"):
             self._refresh_armor_summary()
+        if hasattr(self, "refresh_home_session"):
+            self.refresh_home_session()
+        window = getattr(self, "_combat_prep_window", None)
+        if window is not None and window.winfo_exists():
+            window.refresh_from_session()
+        self._battle_map_changed()
 
     def _advance_session_time(self, seconds):
         try:
@@ -2618,7 +2843,7 @@ class GURPSCalculator:
                 lines = [t("session_time_advanced", seconds=seconds)]
                 for item in results:
                     lines.append(t(
-                        "session_bleeding_result", combatant=item["combatant"],
+                        "session_bleeding_result", combatant=self.combat_session.combatants[item["combatant"]].name,
                         location=t("injury_location_" + item["location"]), roll=item["roll"],
                         target=item["target"], loss=item["hp_loss"],
                     ))
@@ -2628,26 +2853,82 @@ class GURPSCalculator:
             messagebox.showerror(t("common_error_title"), str(exc))
 
     def _undo_session(self):
-        if self.combat_session.undo():
-            self._last_melee_result = None
-            self._last_grapple_result = None
-            self._last_injury_result = None
-            self._refresh_session_summary(sync_fields=True)
-        else:
-            messagebox.showinfo(t("session_title"), t("session_nothing_to_undo"))
+        try:
+            if self.combat_session.undo():
+                self._session_changed()
+            else:
+                messagebox.showinfo(t("session_title"), t("session_nothing_to_undo"))
+        except OSError as exc:
+            messagebox.showerror(t("session_title"), t("local_data_save_error", error=exc))
 
     def _new_session(self):
         if not messagebox.askyesno(t("session_new"), t("session_new_confirm")):
             return
-        path = self.combat_session.autosave_path
-        self.combat_session = CombatSession.new(path)
-        self.combat_session.save()
-        self.session_actor_key = "combatant_a"
-        self.session_target_key = "combatant_b"
+        try:
+            self._replace_active_session(CombatSession.new(self.combat_session.autosave_path))
+        except OSError as exc:
+            messagebox.showerror(t("session_title"), t("local_data_save_error", error=exc))
+
+    def _replace_active_session(self, candidate):
+        candidate.save()
+        self.combat_session = candidate
+        self.session_actor_key, self.session_target_key = candidate.selected_pair()
+        # Even a reopened snapshot with the same IDs is a new scenario context.
+        self._session_reserve_actor = None
+        self._map_ranged_transfer = None
+        self._ranged_drafts = {}
+        self._clear_ranged_draft()
+        self._refresh_handoff_choices()
+        self._session_changed()
+
+    def _session_changed(self):
+        self.session_actor_key, self.session_target_key = self.combat_session.selected_pair(
+            self.session_actor_key, self.session_target_key)
         self._last_melee_result = None
         self._last_grapple_result = None
         self._last_injury_result = None
-        self._rebuild_ui()
+        self._pending_session_context = {}
+        self._supernatural_drafts.clear()
+        labels = self._session_labels()
+        names = {value: key for key, value in labels.items()}
+        for box in self._session_boxes:
+            box["values"] = tuple(labels)
+        self.session_actor.set(names[self.session_actor_key])
+        self.session_target.set(names[self.session_target_key])
+        self._refresh_session_summary()
+
+    def _use_session_weapons(self):
+        actor = self.combat_session.combatants[self.session_actor_key]
+        target = self.combat_session.combatants[self.session_target_key]
+        melee = self.melee_weapon_catalog.get(actor.melee_weapon_id)
+        ranged = self.weapon_catalog.get(actor.ranged_weapon_id)
+        if melee:
+            self.melee_search.set("")
+            self._populate_melee_weapons(self.melee_weapon_catalog.search())
+            label = next(key for key, item in self._melee_weapon_labels.items() if item.identifier == melee.identifier)
+            self.melee_weapon.set(label)
+            self._load_selected_melee_weapon()
+        if ranged:
+            self.ranged_search.set("")
+            self._populate_ranged_weapon_box(self.weapon_catalog.search())
+            label = next(key for key, identifier in self._ranged_weapon_map.items() if identifier == ranged.identifier)
+            self.ranged_weapon.set(label)
+            self._load_selected_weapon()
+        self.ranged_shooter_st.set(str(actor.st))
+        missing = []
+        if target.unknown_size_modifier:
+            missing.append(t("encounter_ranged_sm_missing"))
+        else:
+            self.ranged_sm.set(str(target.size_modifier))
+        if "dodge" in target.unknown_defenses:
+            self.ranged_dodge.set("")
+            missing.append(t("encounter_ranged_dodge_missing"))
+        else:
+            self.ranged_dodge.set(str(target.dodge))
+        self.ranged_target_aware.set(target.aware)
+        self.ranged_target_hp.set(str(target.max_hp))
+        if missing:
+            messagebox.showinfo(t("tab_ranged"), "\n".join(missing))
 
     def _optional_injury_rules(self):
         return OptionalInjuryRules(
@@ -2802,7 +3083,9 @@ class GURPSCalculator:
             attacker_posture_modifier=attacker_posture, target_posture_modifier=target_posture,
             new_posture=self.melee_new_posture_key,
             target_aware=self.melee_target_aware.get(), defense_type=self.melee_defense_key,
-            defense_score=self._optional_number(self.melee_defense_score, int), retreat=self.melee_retreat_key,
+            defense_score=self._session_defense(target, self.melee_target_aware.get() and not target.unconscious
+                                                and self.melee_maneuver_key not in {"evaluate", "feint", "ready", "change_posture", "do_nothing"}),
+            retreat=self.melee_retreat_key,
             optional_injury_rules=self._optional_injury_rules(),
         )
 
@@ -2827,7 +3110,9 @@ class GURPSCalculator:
                     item["value"], t("melee_modifier_" + item["key"]), item["source"], item["page"],
                     " ({})".format(item["detail"]) if item["detail"] else "",
                 ))
-            lines.append(t("melee_effective_skill", value=result.effective_skill, probability=result.probability))
+            skill_line = t("melee_effective_skill", value=result.effective_skill, probability=result.probability)
+            self.melee_result_text.oficina_highlights = (skill_line,) if result.valid else ()
+            lines.append(skill_line)
             if result.defense_score is not None:
                 lines.append(t("melee_effective_defense", value=result.defense_score))
             for restriction in result.defense_restrictions:
@@ -2878,11 +3163,14 @@ class GURPSCalculator:
             return
         if not confirm_session(self, 'melee', self._last_melee_result.state_delta, self._last_melee_result.attacker_delta):
             return
-        self.combat_session.apply_action(
-            self.session_actor_key, self.session_target_key,
-            self._last_melee_result.state_delta, self._last_melee_result.attacker_delta,
-            "melee_attack",
-        )
+        try:
+            self.combat_session.apply_action(
+                self.session_actor_key, self.session_target_key,
+                self._last_melee_result.state_delta, self._last_melee_result.attacker_delta, "melee_attack",
+            )
+        except OSError as exc:
+            messagebox.showerror(t("session_title"), t("local_data_save_error", error=exc))
+            return
         self._last_melee_result = None
         self._refresh_session_summary(sync_fields=True)
         self.melee_result_text.insert(tk.END, "\n\n" + t("session_applied"))
@@ -2941,7 +3229,8 @@ class GURPSCalculator:
                 profile=self.melee_profile_key,
                 skill=self._optional_number(self.melee_skill, int, actor.dx),
                 resistance=self._optional_number(self.melee_grapple_resistance, int),
-                defense_score=self._optional_number(self.melee_defense_score, int),
+                defense_score=self._session_defense(target, target.aware and
+                                                    self.melee_grapple_action_key in {"grapple", "shove"}),
                 defense_type=self.melee_defense_key,
                 location=self.melee_location_key,
                 two_handed=self.melee_grapple_two_handed.get(),
@@ -2992,11 +3281,15 @@ class GURPSCalculator:
             return
         if not confirm_session(self, 'grapple', self._last_grapple_result.target_delta, self._last_grapple_result.actor_delta):
             return
-        self.combat_session.apply_action(
-            self.session_actor_key, self.session_target_key,
-            self._last_grapple_result.target_delta, self._last_grapple_result.actor_delta,
-            "grappling_" + self._last_grapple_result.action,
-        )
+        try:
+            self.combat_session.apply_action(
+                self.session_actor_key, self.session_target_key,
+                self._last_grapple_result.target_delta, self._last_grapple_result.actor_delta,
+                "grappling_" + self._last_grapple_result.action,
+            )
+        except OSError as exc:
+            messagebox.showerror(t("session_title"), t("local_data_save_error", error=exc))
+            return
         self._last_grapple_result = None
         self._refresh_session_summary(sync_fields=True)
         self.melee_result_text.insert(tk.END, "\n\n" + t("session_applied"))
@@ -3023,11 +3316,19 @@ class GURPSCalculator:
         armor = getattr(self, "_armor_labels", {}).get(self.injury_armor.get())
         if armor is None:
             return
-        self.combat_session.equip_armor(self.session_target_key, armor)
+        try:
+            self.combat_session.equip_armor(self.session_target_key, armor)
+        except OSError as exc:
+            messagebox.showerror(t("session_title"), t("local_data_save_error", error=exc))
+            return
         self._refresh_session_summary(sync_fields=True)
 
     def _clear_target_armor(self):
-        self.combat_session.clear_armor(self.session_target_key)
+        try:
+            self.combat_session.clear_armor(self.session_target_key)
+        except OSError as exc:
+            messagebox.showerror(t("session_title"), t("local_data_save_error", error=exc))
+            return
         self._refresh_session_summary(sync_fields=True)
 
     def _import_armor_presets(self):
@@ -3074,6 +3375,11 @@ class GURPSCalculator:
 
     def _current_injury_input(self):
         target = deepcopy(self.combat_session.combatants[self.session_target_key])
+        if self._injury_ranged_draft is not None:
+            draft = self._injury_ranged_draft
+            return InjuryInput(packet=replace(draft.packet, direction=self.injury_direction_key,
+                                              chinks=self.injury_chinks.get()), target=target,
+                               profile=draft.profile, optional_rules=self._optional_injury_rules())
         current_hp = self._optional_number(self.injury_target_hp, int, target.current_hp)
         target.current_hp = current_hp
         target.max_hp = max(target.max_hp, 1, current_hp)
@@ -3093,20 +3399,26 @@ class GURPSCalculator:
         )
 
     def _run_injury(self, operation):
+        self._last_injury_result = None
+        self._injury_draft_resolved = False
         try:
             data = self._current_injury_input()
             result = self.injury_calc.calculate(data) if operation == "calculate" else self.injury_calc.resolve(data)
             self._last_injury_result = result if result.valid else None
+            self._injury_draft_resolved = operation == "resolve" and result.valid
             remember_session(self, 'injury')
             lines = [t("injury_summary", profile=t("rules_profile_" + result.profile), location=t("injury_location_" + data.packet.hit_location))]
             if result.errors:
                 lines.append(t("common_problems") + " " + ", ".join(t("injury_error_" + item) for item in result.errors))
+            final_line = t("injury_final_result", value=result.injury, before=result.target_hp_before,
+                           after=result.target_hp_after)
+            self.injury_result_text.oficina_highlights = (final_line,) if result.valid else ()
             lines.extend((
                 t("injury_basic_result", value=data.packet.basic_damage),
                 t("injury_dr_result", total=result.total_dr, effective=result.effective_dr, divisor=data.packet.armor_divisor),
                 t("injury_penetrating_result", value=result.penetrating_damage),
                 t("injury_wounding_result", value=result.wounding_modifier),
-                t("injury_final_result", value=result.injury, before=result.target_hp_before, after=result.target_hp_after),
+                final_line,
             ))
             if result.blunt_trauma:
                 lines.append(t("injury_blunt_trauma_result", value=result.blunt_trauma))
@@ -3140,12 +3452,25 @@ class GURPSCalculator:
         if self._last_injury_result is None:
             messagebox.showinfo(t("session_title"), t("session_nothing_to_apply"))
             return
+        if self._injury_ranged_draft and not self._injury_draft_resolved:
+            messagebox.showinfo(t("session_title"), t("handoff_resolve_first"))
+            return
         if not confirm_session(self, 'injury', self._last_injury_result.state_delta):
             return
-        self.combat_session.apply(
-            self.session_actor_key, self.session_target_key,
-            self._last_injury_result.state_delta, "manual_injury", advance_action=False,
-        )
+        draft = self._injury_ranged_draft
+        try:
+            self.combat_session.apply(
+                self.session_actor_key, self.session_target_key, self._last_injury_result.state_delta,
+                "ranged_injury" if draft else "manual_injury", advance_action=False,
+            )
+        except OSError as exc:
+            messagebox.showerror(t("session_title"), t("local_data_save_error", error=exc))
+            return
+        if draft:
+            if self._ranged_drafts.get(draft.number) is draft:
+                del self._ranged_drafts[draft.number]
+            self._refresh_handoff_choices()
+            self._clear_ranged_draft()
         self._last_injury_result = None
         self._refresh_session_summary(sync_fields=True)
         self.injury_result_text.insert(tk.END, "\n\n" + t("session_applied"))
@@ -3219,20 +3544,72 @@ class GURPSCalculator:
 
     # ─── Tiro / Ranged Combat ───────────────────────────────────
     @staticmethod
+    def _map_pair_geometry(model, actor_id, target_id):
+        first = model.tokens.get(actor_id)
+        second = model.tokens.get(target_id)
+        if first is None or second is None:
+            return None
+        return (model.grid, model.cell_size, model.origin_x, model.origin_y, model.yards_per_cell,
+                first.q, first.r, second.q, second.r)
+
+    def _send_map_distance_to_ranged(self, actor_id, target_id, yards):
+        model = self.combat_session.battle_map
+        combatants = self.combat_session.combatants
+        geometry = self._map_pair_geometry(model, actor_id, target_id)
+        if (actor_id == target_id or actor_id not in combatants or target_id not in combatants
+                or geometry is None or not math.isfinite(yards) or yards < 0):
+            raise ValueError("map_need_pair")
+        measured = model.distance_yards(*geometry[-4:])
+        if not math.isclose(measured, yards, rel_tol=1e-10, abs_tol=1e-12):
+            raise ValueError("map_settings_stale")
+        self.session_actor_key, self.session_target_key = actor_id, target_id
+        self._session_changed()
+        meters = measured * YARDS_TO_METERS
+        self._map_ranged_transfer = (actor_id, target_id, geometry, measured, meters,
+                                     combatants[actor_id].name, combatants[target_id].name)
+        self.ranged_distance.set(repr(meters))
+        self._refresh_ranged_map_hint()
+        self.choose_tool(8)
+
+    def _refresh_ranged_map_hint(self, *_):
+        transfer = self._map_ranged_transfer
+        if transfer is not None:
+            actor_id, target_id, geometry, yards, meters, actor_name, target_name = transfer
+            try:
+                current = self._optional_number(self.ranged_distance, float)
+            except ValueError:
+                current = None
+            if current is None or not math.isclose(current, meters, rel_tol=1e-14, abs_tol=1e-14):
+                transfer = self._map_ranged_transfer = None
+        text = ""
+        if transfer is not None:
+            text = t("ranged_map_distance", actor=actor_name, target=target_name,
+                     distance=UnitSystem(self.result_units.get()).display(yards, "yards"))
+            if ((actor_id, target_id) != (self.session_actor_key, self.session_target_key)
+                    or geometry != self._map_pair_geometry(self.combat_session.battle_map, actor_id, target_id)):
+                text += "\n" + t("ranged_map_distance_stale")
+        self.ranged_map_hint.set(text)
+        label = getattr(self, "ranged_map_hint_label", None)
+        if label is not None and label.winfo_exists():
+            if text and not label.winfo_manager():
+                label.pack(fill=tk.X, pady=(0, 5))
+            elif not text:
+                label.pack_forget()
+
+    @staticmethod
     def _optional_number(variable, converter=float, default=None):
         value = variable.get().strip()
         return default if value == "" else converter(value.replace(",", "."))
 
     def _current_ranged_weapon(self):
         base = getattr(self, "_ranged_base_weapon", None)
-        mode = DamageMode(
+        mode = replace(base.damage_modes[0] if base else DamageMode("1d", "cr"),
             dice=self.ranged_damage.get().strip(),
             damage_type=self.ranged_damage_type.get().strip().lower(),
             armor_divisor=self._optional_number(self.ranged_armor_divisor, float, 1.0),
             minimum_range=self._optional_number(self.ranged_minimum_range, float, 0.0),
             half_damage_range=self._optional_number(self.ranged_half_damage, float),
             max_range=self._optional_number(self.ranged_max_range, float),
-            raw=self.ranged_damage.get().strip(),
         )
         rof = self._optional_number(self.ranged_rof, float, 1.0)
         return WeaponRecord(
@@ -3269,11 +3646,13 @@ class GURPSCalculator:
         )
 
     def _current_ranged_input(self):
+        transfer = self._map_ranged_transfer
         return RangedAttackInput(
             weapon=self._current_ranged_weapon(),
             profile=self.ranged_profile_key,
             skill=self._optional_number(self.ranged_skill, int, 0),
             distance_m=self._optional_number(self.ranged_distance, float, 0.0),
+            map_distance_yards=transfer[3] if transfer is not None else None,
             target_speed_mps=self._optional_number(self.ranged_speed, float, 0.0),
             target_sm=self._optional_number(self.ranged_sm, int, 0),
             aim_seconds=self._optional_number(self.ranged_aim_seconds, int, 0),
@@ -3306,6 +3685,8 @@ class GURPSCalculator:
         )
 
     def _run_ranged(self, operation):
+        self._ranged_drafts = {}
+        self._refresh_handoff_choices()
         try:
             attack_input = self._current_ranged_input()
             result = (self.ranged_calc.calculate(attack_input) if operation == "calculate"
@@ -3314,6 +3695,8 @@ class GURPSCalculator:
                           resolve_defense=operation == "resolve",
                           resolve_damage=operation == "resolve",
                       ))
+            self._ranged_metrics = (result.effective_skill, result.probability) if result.valid else None
+            self.ranged_layout.set_metrics(self._ranged_metrics)
             self.ranged_result_text.delete(1.0, tk.END)
             lines = [t("ranged_summary", weapon=attack_input.weapon.name,
                        profile=t("ranged_profile_" + result.profile))]
@@ -3355,9 +3738,90 @@ class GURPSCalculator:
                                        basic=damage["basic_damage"], dr=damage["effective_dr"],
                                        penetrating=damage["penetrating_damage"],
                                        multiplier=damage["wounding_modifier"], injury=damage["injury"]))
+            if operation == "resolve" and result.valid:
+                for index in range(len(result.damages)):
+                    try:
+                        draft = RangedHitDraft.from_result(result, attack_input.weapon, index)
+                    except ValueError:
+                        lines.append(t("handoff_special_hit", number=index + 1))
+                    else:
+                        self._ranged_drafts[draft.number] = draft
+                self._refresh_handoff_choices()
             self.ranged_result_text.insert(tk.END, "\n".join(lines))
         except Exception as exc:
             messagebox.showerror(t("common_error_title"), str(exc))
+
+    def _refresh_handoff_choices(self):
+        values = tuple(str(number) for number in self._ranged_drafts)
+        self._handoff_picker["values"] = values
+        self._handoff_selected.set(values[0] if values else "")
+        self._handoff_button.state(["!disabled" if values else "disabled"])
+
+    def _open_ranged_draft(self):
+        selected = self._handoff_selected.get()
+        if not selected or getattr(self.ranged_result_text, "stale", False):
+            messagebox.showwarning(t("tab_ranged"), t("handoff_stale"))
+            return
+        draft = self._ranged_drafts.get(int(selected))
+        if draft is None:
+            return
+        if self._injury_ranged_draft is not None and not messagebox.askyesno(t("tab_injury"), t("handoff_replace")):
+            return
+        if self._injury_ranged_draft is None:
+            self._injury_manual_form = (
+                tuple((var, var.get()) for var in (self.injury_basic_damage, self.injury_damage_type,
+                      self.injury_armor_divisor, self.injury_chinks, self.injury_large_area)),
+                self.injury_location_key, self.injury_profile_key, self.injury_direction_key,
+            )
+        self._injury_ranged_draft = draft
+        self._injury_draft_resolved = False
+        self._last_injury_result = None
+        self.injury_basic_damage.set(str(draft.packet.basic_damage))
+        self.injury_damage_type.set(draft.packet.damage_type)
+        self.injury_armor_divisor.set(str(draft.packet.armor_divisor))
+        self.injury_location_key = draft.packet.hit_location
+        self.injury_profile_key = draft.profile
+        self.injury_location.set(next(label for label, key in self._injury_location_labels.items() if key == self.injury_location_key))
+        self.injury_profile.set(next(label for label, key in self._injury_profile_labels.items() if key == draft.profile))
+        self.injury_direction_key = draft.packet.direction
+        self.injury_direction.set(next(label for label, key in self._injury_direction_labels.items() if key == draft.packet.direction))
+        self.injury_chinks.set(False)
+        self.injury_large_area.set(False)
+        self._refresh_session_summary(sync_fields=True)
+        self._refresh_ranged_draft()
+        self.choose_tool(7)
+        self._run_injury("calculate")
+
+    def _clear_ranged_draft(self):
+        self._injury_ranged_draft = None
+        self._injury_draft_resolved = False
+        self._last_injury_result = None
+        if self._injury_manual_form:
+            fields, self.injury_location_key, self.injury_profile_key, self.injury_direction_key = self._injury_manual_form
+            self._injury_manual_form = None
+            for var, value in fields:
+                var.set(value)
+            for variable, key, labels in ((self.injury_location, self.injury_location_key, self._injury_location_labels),
+                                          (self.injury_profile, self.injury_profile_key, self._injury_profile_labels),
+                                          (self.injury_direction, self.injury_direction_key, self._injury_direction_labels)):
+                variable.set(next(label for label, identifier in labels.items() if identifier == key))
+        self._refresh_ranged_draft()
+
+    def _refresh_ranged_draft(self):
+        draft = self._injury_ranged_draft
+        for entry in self._injury_locked_entries:
+            entry.configure(state="readonly" if draft else "normal")
+        for box in self._injury_locked_boxes:
+            box.configure(state="disabled" if draft else "readonly")
+        self._injury_large_area_box.state(["disabled" if draft else "!disabled"])
+        if not draft:
+            self._injury_handoff_banner.pack_forget()
+            return
+        message = t("handoff_draft", number=draft.number, weapon=draft.weapon_name)
+        if draft.half_damage_applied:
+            message += " " + t("handoff_half_damage")
+        self._injury_handoff_message.configure(text=message)
+        self._injury_handoff_banner.pack(side=tk.TOP, fill=tk.X, before=self._injury_scroll_canvas)
 
     def _save_ranged_preset(self):
         try:
@@ -3410,7 +3874,7 @@ class GURPSCalculator:
 
     def _update_title(self):
         """Atualiza título da janela."""
-        self.root.title("{} v{}".format(t("app_title"), __version__))
+        self.root.title("{} v{} · Oficina".format(t("app_title"), __version__))
 
     def run(self):
         """Inicia o loop principal da aplicação."""
@@ -3419,6 +3883,10 @@ class GURPSCalculator:
 
 def main():
     """Função principal - ponto de entrada da aplicação."""
+    if sys.argv[1:] == ["--startup-check"]:
+        from utils.startup_check import run
+        run(GURPSCalculator)
+        return
     app = GURPSCalculator()
     app.run()
 

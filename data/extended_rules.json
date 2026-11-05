@@ -6636,6 +6636,9 @@
       "duration_seconds": 60,
       "difficulty": "Hard",
       "prereq_count": 0,
+      "effects": [
+        {"kind": "narrative", "duration_seconds": 60, "metadata": {"action": "light"}}
+      ],
       "systems": [
         "standard",
         "ritual_magic"
@@ -7554,6 +7557,8 @@
       "duration_seconds": 60,
       "difficulty": "Hard",
       "prereq_count": 2,
+      "prerequisites": ["Lend Vitality"],
+      "rule_model": "minor_healing",
       "systems": [
         "standard",
         "ritual_magic"
@@ -15286,6 +15291,14 @@
       "skill": "Emotion Sense (IQ/H)",
       "levels": "4",
       "cost": "3/9/18/20",
+      "operational_model": "emotion_sense",
+      "activation_cost": 0,
+      "character_points_by_level": [3, 9, 18, 20],
+      "range_by_level": ["skin_contact", "speed_range", "long_distance", "none"],
+      "resist_attribute": "will",
+      "effects": [
+        {"kind": "narrative", "metadata": {"action": "emotion_sense", "situational_bonus": 3}}
+      ],
       "notes": null
     },
     {
@@ -15330,6 +15343,15 @@
       "skill": "Mental Surgery (IQ/H)",
       "levels": "5",
       "cost": "10/25/33/48/65",
+      "operational_model": "mental_surgery",
+      "activation_cost": 0,
+      "character_points_by_level": [10, 25, 33, 48, 65],
+      "range_by_level": ["skin_contact", "skin_contact", "skin_contact", "skin_contact", "skin_contact"],
+      "activation_time_by_level": [3600, 600, 60, 10, 1],
+      "resist_attribute": "will",
+      "effects": [
+        {"kind": "narrative", "metadata": {"action": "mental_surgery", "permanent": true}}
+      ],
       "notes": null
     },
     {

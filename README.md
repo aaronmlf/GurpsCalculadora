@@ -4,11 +4,25 @@ Calculadora multi-ferramentas para o sistema **GURPS 4th Edition** construída c
 
 Versão atual: **v1.6.0**. Interface gráfica em **Português (BR)** e **Inglês**, com perfis Basic, Realista e Cinematográfico claramente separados.
 
-### Interface atualizada
+### Interface Oficina
 
-O menu lateral organiza as ferramentas, e **Início** reúne favoritos e recentes.
-Em **Exibir**, é possível escolher tema claro/escuro, tamanho da fonte, recolher a
-navegação, consultar a sessão e importar/exportar configurações numéricas.
+O menu lateral organiza as ferramentas em áreas recolhíveis. **Início** tem
+cartões de acesso direto a Dados, Tiro, Corpo a corpo e Trauma, além de favoritos,
+recentes e um resumo da sessão. Use **Ctrl+K** ou **Buscar ferramentas** para ir
+direto a um módulo pelo nome em português ou inglês.
+
+Em **Tiro**, **Impactos**, **Força**, **Magia**, **Poderes e Psi**, **Veículos**,
+**Social** e **Batalhas**, os parâmetros ficam ao lado do resultado quando há
+espaço. Em janelas estreitas, os painéis ficam empilhados. O resultado tem resumo
+e memória de cálculo recolhível. Opções de combate, resistência e logística
+ficam em seções separadas. Em **Dados**, o formulário e os atalhos ficam juntos;
+o total, a exportação e as páginas de resultados têm um painel próprio.
+
+Em **Aparência**, escolha o tema claro ou escuro, a fonte e as cores de fundo,
+painéis e destaque. A prévia não altera a janela principal até aplicar; as cores
+são salvas por tema e podem voltar ao padrão. O menu **Exibir** permite recolher
+a navegação, consultar a sessão e importar/exportar configurações numéricas.
+A Oficina usa apenas os controles do Tkinter, sem carregar imagens dos mockups.
 Os catálogos grandes oferecem filtros, favoritos e consulta dos dados completos.
 Resultados têm cópia, exportação, comparação e histórico temporário; ao trocar
 idioma/unidades, o texto antigo é preservado com seu contexto original, sem rerrolar.
@@ -37,7 +51,7 @@ durante a troca; presets mantêm as unidades originais dos motores. Resultados j
 apresentados em metros e jardas continuam mostrando ambas as unidades. Preferências
 de idioma e unidades são salvas na pasta de dados do usuário.
 
-![Python](https://img.shields.io/badge/Python-3.8+-blue)
+![Python](https://img.shields.io/badge/Python-3.11+-blue)
 ![Tkinter](https://img.shields.io/badge/GUI-Tkinter-green)
 ![GURPS](https://img.shields.io/badge/System-GURPS_4e-red)
 ![License](https://img.shields.io/badge/License-MIT-yellow)
@@ -122,7 +136,10 @@ de idioma e unidades são salvas na pasta de dados do usuário.
 - Alcance (Reach), ST mínima, mão inábil, armas desequilibradas e estado Ready
 - Grappling: agarrar, libertar-se, derrubar, imobilizar, estrangular, locks, throws e wrenching, sem Control Points
 - Catálogos incorporados com 359 armas, 113 técnicas e 104 estilos; estilos são orientativos
-- Sessão leve para dois combatentes, salvamento automático atômico, histórico e desfazer
+- **Preparar sessão**: importação em lote de fichas `.gcs` (esquema v5) e da exportação Fantasy Grounds PC da Master Library; não cria nem altera fichas
+- Cenários com elenco, grupos, ordem manual e ordenação por Velocidade Básica (DX desempata; empates restantes conservam a ordem manual)
+- HP, FP, ferimentos e outras reservas são independentes para cada participante e cenário. Histórico, desfazer e salvamento atômico: uma falha não publica alterações em memória
+- **Tiro → Trauma**: transfere um acerto comum já rolado, incluindo a redução por 1/2D quando aplicável; revise o alvo e a armadura antes de aplicar. Acertos com efeitos especiais ficam na aba Tiro.
 
 ### 11. Força e Esforço (Strength and Effort)
 
@@ -134,14 +151,15 @@ de idioma e unidades são salvas na pasta de dados do usuário.
 ### 12. Magia, Poderes e Psi
 
 - Motores independentes para conjuração, construção de habilidades e uso psi
-- Magia padrão parcial; sistemas alternativos de Thaumatology, Ritual Path Magic e Sorcery cadastrados, mas ainda sem resolvedores próprios (resolução bloqueada)
-- Custos, alcance, área, tempo, manutenção, resistência e recursos energéticos
-- Catálogos estruturados com fonte e página; efeitos narrativos ficam pendentes para o mestre
+- Magia padrão com mana, custos, alcance, área, tempo, resistência, reservas de energia, previsão de manutenção e renovação manual
+- Magias variáveis podem exigir parâmetros do mestre; sistemas alternativos sem motor próprio são marcados **Só referência**
+- Psi: **Emotion Sense** e **Mental Surgery** têm níveis publicados calculáveis. Outras entradas psi são referências; efeitos narrativos ficam com o mestre.
+- Consulte o status e a fonte no catálogo. Magia/Psi podem usar FP da sessão e só o aplicam após confirmação; ER e energia externa são controladas pelo mestre.
 
 ### 13. Veículos e Naves
 
 - Movimento, aceleração, autonomia, combustível, delta-v e tempo de viagem
-- Colisões integradas ao motor de dano e ataques integrados à calculadora de tiro
+- Painel **Colisões e combate veicular**: colisão entre veículos com DR de ambos, cálculo e resolução de disparos usando o motor de Tiro; os resultados não alteram a sessão
 - Catálogo de veículos e suporte a veículos personalizados na pasta do usuário
 - Sessão veicular com aplicação explícita e desfazer
 
@@ -161,6 +179,7 @@ de idioma e unidades são salvas na pasta de dados do usuário.
 - Soma de todos os dados, modificador e total final; resultados negativos preservados
 - Detalhes numerados em páginas de 100 dados, com navegação direta por página
 - Cópia da página atual e exportação de **todos** os dados em arquivo `.txt`
+- Cópia só do total, até 12 favoritas e 12 expressões recentes com seus totais, e atalhos **Teste 3d6** e **Disputa Rápida**
 - Troca de idioma preserva os dados e traduz a apresentação sem nova rolagem
 
 ---
@@ -181,7 +200,7 @@ GurpsCalculadora/
 │   ├── ranged_combat.py             # Tiro e resolução de ataques à distância
 │   ├── injury.py                    # Dano, armaduras e trauma compartilhado
 │   ├── melee_combat.py              # Corpo a corpo, técnicas e grappling
-│   ├── combat_session.py            # Sessão leve para dois combatentes
+│   ├── combat_session.py            # Elenco, ordem e estado por cenário
 │   ├── strength.py                  # Força, esforço e dano forte
 │   ├── magic.py                     # Sistemas mágicos
 │   ├── powers.py                    # Powers e Psionics
@@ -213,7 +232,7 @@ GurpsCalculadora/
 
 ## Requisitos
 
-- **Python 3.8+**
+- **Python 3.11+**
 - **Tkinter** (incluído no Python padrão, mas pode precisar de instalação separada no Linux)
 
 ### Instalação do Tkinter
@@ -286,7 +305,50 @@ python3 main.py
 3. **Preencher campos:** Insira os valores nos campos de entrada
 4. **Calcular:** Clique no botão "Calcular" / "Calculate"
 5. **Rolar dados:** Use os botões de rolagem para resultados aleatórios
-6. **Aplicar:** Em Corpo a corpo ou Trauma, somente “Aplicar à sessão” altera HP, condições ou equipamento
+6. **Aplicar:** Revise o resultado e confirme em **Aplicar à sessão** quando quiser registrar o efeito
+
+### Fichas e cenários de combate
+
+1. Abra **Início → Preparar sessão → Fichas** e selecione vários arquivos
+   `.gcs` (esquema v5) ou arquivos `.xml` exportados com **Fantasy Grounds PC**
+   da [Master Library do GCS](https://github.com/richardwilkes/gcs_master_library).
+   O relatório separa os arquivos aceitos dos que precisam de correção.
+2. Selecione as fichas importadas e adicione as cópias desejadas ao **Elenco**.
+   Escolha os grupos, mova participantes na lista ou ordene por Velocidade
+   Básica. Defina agente e alvo para as calculadoras de combate.
+3. Use **Recursos atuais** para editar HP, FP e reservas só neste combate.
+   Você pode incluir uma reserva temporária e vinculá-la como ER em Magia ou Psi.
+   Em **Cenários**, salve ou abra cópias nomeadas.
+
+Os arquivos originais permanecem intactos. Modelos `.gct` e catálogos como
+`.adq`, `.skl` e `.eqp` não são fichas completas: use-os no GCS e salve
+uma ficha `.gcs` para importar. Defesas ou SM efetivo ausentes devem ser
+informados na calculadora; armas e DR por localização não são equipados
+automaticamente.
+
+### Mapa de batalha
+
+Abra **Combate → Mapa** ou use **Mapa** em **Preparar sessão**. Comece com
+um tabuleiro vazio ou escolha **Mapa → Importar fundo PNG**. Ajuste o formato
+da grade, a distância entre os centros e a origem para alinhar a imagem.
+A grade hexagonal começa com 1 jarda por célula.
+
+- Selecione alguém do elenco, clique em **Colocar** e escolha a célula.
+  Arraste o marcador para movê-lo. Use a roda para zoom e o botão do meio
+  para deslocar a vista.
+- Defina agente e alvo no menu **Marcador**. **Enviar a Tiro** preenche
+  a distância, sem alterar arma, perícia, velocidade, cobertura ou visibilidade.
+  A régua respeita o sistema de unidades escolhido; a regra de alcance recebe
+  o valor exato em jardas. Se as posições mudarem, envie a nova distância.
+- Abra **Visão dos jogadores** para compartilhar só essa janela ou movê-la
+  a um segundo monitor. Ela acompanha as alterações do mestre e não exibe
+  HP, FP, nomes de grupos, notas do mestre ou marcadores ocultos. A imagem
+  do fundo é pública nessa janela; escolha um PNG sem segredos impressos.
+
+O cenário salva a grade, posições, visibilidade e referência do fundo.
+O PNG fica na pasta de dados local, fora do executável, e o arquivo
+original não é alterado. O mapa é offline e não inclui neblina,
+iluminação dinâmica ou controle remoto pelos jogadores.
 
 ### Testes
 
@@ -301,13 +363,14 @@ Os arquivos de empacotamento estao em `packaging/`:
 - Linux: `packaging/build_linux.sh`
 - Windows: `packaging/build_windows.bat`
 
-O PyInstaller gera o executavel correspondente em `dist/`. Cada sistema deve
-ser compilado em seu proprio ambiente; o executavel do Windows nao e produzido
-diretamente pelo Python do Linux.
+Os scripts compilam e verificam o executável a partir da mesma cópia das fontes.
+Os ZIPs e seus hashes ficam em `dist/releases/<tag>/<linux|windows>/`.
+Veja o [guia de empacotamento e verificação](packaging/RELEASE.md) para requisitos,
+teste de abertura e lista dos arquivos incluídos.
 
 ### Conversão de Unidades
 
-A interface exibe valores em **metros**, mas os cálculos internos usam **jardas** (padrão GURPS). A conversão é automática: **1 jarda = 0,9144 metros**.
+Escolha **Métrico** ou **Imperial** no menu de unidades. A apresentação muda sem alterar a medida guardada; a conversão entre metros e jardas usa **1 jarda = 0,9144 metros**.
 
 ---
 
@@ -348,11 +411,10 @@ O perfil Realista referencia regras selecionadas de **Martial Arts**, **High-Tec
 
 | Métrica | Valor |
 |---------|-------|
-| Testes automatizados | 134 |
 | Armas catalogadas | 1.091 (732 à distância + 359 corpo a corpo) |
 | Armaduras / técnicas / estilos | 296 / 113 / 104 |
-| Módulos principais | 14 |
-| Chaves i18n | 625+ (×2 idiomas) |
+| Ferramentas | 17 |
+| Idiomas da interface | PT-BR e inglês |
 | Dependências externas | 0 |
 
 ## Contribuindo

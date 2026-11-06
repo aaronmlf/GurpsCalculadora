@@ -5,7 +5,7 @@ from tkinter import ttk
 import unittest
 from unittest.mock import patch
 
-from tests.tk_support import requires_tk
+from tests.tk_support import assert_workbench_reflow, requires_tk
 from utils.gui_form_state import descendants
 from utils.i18n import t
 
@@ -55,8 +55,7 @@ class ImpactWorkbenchTests(unittest.TestCase):
                     app.root.update()
                     text = getattr(app, output)
                     layout = text.oficina_layout
-                    self.assertTrue(layout.wide)
-                    self.assertEqual(layout.inputs.grid_info()['row'], layout.result.grid_info()['row'])
+                    assert_workbench_reflow(self, layout)
                     button = self.button(layout, action)
                     self.check_target(layout, button)
                     button.invoke()
@@ -66,10 +65,7 @@ class ImpactWorkbenchTests(unittest.TestCase):
 
                     app.root.geometry('800x600')
                     app.root.update()
-                    self.assertFalse(layout.wide)
-                    self.assertGreater(layout.result.grid_info()['row'], layout.inputs.grid_info()['row'])
-                    self.assertEqual(layout.winfo_width(), layout.canvas.winfo_width())
-                    self.assertEqual(layout.canvas.xview(), (0.0, 1.0))
+                    assert_workbench_reflow(self, layout, wide=False)
                     self.assertIs(text, getattr(app, output))
                     self.assertEqual(text.get('1.0', 'end-1c'), result)
                     self.check_target(layout, button)

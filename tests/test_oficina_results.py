@@ -5,7 +5,7 @@ from tkinter import ttk
 import unittest
 from unittest.mock import patch
 
-from tests.tk_support import requires_tk
+from tests.tk_support import assert_workbench_reflow, requires_tk
 from utils.gui_form_state import descendants
 from utils.i18n import t
 
@@ -73,10 +73,10 @@ class OficinaResultsTests(unittest.TestCase):
                     app.choose_tool(index)
                     app.root.geometry('1520x920')
                     app.root.update()
-                    self.assertTrue(layout.wide)
+                    assert_workbench_reflow(self, layout)
                     app.root.geometry('800x600')
                     app.root.update()
-                    self.assertFalse(layout.wide)
+                    assert_workbench_reflow(self, layout, wide=False)
                     action = 'social_reaction' if prefix == 'social' else 'common_calculate'
                     button = self.button(layout.inputs, action)
                     layout.reveal(button)

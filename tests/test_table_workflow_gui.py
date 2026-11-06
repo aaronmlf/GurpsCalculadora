@@ -5,7 +5,7 @@ import unittest
 from unittest.mock import patch
 
 from calculators.injury import StateDelta
-from calculators.injury import DamagePacket
+from calculators.injury import CombatantState, DamagePacket
 from tests.tk_support import requires_tk
 from utils.gui_hub import session_window
 from utils.i18n import t
@@ -132,6 +132,66 @@ class TableWorkflowGuiTests(unittest.TestCase):
         self.assertFalse(app._ranged_drafts)
         self.assertIsNone(app._injury_ranged_draft)
 
+    def test_map_cannot_retarget_an_already_rolled_injury_draft(self):
+        app = self.app
+        actor, target = app.combat_session.selected_pair()
+        reserve = app.combat_session.add_combatant(CombatantState(identifier="reserve", name="Reserva"))
+        model = app.combat_session.battle_map
+        app.combat_session.set_battle_map(model.with_token(actor, 0, 0).with_token(target, 2, 0)
+                                          .with_token(reserve, 3, 0))
+        app._send_map_distance_to_ranged(actor, target, 2)
+        app.ranged_damage.set("2d")
+        app.ranged_damage_type.set("pi")
+        app.ranged_half_damage.set("")
+        app.ranged_skill.set("16")
+        app.ranged_dodge.set("")
+        resolve = app.ranged_calc.resolve
+        with patch.object(app.ranged_calc, "resolve", side_effect=lambda attack, **opts: resolve(
+            attack, attack_roll=8, damage_rolls=[4], **opts,
+        )):
+            app._run_ranged("resolve")
+        app.root.update()
+        app._open_ranged_draft()
+        self.assertEqual(app._injury_ranged_draft.encounter_pair, (actor, target))
+        app.choose_tool(16)
+        app.battle_map_panel.select_token(reserve)
+        app.battle_map_panel.set_role("target")
+        app.choose_tool(7)
+        self.assertIn(t("handoff_pair_changed"), app._injury_handoff_message["text"])
+        with patch("main.messagebox.showerror") as error, patch("main.messagebox.showwarning") as warning:
+            app._run_injury("resolve")
+            error.assert_called_once_with(t("common_error_title"), t("handoff_pair_changed"))
+            app._apply_injury_result()
+            warning.assert_called_once_with(t("session_title"), t("handoff_pair_changed"))
+        self.assertEqual([app.combat_session.combatants[key].current_hp for key in (target, reserve)], [10, 10])
+
+        app._select_encounter_role("target", target)
+        app._run_injury("resolve")
+        app.root.update()
+        with patch("utils.gui_hub.messagebox.askyesno", return_value=True):
+            app._apply_injury_result()
+        self.assertEqual([app.combat_session.combatants[key].current_hp for key in (target, reserve)], [6, 10])
+
+    def test_ranged_ammunition_edit_and_malfunction_are_shown_in_both_languages(self):
+        app = self.app
+        for language in ("pt_BR", "en_US"):
+            with self.subTest(language=language):
+                app._change_language(language)
+                app.ranged_skill.set("16")
+                app.ranged_distance.set("1")
+                app.ranged_rof.set("10")
+                app.ranged_shots_stat.set("1+1(3i)")
+                app.ranged_shots_fired.set("3")
+                app._run_ranged("calculate")
+                text = app.ranged_result_text
+                self.assertIn(t("ranged_error_shots_exceed_capacity"), text.get("1.0", "end"))
+                app.ranged_shots_fired.set("2")
+                app.ranged_malf.set("15")
+                with patch("calculators.ranged_combat.roll_3d6", return_value=(15, [5, 5, 5])):
+                    app._run_ranged("resolve")
+                self.assertIn(t("ranged_malfunction"), text.get("1.0", "end"))
+                self.assertFalse(app._ranged_drafts)
+
     def test_localized_catalogs_powers_validation_and_vehicle_controls(self):
         app = self.app
         for language in ("pt_BR", "en_US"):
@@ -209,7 +269,8 @@ class TableWorkflowGuiTests(unittest.TestCase):
                 for label in app.vehicle_combat_panel.speed_labels:
                     self.assertGreater(int(label.cget("wraplength")), 140)
                     self.assertLess(label.winfo_height(), 135)
-                app._ranged_drafts = {1: RangedHitDraft(1, "A long weapon name", "basic", DamagePacket(3), True)}
+                app._ranged_drafts = {1: RangedHitDraft(1, "A long weapon name", "basic", DamagePacket(3), True,
+                                                       app.combat_session.selected_pair())}
                 app._refresh_handoff_choices()
                 app._open_ranged_draft()
                 app.root.update()

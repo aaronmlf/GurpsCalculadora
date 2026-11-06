@@ -39,14 +39,20 @@ class MapImage:
     height: int
 
 
-def _scanline_bytes(width, height, bits, interlace):
+def _scanline_layout(width, height, bits, interlace):
     passes = _ADAM7 if interlace else ((0, 0, 1, 1),)
-    expected = 0
     for x, y, dx, dy in passes:
         cols, rows = (width - x + dx - 1) // dx, (height - y + dy - 1) // dy
         if cols > 0 and rows > 0:
-            expected += rows * (1 + (cols * bits + 7) // 8)
-    return expected
+            yield rows, 1 + (cols * bits + 7) // 8
+
+
+def _filter_offsets(layout):
+    start = 0
+    for rows, stride in layout:
+        end = start + rows * stride
+        yield from range(start, end, stride)
+        start = end
 
 
 def inspect_png(data: bytes) -> MapImage:
@@ -68,7 +74,10 @@ def inspect_png(data: bytes) -> MapImage:
 
     offset, chunks, idat, palette, idat_finished = 8, 0, False, False, False
     inflater = decompressobj()
-    remaining = _scanline_bytes(width, height, depth * _CHANNELS[color], interlace)
+    layout = tuple(_scanline_layout(width, height, depth * _CHANNELS[color], interlace))
+    remaining = expected = sum(rows * stride for rows, stride in layout)
+    filters = _filter_offsets(layout)
+    next_filter = next(filters, None)
     view = memoryview(data)
     while offset + 12 <= len(data) and chunks < 16384:
         size, name = struct.unpack_from(">I4s", data, offset)
@@ -94,9 +103,15 @@ def inspect_png(data: bytes) -> MapImage:
                 # Stream in modest pieces. Even a valid CRC cannot authorize a
                 # decompression larger than the declared, bounded image dimensions.
                 while compressed:
-                    remaining -= len(inflater.decompress(compressed, min(remaining + 1, 256 * 1024)))
+                    start = expected - remaining
+                    expanded = inflater.decompress(compressed, min(remaining + 1, 256 * 1024))
+                    remaining -= len(expanded)
                     if remaining < 0 or inflater.unused_data:
                         raise ZlibError("excess PNG scanline data")
+                    while next_filter is not None and next_filter < start + len(expanded):
+                        if expanded[next_filter - start] > 4:
+                            raise ZlibError("invalid PNG scanline filter")
+                        next_filter = next(filters, None)
                     compressed = inflater.unconsumed_tail
             except ZlibError:
                 break
@@ -146,8 +161,12 @@ class BattleMapAssetStore:
             raise BattleMapAssetError("battle_map_image_invalid")
         return image
 
-    def import_png(self, path) -> str:
+    def import_png(self, path, *, validate=None) -> str:
         image = _read_png(Path(path))
+        if validate is not None:
+            # Pass the exact bytes we will write, without reopening the user's
+            # file after the caller checks its renderer can display the image.
+            validate(image)
         identifier = sha256(image.data).hexdigest()
         dest = self._path(identifier)
         temporary = None

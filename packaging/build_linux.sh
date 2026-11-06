@@ -2,7 +2,7 @@
 set -eu
 
 cd "$(dirname "$0")/.."
-venv=packaging/.build-venv/linux
+venv=${GURPS_BUILD_VENV:-packaging/.build-venv/linux}
 if [ ! -x "$venv/bin/python" ]; then
     python3 -m venv "$venv"
 fi

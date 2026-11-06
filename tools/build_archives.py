@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import argparse
+from contextlib import contextmanager
 import ctypes
 import hashlib
 from importlib import metadata
@@ -15,6 +16,7 @@ import struct
 import subprocess
 import sys
 import tempfile
+import time
 import zipfile
 
 
@@ -32,7 +34,10 @@ from utils.startup_check import PROFILE_ENV
 RELEASE_SCHEMA = 'gurps-calculadora.release.v1'
 PLATFORMS = {'linux': ('Linux', 'GurpsCalculadora'), 'windows': ('Windows', 'GurpsCalculadora.exe')}
 SOURCE_ZIP = 'GurpsCalculadora_Codigo_Fonte.zip'
+CURRENT_MANIFEST = 'current.json'
 SAFE_TAG = re.compile(r'v[0-9]+\.[0-9]+\.[0-9]+(?:-[a-zA-Z0-9]+(?:[.-][a-zA-Z0-9]+)*)?\Z')
+LINUX_GLIBC_CEILING = (2, 39)
+GLIBC_VERSION = re.compile(r'[0-9]+(?:\.[0-9]+)+\Z')
 
 
 def sha256(path):
@@ -89,7 +94,8 @@ def _check_binary(binary, target):
         if target == 'linux':
             if (len(header) != 64 or header[:6] != b'\x7fELF\x02\x01'
                     or header[16:18] not in {b'\x02\x00', b'\x03\x00'}
-                    or header[18:20] != b'\x3e\x00' or not os.access(binary, os.X_OK)):
+                    or header[18:20] != b'\x3e\x00'
+                    or (os.name == 'posix' and not os.access(binary, os.X_OK))):
                 raise ValueError('Expected an executable Linux x86-64 ELF file')
         else:
             if len(header) != 64 or header[:2] != b'MZ':
@@ -101,11 +107,15 @@ def _check_binary(binary, target):
                 raise ValueError('Expected an executable Windows x86-64 PE32+ file')
 
 
-def verify_embedded_resources(binary, root):
-    """Verify the names *and contents* of packaged catalogs and translations."""
+def _pyinstaller_archive(binary):
     from PyInstaller.archive.readers import CArchiveReader
 
-    archive = CArchiveReader(str(binary))
+    return CArchiveReader(str(binary))
+
+
+def verify_embedded_resources(binary, root):
+    """Verify the names *and contents* of packaged catalogs and translations."""
+    archive = _pyinstaller_archive(binary)
     all_names = {name.replace('\\', '/'): name for name in archive.toc}
     expected = set(resource_paths(root))
     included = {name for name in all_names if name.startswith(('i18n/', 'data/'))}
@@ -117,6 +127,64 @@ def verify_embedded_resources(binary, root):
     for name in expected:
         if hashlib.sha256(archive.extract(all_names[name])).hexdigest() != sha256(declared_file(root, name)):
             raise ValueError(f'Stale embedded resource: {name}')
+
+
+def _linux_version(version):
+    if not isinstance(version, str) or not GLIBC_VERSION.fullmatch(version):
+        raise ValueError(f'Invalid Linux glibc version: {version!r}')
+    return tuple(int(part) for part in version.split('.'))
+
+
+def _check_linux_build_host():
+    libc = os.confstr('CS_GNU_LIBC_VERSION') or ''
+    name, _, version = libc.partition(' ')
+    if name != 'glibc' or _linux_version(version) > LINUX_GLIBC_CEILING:
+        raise ValueError(f'Linux release requires a glibc 2.39 or older build environment '
+                         f'(found {libc or "unknown"}); see packaging/RELEASE.md')
+    if shutil.which('readelf') is None:
+        raise ValueError('GNU readelf (binutils) is required to check the Linux executable')
+
+
+def _read_glibc_needs(path, label):
+    # Version definitions (symbols the ELF *provides*) do not constrain its
+    # target system. Only inspect the version needs from external libraries.
+    result = subprocess.run(['readelf', '--wide', '--version-info', '--', str(path)],
+                            env={**os.environ, 'LC_ALL': 'C'}, capture_output=True,
+                            text=True, encoding='ascii', errors='replace', check=True, timeout=30)
+    needs = result.stdout.partition('Version needs section')[2]
+    for token in re.findall(r'\bName:\s+(GLIBC_\S+)', needs):
+        name = token.removeprefix('GLIBC_')
+        if name == 'ABI_DT_RELR':
+            version = (2, 36)
+        elif GLIBC_VERSION.fullmatch(name):
+            version = _linux_version(name)
+        else:
+            # GLIBC_PRIVATE and unknown capability tags are not portable
+            # requirements, even if all numeric versions are under the limit.
+            raise ValueError(f'Non-portable glibc dependency in {label}: {token}')
+        if version > LINUX_GLIBC_CEILING:
+            raise ValueError(f'{label} requires {token}; Linux release ceiling is GLIBC_2.39')
+        yield version
+
+
+def verify_linux_abi(binary):
+    """Check the bootloader and every ELF in the PyInstaller onefile archive."""
+    _check_binary(binary, 'linux')
+    highest = max(_read_glibc_needs(binary, binary.name), default=())
+    archive = _pyinstaller_archive(binary)
+    elf_count = 0
+    with tempfile.TemporaryDirectory(prefix='gurps-linux-abi-') as directory:
+        extracted = Path(directory) / 'module.elf'
+        for name in archive.toc:
+            content = archive.extract(name)
+            if not content or not content.startswith(b'\x7fELF'):
+                continue
+            extracted.write_bytes(content)
+            highest = max((highest, *_read_glibc_needs(extracted, name)))
+            elf_count += 1
+    if not elf_count or not highest:
+        raise ValueError('No verifiable glibc requirements in the Linux package')
+    return '.'.join(map(str, highest))
 
 
 def _host():
@@ -210,6 +278,10 @@ def verify_release(directory):
         raise ValueError('Invalid tag')
     if release.get('environment') not in ({'native', 'wine'} if target == 'windows' else {'native'}):
         raise ValueError('Invalid build environment')
+    if 'glibc_required_by_elf' in release and (
+        target != 'linux' or _linux_version(release['glibc_required_by_elf']) > LINUX_GLIBC_CEILING
+    ):
+        raise ValueError('Incompatible glibc requirement in release.json')
     validate_startup_report(release.get('startup_check'), version)
     folder, executable, instructions = _package_names(target)
     binary_zip = f'{folder}.zip'
@@ -218,7 +290,8 @@ def verify_release(directory):
         raise ValueError('Unexpected release archives')
     for name, expected in artifacts.items():
         archive_path = directory / name
-        if archive_path.is_symlink() or sha256(archive_path) != expected:
+        if (archive_path.is_symlink() or not archive_path.is_file()
+                or archive_path.resolve() != directory.resolve() / name or sha256(archive_path) != expected):
             raise ValueError(f'Checksum mismatch: {name}')
     if declared_file(directory, 'SHA256SUMS.txt').read_text(encoding='ascii') != _checksums(artifacts):
         raise ValueError('Checksum index differs from release.json')
@@ -240,9 +313,184 @@ def verify_release(directory):
     return release
 
 
+def _unlinked_path(path):
+    if path.is_symlink() or path.resolve() != path:
+        raise ValueError(f'Refusing a linked distribution path: {path}')
+    return path
+
+
+@contextmanager
+def _current_lock(dist):
+    lock = dist / '.atuais.lock'
+    deadline = time.monotonic() + 15
+    while True:
+        _unlinked_path(lock)
+        try:
+            handle = lock.open('x', encoding='ascii')
+            break
+        except FileExistsError:
+            if time.monotonic() >= deadline:
+                raise OSError(f'Another refresh holds {lock}; retry after it finishes') from None
+            time.sleep(0.1)
+    try:
+        with handle:
+            handle.write(f'{os.getpid()}\n')
+        yield
+    finally:
+        lock.unlink()
+
+
+def _stage_current_file(current, stage, name, expected):
+    target = _unlinked_path(current / name)
+    if target.exists() and not target.is_file():
+        raise ValueError(f'Expected a regular file: {target}')
+    candidate = stage / name
+    if sha256(candidate) != expected:
+        raise ValueError(f'Checksum mismatch preparing {name}')
+    mode_ok = name != PLATFORMS['linux'][1] or os.name != 'posix' or os.access(target, os.X_OK)
+    return not target.exists() or sha256(target) != expected or not mode_ok
+
+
+def _stage_current_archive(current, stage, name, source, checksum):
+    target = current / name
+    if target.is_symlink():
+        if target.resolve() != source or sha256(source) != checksum:
+            raise ValueError(f'Existing ZIP shortcut differs from the verified archive: {target}')
+        return False
+    _unlinked_path(target)
+    if target.exists():
+        if not target.is_file() or sha256(target) != checksum:
+            raise ValueError(f'Existing versioned ZIP differs from the verified archive: {target}')
+        return False
+    staged = stage / name
+    # Stage and atuais are siblings; the same relative symlink works in
+    # both. Windows or filesystems without symlinks get a regular ZIP copy.
+    if os.name == 'posix':
+        try:
+            staged.symlink_to(os.path.relpath(source, current))
+        except OSError:
+            pass
+    if not staged.is_symlink():
+        shutil.copyfile(source, staged)
+    if sha256(staged) != checksum:
+        raise ValueError(f'Checksum mismatch preparing {name}')
+    return True
+
+
+class _CurrentRecoveryError(OSError):
+    """The staging directory must remain available for manual recovery."""
+
+
+def _install_current(current, stage, names):
+    previous = stage / 'previous'
+    previous.mkdir()
+    for name in names:
+        target = _unlinked_path(current / name)
+        if target.exists():
+            shutil.copy2(target, previous / name)
+    applied = []
+    try:
+        for name in names:
+            os.replace(stage / name, current / name)
+            applied.append(name)
+    except OSError as exc:
+        errors = []
+        for name in reversed(applied):
+            target, saved = current / name, previous / name
+            try:
+                if saved.is_file():
+                    os.replace(saved, target)
+                else:
+                    target.unlink()
+            except OSError as rollback_error:
+                errors.append(f'{name}: {rollback_error}')
+        if errors:
+            raise _CurrentRecoveryError(f'Could not fully restore dist/atuais. Backups: {previous}. '
+                                        f'{"; ".join(errors)}') from exc
+        if isinstance(exc, PermissionError):
+            raise PermissionError('Close any running copy of GurpsCalculadora and retry the refresh') from exc
+        raise
+
+
+def refresh_current(root, tag, *, require_pair=True, expected_source=None):
+    """Install a verified cross-platform release without altering its archives."""
+    if not isinstance(tag, str) or not SAFE_TAG.fullmatch(tag):
+        raise ValueError('Invalid tag for dist/atuais')
+    dist = _unlinked_path(Path(root).resolve() / 'dist')
+    releases = _unlinked_path(dist / 'releases')
+    tag_dir = _unlinked_path(releases / tag)
+    folders = {target: _unlinked_path(tag_dir / target) for target in PLATFORMS}
+    if not all(folder.is_dir() for folder in folders.values()):
+        if require_pair:
+            raise ValueError(f'Both Linux and Windows releases are required for {tag}')
+        return None
+
+    with _current_lock(dist):
+        reports = {target: verify_release(_unlinked_path(folder)) for target, folder in folders.items()}
+        for target, report in reports.items():
+            if report['tag'] != tag or report['target'] != target:
+                raise ValueError(f'Wrong tag or platform in {folders[target]}')
+            startup = report['startup_check']
+            if (startup.get('encounter_map_ranged') is not True
+                    or startup.get('languages_checked') != ['pt_BR', 'en_US']):
+                raise ValueError(f'Missing integrated startup verification for {target}')
+        linux, windows = reports['linux'], reports['windows']
+        if 'glibc_required_by_elf' not in linux:
+            raise ValueError('Linux release is missing its glibc compatibility check')
+        fingerprint = linux['source_sha256']
+        if (fingerprint != windows['source_sha256'] or linux['source_files'] != windows['source_files']
+                or linux['version'] != windows['version']):
+            raise ValueError('Linux and Windows were not built from the same source snapshot')
+        if expected_source is not None and (
+            fingerprint != expected_source or snapshot_hash(root, source_paths(root)) != expected_source
+        ):
+            raise ValueError('The verified builds no longer match the current project sources')
+
+        current = _unlinked_path(dist / 'atuais')
+        current.mkdir(exist_ok=True)
+        stage = Path(tempfile.mkdtemp(prefix='.atuais-', dir=dist))
+        keep_stage = False
+        try:
+            pending = []
+            archives = []
+            for target, report in reports.items():
+                folder, executable, _instructions = _package_names(target)
+                archive_name = f'{folder}.zip'
+                archive = folders[target] / archive_name
+                with zipfile.ZipFile(archive) as package:
+                    with package.open(f'{folder}/{executable}') as handle, (stage / executable).open('xb') as output:
+                        shutil.copyfileobj(handle, output)
+                if target == 'linux':
+                    (stage / executable).chmod(0o755)
+                _check_binary(stage / executable, target)
+                if _stage_current_file(current, stage, executable, report['binary_sha256']):
+                    pending.append(executable)
+                archives.append((archive, report['archives'][archive_name]))
+            archives.append((folders['linux'] / SOURCE_ZIP, linux['archives'][SOURCE_ZIP]))
+            for archive, checksum in archives:
+                name = f'{archive.stem}_{tag}.zip'
+                if _stage_current_archive(current, stage, name, archive, checksum):
+                    pending.append(name)
+            marker = stage / CURRENT_MANIFEST
+            marker.write_text(json.dumps({'tag': tag, 'source_sha256': fingerprint}, indent=2) + '\n',
+                              encoding='utf-8')
+            if _stage_current_file(current, stage, marker.name, sha256(marker)):
+                pending.append(marker.name)
+            _install_current(current, stage, pending)
+        except _CurrentRecoveryError:
+            keep_stage = True
+            raise
+        finally:
+            if not keep_stage:
+                shutil.rmtree(stage)
+    return current
+
+
 def build_release(root=ROOT, tag=None):
     root = Path(root).resolve()
     target, environment = _host()
+    if target == 'linux':
+        _check_linux_build_host()
     version = read_version(root)
     tag = _tag(tag, version)
     pins = _locked_tools(root, target)
@@ -282,6 +530,7 @@ def build_release(root=ROOT, tag=None):
             binary = workspace / 'binary' / executable
             _check_binary(binary, target)
             verify_embedded_resources(binary, snapshot)
+            glibc = verify_linux_abi(binary) if target == 'linux' else None
             startup = run_startup_check([binary], version)
             if source_paths(snapshot) != paths or snapshot_hash(snapshot, paths) != initial_hash:
                 raise ValueError('Release inputs changed during testing or build')
@@ -301,6 +550,8 @@ def build_release(root=ROOT, tag=None):
                 'source_files': list(paths), 'source_sha256': initial_hash, 'archives': artifacts,
                 'binary_sha256': sha256(binary), 'startup_check': startup,
             }
+            if glibc is not None:
+                release['glibc_required_by_elf'] = glibc
             (staged / 'release.json').write_text(json.dumps(release, indent=2, sort_keys=True) + '\n',
                                                 encoding='utf-8')
             (staged / 'SHA256SUMS.txt').write_text(_checksums(artifacts), encoding='ascii')
@@ -310,6 +561,11 @@ def build_release(root=ROOT, tag=None):
             staged.rename(destination)
     finally:
         lock.unlink()
+    try:
+        refresh_current(root, tag, require_pair=False, expected_source=initial_hash)
+    except (OSError, ValueError, zipfile.BadZipFile) as exc:
+        raise OSError(f'Build verified at {destination}, but dist/atuais was not refreshed: {exc}. '
+                      f'Retry with --refresh-current {tag}.') from exc
     return destination
 
 
@@ -318,11 +574,19 @@ def main():
     operation = parser.add_mutually_exclusive_group()
     operation.add_argument('--tag', help='Git version tag (defaults to the current app version)')
     operation.add_argument('--verify', type=Path, help='Verify archives in an existing release directory')
+    operation.add_argument('--verify-linux-binary', type=Path,
+                           help='Check glibc requirements of a Linux PyInstaller executable')
+    operation.add_argument('--refresh-current', metavar='TAG',
+                           help='Refresh dist/atuais from an existing verified Linux and Windows pair')
     args = parser.parse_args()
     try:
-        if args.verify is not None:
+        if args.verify_linux_binary is not None:
+            print(f'Highest required glibc version: {verify_linux_abi(args.verify_linux_binary)}')
+        elif args.verify is not None:
             result = verify_release(args.verify)
             print(f"Verified {result['tag']} ({result['target']}, {result['environment']}): {args.verify}")
+        elif args.refresh_current is not None:
+            print(f'Current executables verified: {refresh_current(ROOT, args.refresh_current)}')
         else:
             print(f'Verified release: {build_release(tag=args.tag)}')
     except (OSError, ValueError, TypeError, SyntaxError, zipfile.BadZipFile, subprocess.SubprocessError) as exc:

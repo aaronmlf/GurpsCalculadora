@@ -6,6 +6,7 @@
 AUDITORIA_IMPLEMENTACAO.md
 CONCLUSAO_MASS_COMBAT.md
 ENTREGA_GUI.md
+AGENTS.md
 README.md
 calculators/__init__.py
 calculators/battle_aftermath.py
@@ -33,6 +34,7 @@ calculators/slam.py
 calculators/strength.py
 calculators/vehicles.py
 main.py
+packaging/Dockerfile.linux
 packaging/GurpsCalculadora.spec
 packaging/LEIA-ME_LINUX.txt
 packaging/LEIA-ME_WINDOWS.txt

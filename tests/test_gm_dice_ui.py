@@ -7,7 +7,7 @@ import time
 import unittest
 from unittest.mock import patch
 
-from tests.tk_support import requires_tk
+from tests.tk_support import assert_workbench_reflow, requires_tk
 from utils.gm_dice import DiceRollError, roll_dice
 from utils.gm_dice_preferences import DiceExpressions
 from utils.ui_preferences import load_ui_preferences
@@ -78,8 +78,7 @@ class GMDiceGuiTests(unittest.TestCase):
                 panel = app.gm_dice_panel
                 app.root.geometry('800x600')
                 app.root.update()
-                self.assertFalse(panel.wide)
-                self.assertGreater(panel.result.winfo_rooty(), panel.inputs.winfo_rooty())
+                assert_workbench_reflow(self, panel, wide=False)
                 self.assertFalse(panel.work.winfo_ismapped())
                 app.gm_dice_expression.set('104d1+20')
                 panel.roll_button.invoke()
@@ -95,8 +94,7 @@ class GMDiceGuiTests(unittest.TestCase):
                                          panel.canvas.winfo_rootx() + panel.canvas.winfo_width())
                 app.root.geometry('1500x900')
                 app.root.update()
-                self.assertTrue(panel.wide)
-                self.assertGreater(panel.result.winfo_rootx(), panel.inputs.winfo_rootx())
+                assert_workbench_reflow(self, panel)
                 self.assertEqual(panel.total['text'], '124')
                 panel.next.invoke()
                 self.assertIn('#104=1', panel.output.get('1.0', 'end-1c'))

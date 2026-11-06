@@ -5,9 +5,10 @@ from tkinter import ttk
 import unittest
 from unittest.mock import patch
 
-from tests.tk_support import requires_tk
+from tests.tk_support import assert_workbench_reflow, requires_tk
 from utils.gui_form_state import descendants
 from utils.i18n import t
+from utils.ranged_layout import RangedWorkbench
 
 
 @requires_tk
@@ -48,8 +49,7 @@ class RangedLayoutTests(unittest.TestCase):
                 app.choose_tool(8)
                 self.resize('1520x920')
                 layout = app.ranged_layout
-                self.assertTrue(layout.wide)
-                self.assertEqual(layout.inputs.grid_info()['row'], layout.result.grid_info()['row'])
+                assert_workbench_reflow(self, layout)
 
                 app.ranged_search.set('Auto Pistol, 9mm')
                 self.button('ranged_search_button').invoke()
@@ -71,10 +71,7 @@ class RangedLayoutTests(unittest.TestCase):
                                 probability=expected.probability), calculated)
 
                 self.resize('800x600')
-                self.assertFalse(layout.wide)
-                self.assertGreater(layout.result.grid_info()['row'], layout.inputs.grid_info()['row'])
-                self.assertEqual(layout.winfo_width(), layout.canvas.winfo_width())
-                self.assertEqual(layout.canvas.xview(), (0.0, 1.0))
+                assert_workbench_reflow(self, layout, wide=False)
                 self.assertIs(text, app.ranged_result_text)
                 self.assertEqual(text.get('1.0', 'end-1c'), calculated)
                 self.assertEqual(app.ranged_distance.get(), '18.288')
@@ -99,8 +96,26 @@ class RangedLayoutTests(unittest.TestCase):
                     self.assertIn(t('ranged_hits_after_defense', value=0), text.get('1.0', 'end'))
                 self.show_error.assert_not_called()
                 self.resize('1520x920')
-                self.assertTrue(layout.wide)
+                assert_workbench_reflow(self, layout)
                 self.assertIs(text, app.ranged_result_text)
+
+    def test_workbench_crosses_the_exact_breakpoint_even_on_small_desktops(self):
+        # Size a child canvas directly: Windows may clamp top-level geometry
+        # to its monitor, but the child still receives genuine Tk resize events.
+        root = self.app.root
+        tab = ttk.Frame(root)
+        tab.place(x=0, y=0, relwidth=1, relheight=1)
+        layout = RangedWorkbench(tab, '#000000')
+        ttk.Label(layout.inputs, text='Input').pack()
+        ttk.Label(layout.result, text='Result').pack()
+        layout.canvas.pack_forget()
+        for delta, wide in ((-1, False), (0, True), (1, True), (-1, False)):
+            with self.subTest(delta=delta):
+                width = layout.WIDE + delta
+                layout.canvas.place(x=0, y=0, width=width, relheight=1)
+                root.update()
+                self.assertEqual(layout.canvas.winfo_width(), width)
+                assert_workbench_reflow(self, layout, wide=wide)
 
     def test_invalid_hidden_field_reveals_its_disclosure(self):
         app = self.app

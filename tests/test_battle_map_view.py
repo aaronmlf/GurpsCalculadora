@@ -69,6 +69,21 @@ class MapAssetTests(unittest.TestCase):
                 with self.assertRaisesRegex(BattleMapAssetError, "battle_map_image_too_large"):
                     BattleMapAssetStore(directory).import_png(source)
 
+    def test_scanline_filters_across_idat_chunks_and_adam7_passes(self):
+        # A 2x2 Adam7 image has passes of 1, 1, and 2 RGB pixels. The filter
+        # byte is separate from pixel data even if split across IDAT chunks.
+        data = (b"\x00" + b"\xff" * 3 + b"\x04" + b"\xff" * 3
+                + b"\x02" + b"\xff" * 6)
+        header = png(2, 2, scanlines=data, interlace=1)[:33]
+
+        def encode(scanlines):
+            return header + b"".join(chunk(b"IDAT", bytes((byte,)))
+                                      for byte in compress(scanlines)) + chunk(b"IEND", b"")
+
+        self.assertEqual(inspect_png(encode(data)).height, 2)
+        with self.assertRaisesRegex(BattleMapAssetError, "battle_map_image_invalid"):
+            inspect_png(encode(data[:8] + b"\x05" + data[9:]))
+
 
 class SceneProjectionTests(unittest.TestCase):
     def test_only_public_display_fields_in_projection(self):
@@ -130,6 +145,101 @@ class MapCanvasTests(unittest.TestCase):
         player.render(MapScene.from_map(battle_map.with_token_visibility("hero", False), labels))
         self.root.update()
         self.assertEqual(texts(player.canvas), [])
+        self.assertEqual(self.callback_errors, [])
+
+    def _assert_grid(self, canvas, *, overview, vertex_count):
+        cells = canvas.find_withtag("map-grid")
+        self.assertGreater(len(cells), 0)
+        self.assertLessEqual(len(cells), 3600)
+        self.assertTrue(all(canvas.type(item) == "polygon" for item in cells))
+        self.assertEqual(len(canvas.coords(cells[0])), vertex_count * 2)
+        indicators = canvas.find_withtag("map-grid-overview")
+        if overview:
+            self.assertTrue(any(canvas.type(item) == "text" and canvas.itemcget(item, "text").strip()
+                                for item in indicators))
+        else:
+            self.assertFalse(indicators)
+
+    def test_large_viewport_and_tiny_cells_keep_a_bounded_grid_at_every_orientation(self):
+        clicked = []
+        canvas = MapCanvas(self.root, on_click=lambda x, y: clicked.append((x, y)))
+        canvas.place(x=0, y=0, width=1688, height=760)
+        self.root.update()
+        self.assertEqual((canvas.winfo_width(), canvas.winfo_height()), (1688, 760))
+
+        for kind, vertex_count in (("hex", 6), ("hex_flat", 6), ("square", 4)):
+            with self.subTest(grid=kind):
+                state = BattleMap(grid=kind, origin_x=23.25, origin_y=-17.75)
+                canvas.render(MapScene.from_map(state), fit=True)
+                self.root.update()
+                # Exercise the precise camera scale at which the old axial
+                # bounding rectangle overcounted the actual visible cells.
+                canvas._scale = .35
+                canvas.render(MapScene.from_map(state))
+                self.root.update()
+                self._assert_grid(canvas, overview=False, vertex_count=vertex_count)
+                center = state.cell_center(0, 0)
+                initial = canvas.canvas_coords(*center)
+
+                def projected_cell_size():
+                    adjacent = canvas.canvas_coords(*state.cell_center(1, 0))
+                    x, y = canvas.canvas_coords(*center)
+                    return ((adjacent[0] - x) ** 2 + (adjacent[1] - y) ** 2) ** .5
+
+                for _ in range(2):
+                    canvas.zoom_out()
+                self.root.update()
+                # The old implementation dropped this grid for exceeding the
+                # item budget, not because the individual cells were too small.
+                self.assertGreater(projected_cell_size(), 10)
+                self._assert_grid(canvas, overview=True, vertex_count=vertex_count)
+
+                cell = (-7, -3)
+                world = state.cell_center(*cell)
+                x, y = map(round, canvas.canvas_coords(*world))
+                canvas.event_generate("<ButtonPress-1>", x=x, y=y)
+                canvas.event_generate("<ButtonRelease-1>", x=x, y=y)
+                self.assertTrue(clicked)
+                self.assertEqual(state.cell_at(*clicked.pop()), cell)
+
+                for _ in range(11):
+                    canvas.zoom_out()
+                self.root.update()
+                self.assertLess(projected_cell_size(), 10)
+                self._assert_grid(canvas, overview=True, vertex_count=vertex_count)
+
+                before_toggle = canvas.canvas_coords(*world)
+                canvas.render(MapScene.from_map(replace(state, show_grid=False)))
+                self.root.update()
+                self.assertFalse(canvas.find_withtag("map-grid"))
+                self.assertFalse(canvas.find_withtag("map-grid-overview"))
+                canvas.render(MapScene.from_map(state))
+                self.root.update()
+                self._assert_grid(canvas, overview=True, vertex_count=vertex_count)
+                self.assertEqual(canvas.canvas_coords(*world), before_toggle)
+
+                for _ in range(13):
+                    canvas.zoom_in()
+                self.root.update()
+                self._assert_grid(canvas, overview=False, vertex_count=vertex_count)
+                self.assertAlmostEqual(projected_cell_size(), state.cell_size * .35)
+                for current, original in zip(canvas.canvas_coords(*center), initial):
+                    self.assertAlmostEqual(current, original)
+        self.assertEqual(self.callback_errors, [])
+
+    def test_player_window_shows_reference_grid_at_low_zoom(self):
+        player = PlayerMapWindow(self.root, title="Jogador")
+        player.canvas.pack_forget()
+        player.canvas.place(x=0, y=0, width=820, height=600)
+        state = BattleMap(grid="hex_flat", tokens={"hero": MapToken(0, 0), "secret": MapToken(2, 0, False)})
+        player.render(MapScene.from_map(state, {"hero": "Vigia", "secret": "Segredo"}))
+        self.root.update()
+        self._assert_grid(player.canvas, overview=False, vertex_count=6)
+        for _ in range(18):
+            player.canvas.zoom_out()
+        self.root.update()
+        self._assert_grid(player.canvas, overview=True, vertex_count=6)
+        self.assertEqual([token.label for token in player.canvas.scene.tokens], ["Vigia"])
         self.assertEqual(self.callback_errors, [])
 
     def test_png_photo_fit_crop_cache_and_missing_image(self):

@@ -12,9 +12,10 @@ class RangedHitDraft:
     profile: str
     packet: DamagePacket
     half_damage_applied: bool
+    encounter_pair: tuple[str, str] | None = None
 
     @classmethod
-    def from_result(cls, result, weapon, index):
+    def from_result(cls, result, weapon, index, *, encounter_pair=None):
         if not result.valid or not 0 <= index < len(result.damages):
             raise ValueError("handoff_no_hit")
         hit = result.damages[index]
@@ -25,4 +26,4 @@ class RangedHitDraft:
                                                "fragmentation", "resistance", "effect_type", "effect_shape"))):
             raise ValueError("handoff_special_hit")
         return cls(index + 1, weapon.name, result.profile, DamagePacket.from_dict(packet),
-                   result.beyond_half_damage)
+                   result.beyond_half_damage, encounter_pair)

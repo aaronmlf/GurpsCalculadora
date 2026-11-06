@@ -93,6 +93,7 @@ class BattleMapPanel(ttk.Frame):
             self.asset_store = app._battle_map_assets = BattleMapAssetStore(app.ui_preferences_path.parent)
         self._fit_next = True
         self._placing_id = None
+        self._placement_visibility = {}
         self._session = None
         self._last_image = None
         self._selected_id = getattr(app, '_battle_map_selected_id', None)
@@ -162,6 +163,7 @@ class BattleMapPanel(ttk.Frame):
         self.status = wrap_label(ttk.Label(self, width=1, wraplength=230, style='Warning.TLabel'))
         self.canvas = MapCanvas(self, asset_store=self.asset_store, on_select=self._canvas_select,
                                 on_move=self._canvas_move, on_click=self._canvas_click,
+                                is_placing=lambda: self._placing_id is not None,
                                 background=app.colors['panel'], highlightthickness=0)
         self.canvas.pack(fill='both', expand=True)
         self.canvas.bind('<Escape>', self.cancel_placement, add='+')
@@ -208,7 +210,7 @@ class BattleMapPanel(ttk.Frame):
             return self.import_background(filename)
 
     def import_background(self, path):
-        identifier = self.asset_store.import_png(path)
+        identifier = self.asset_store.import_png(path, validate=self.canvas.decode_background)
         self.commit(replace(self.state, image_id=identifier), fit=True)
         return identifier
 
@@ -239,7 +241,6 @@ class BattleMapPanel(ttk.Frame):
         self._refresh_controls()
 
     def _canvas_select(self, identifier):
-        self.cancel_placement()
         self.select_token(identifier)
 
     def _selected(self):
@@ -251,26 +252,35 @@ class BattleMapPanel(ttk.Frame):
         identifier = self._selected()
         self._placing_id = identifier
         self._message(t('map_place_click', name=self.app.combat_session.combatants[identifier].name))
+        self.canvas.configure(cursor='crosshair')
         self.canvas.focus_set()
 
     def cancel_placement(self, event=None):
         if self._placing_id is not None:
             self._placing_id = None
+            self.canvas.configure(cursor='')
             self._message()
             return 'break' if event is not None else None
 
     def _canvas_click(self, x, y):
         identifier = self._placing_id
         if identifier is not None:
-            self.cancel_placement()
-            self._guard(lambda: self.place_token(identifier, x, y))
+            def place():
+                self.place_token(identifier, x, y)
+                self.cancel_placement()
+
+            self._guard(place)
 
     def place_token(self, identifier, x, y):
         if identifier not in self.app.combat_session.combatants:
             raise ValueError('encounter_select_one')
         q, r = self.state.cell_at(x, y)
+        # Resolve visibility before committing, so no intermediate public scene
+        # can expose the name or position of a newly placed hidden token.
+        visible = None if identifier in self.state.tokens else self._placement_visibility.get(identifier, False)
         self._selected_id = self.app._battle_map_selected_id = identifier
-        self.commit(self.state.with_token(identifier, q, r))
+        self.commit(self.state.with_token(identifier, q, r, visible=visible))
+        self._placement_visibility.pop(identifier, None)
 
     def _canvas_move(self, identifier, x, y):
         self.cancel_placement()
@@ -282,6 +292,8 @@ class BattleMapPanel(ttk.Frame):
         identifier = self._selected()
         if identifier in self.state.tokens:
             self.commit(self.state.with_token_visibility(identifier, self.visible_to_players.get()))
+        else:
+            self._placement_visibility[identifier] = self.visible_to_players.get()
 
     def remove_token(self):
         identifier = self._selected()
@@ -307,10 +319,11 @@ class BattleMapPanel(ttk.Frame):
     def _refresh_controls(self):
         token = self.state.tokens.get(self._selected_id)
         self.show_grid.set(self.state.show_grid)
-        self.visible_to_players.set(bool(token and token.visible))
+        self.visible_to_players.set(token.visible if token else self._placement_visibility.get(self._selected_id, False))
         self.map_menu.entryconfigure(self._clear_entry, state='normal' if self.state.image_id else 'disabled')
-        for index in (self._visibility_entry, self._remove_entry):
-            self.token_menu.entryconfigure(index, state='normal' if token else 'disabled')
+        self.token_menu.entryconfigure(self._visibility_entry,
+                                       state='normal' if self._selected_id in self._labels else 'disabled')
+        self.token_menu.entryconfigure(self._remove_entry, state='normal' if token else 'disabled')
         distance = self.pair_distance()
         units = UnitSystem(self.app.result_units.get())
         self.distance_label.configure(text=t('map_need_pair') if distance is None else
@@ -325,12 +338,15 @@ class BattleMapPanel(ttk.Frame):
         if self._session is not session:
             self._session = session
             self.cancel_placement()
+            self._placement_visibility.clear()
             self._fit_next = True
         if self._last_image != state.image_id:
             self._last_image = state.image_id
             self._fit_next = True
         self._labels = {key: f'{index}. {session.combatants[key].name}'
                         for index, key in enumerate(session.combatant_order, 1)}
+        for identifier in self._placement_visibility.keys() - self._labels.keys():
+            del self._placement_visibility[identifier]
         self._colors = {}
         for key, participant in session.combatants.items():
             group = participant.group or participant.team

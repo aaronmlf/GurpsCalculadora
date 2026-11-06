@@ -29,6 +29,11 @@ a = Analysis(
 # Filter out graphviz tcl data that causes extraction errors
 a.datas = [item for item in a.datas if "graphviz" not in str(item[0]).lower()]
 
+if sys.platform.startswith("linux"):
+    # libmvec is part of glibc and uses the matching loader's private ABI.
+    # Like libc and libm, it must be resolved from the target system.
+    a.binaries = [item for item in a.binaries if not Path(item[0]).name.startswith("libmvec.so")]
+
 pyz = PYZ(a.pure)
 
 exe = EXE(

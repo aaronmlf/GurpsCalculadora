@@ -31,6 +31,11 @@ MAX_ATTRIBUTES = 256
 MAX_ENERGY_TRACKS = 32
 MAX_STAT = 1_000_000_000
 _XML_NUMBER = re.compile(r'[+-]?[0-9]{1,12}(?:\.[0-9]{1,8})?\Z')
+_FG_PARRY = re.compile(r'([+-]?[0-9]{1,12})(?:FU|F|U)\Z')
+_FG_LEGACY_ENCODING = re.compile(
+    rb"""(?:\xef\xbb\xbf)?<\?xml\s+[^?>]*\bencoding\s*=\s*(['"])iso-8859-1\1[^?>]*\?>""",
+    re.IGNORECASE,
+)
 
 
 class GCSImportError(ValueError):
@@ -263,19 +268,30 @@ def _xml_number(parent, key, *, required=True, current=False, minimum=0, integra
         if required:
             raise GCSImportError('gcs_missing_current' if current else 'gcs_missing_calculated', key)
         return None
+    # GCS exports the best Parry as a score followed by weapon-specific F/U
+    # flags. Import the score; those flags do not apply to a generic defense.
+    if key == 'parry' and (match := _FG_PARRY.fullmatch(value)) is not None:
+        value = match[1]
     if not _XML_NUMBER.fullmatch(value):
         raise GCSImportError('gcs_invalid_stat', key)
     return _numeric(Decimal(value), key, minimum=minimum, integral=integral)
 
 
 def _fantasy_grounds(raw: bytes, source_name: str) -> ImportedCharacter:
-    # The verified templates write ISO-8859-1 (and ET also accepts UTF-8).
     # Reject declarations/entities and alternate NUL encodings before parse.
     if (b'\0' in raw or raw.count(b'<') > 100_000 or
             re.search(rb'<!\s*(?:doctype|entity)\b', raw, flags=re.IGNORECASE)):
         raise GCSImportError('gcs_invalid_document')
     try:
-        root = ET.fromstring(raw)
+        document = raw
+        if _FG_LEGACY_ENCODING.match(raw):
+            # The legacy PC template declares Latin-1 but newer GCS can
+            # write UTF-8 verbatim. Keep actual Latin-1 exports as a fallback.
+            try:
+                document = raw.decode('utf-8-sig')
+            except UnicodeDecodeError:
+                pass
+        root = ET.fromstring(document)
     except (ET.ParseError, LookupError, ValueError, RecursionError) as exc:
         raise GCSImportError('gcs_invalid_document') from exc
     if root.tag != 'root':

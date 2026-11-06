@@ -1,8 +1,11 @@
 import json
+import math
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
+from calculators.battle_map import BattleMap
 from calculators.ranged_combat import (
     DamageMode,
     RangedAttackInput,
@@ -93,12 +96,40 @@ class RangedCalculationTests(unittest.TestCase):
         self.assertFalse(self.calculate(weapon=custom, distance_m=100 * 0.9144).beyond_half_damage)
         self.assertTrue(self.calculate(weapon=custom, distance_m=101 * 0.9144).beyond_half_damage)
 
+    def test_metric_and_scaled_map_distance_respect_exact_threshold(self):
+        custom = weapon(damage_modes=[DamageMode("2d", "pi", half_damage_range=7, max_range=7)])
+        map_distance = BattleMap(yards_per_cell=0.14).distance_yards(0, 0, 50, 0)
+        for distance in ({"distance_m": 6.4008}, {"map_distance_yards": map_distance}):
+            with self.subTest(distance=distance):
+                result = self.calculate(weapon=custom, **distance)
+                self.assertTrue(result.valid)
+                self.assertFalse(result.beyond_half_damage)
+                self.assertEqual(result.modifiers[0]["value"], -3)
+        just_beyond = self.calculate(weapon=custom, map_distance_yards=7 + 1e-9)
+        self.assertFalse(just_beyond.range_valid)
+        self.assertTrue(just_beyond.beyond_half_damage)
+        self.assertEqual(just_beyond.modifiers[0]["value"], -4)
+
+    def test_roundoff_is_ignored_at_minimum_range_and_combined_speed_boundary(self):
+        custom = weapon(damage_modes=[DamageMode("2d", "pi", minimum_range=4)])
+        result = self.calculate(weapon=custom, map_distance_yards=math.nextafter(4, 0),
+                                target_speed_mps=2.7432)
+        self.assertTrue(result.range_valid)
+        self.assertEqual(result.modifiers[0]["value"], -3)
+        shorter = self.calculate(weapon=custom, map_distance_yards=4 - 1e-9)
+        self.assertFalse(shorter.range_valid)
+        longer_combined = self.calculate(weapon=custom, map_distance_yards=4 + 1e-9,
+                                         target_speed_mps=2.7432)
+        self.assertEqual(longer_combined.modifiers[0]["value"], -4)
+
     def test_simplified_range_bands(self):
         self.assertEqual(simplified_range_modifier(5), (0, "close"))
         self.assertEqual(simplified_range_modifier(20), (-3, "short"))
         self.assertEqual(simplified_range_modifier(100), (-7, "medium"))
         self.assertEqual(simplified_range_modifier(500), (-11, "long"))
         self.assertEqual(simplified_range_modifier(501), (-15, "extreme"))
+        self.assertEqual(simplified_range_modifier(math.nextafter(5, 6)), (0, "close"))
+        self.assertEqual(simplified_range_modifier(5 + 1e-9), (-3, "short"))
 
     def test_cinematic_range_does_not_leak_to_basic(self):
         basic = self.calculate(distance_m=50 * 0.9144)
@@ -132,6 +163,8 @@ class RangedCalculationTests(unittest.TestCase):
     def test_success_probability_uses_all_216_outcomes(self):
         self.assertEqual(success_probability(10), 50.0)
         self.assertEqual(success_probability(3), 1.85)
+        self.assertEqual(success_probability(2), 0.0)
+        self.assertEqual(self.calculate(weapon=weapon(malfunction=11)).probability, 50.0)
 
     def test_all_rapid_fire_intervals(self):
         cases = {1: 0, 4: 0, 5: 1, 8: 1, 9: 2, 12: 2, 13: 3,
@@ -146,6 +179,35 @@ class RangedCalculationTests(unittest.TestCase):
         result = self.calculate(weapon=custom, shots_fired=4)
         self.assertIn("full_auto_minimum", result.errors)
         self.assertTrue(self.calculate(weapon=custom, shots_fired=5).valid)
+
+    def test_burst_cannot_exceed_rof_or_award_impossible_rapid_fire_bonus(self):
+        custom = weapon(rate_of_fire_modes=[1])
+        result = self.calculate(weapon=custom, shots_fired=25)
+        self.assertFalse(result.valid)
+        self.assertIn("shots_exceed_rof", result.errors)
+        self.assertEqual(result.rate_of_fire_bonus, 0)
+        self.assertEqual(result.probability, 0)
+        multi_mode = weapon(rate_of_fire_modes=[3, 5])
+        self.assertTrue(self.calculate(weapon=multi_mode, shots_fired=5).valid)
+        self.assertIn("shots_exceed_rof", self.calculate(weapon=multi_mode, shots_fired=6).errors)
+
+    def test_ammo_limit_counts_chamber_and_preserves_fractional_rof(self):
+        custom = weapon(rate_of_fire_modes=[20], shots_capacity=3, chamber_capacity=1)
+        self.assertTrue(self.calculate(weapon=custom, shots_fired=4).valid)
+        self.assertIn("shots_exceed_capacity", self.calculate(weapon=custom, shots_fired=5).errors)
+        fractional = weapon(rate_of_fire_modes=[0.5], shots_capacity=1)
+        self.assertTrue(self.calculate(weapon=fractional).valid)
+        self.assertIn("shots_exceed_rof", self.calculate(weapon=fractional, shots_fired=2).errors)
+
+    def test_invalid_bursts_do_not_roll_or_resolve_damage(self):
+        for custom, shots in ((weapon(rate_of_fire_modes=[1]), 25),
+                              (weapon(rate_of_fire_modes=[20], shots_capacity=1), 2),
+                              (weapon(rate_of_fire_modes=[0]), 1)):
+            with self.subTest(weapon=custom, shots=shots), patch("calculators.ranged_combat.roll_3d6") as roll:
+                result = self.calculator.resolve(RangedAttackInput(weapon=custom, shots_fired=shots))
+                roll.assert_not_called()
+                self.assertFalse(result.valid)
+                self.assertEqual((result.attack, result.damages), (None, []))
 
 
 class RangedResolutionTests(unittest.TestCase):
@@ -189,18 +251,54 @@ class RangedResolutionTests(unittest.TestCase):
         )
         self.assertIsNone(result.defense)
 
-    def test_malfunction_is_detected_from_attack_roll(self):
+    def test_malfunction_replaces_the_normal_attack_including_defense_and_damage(self):
         custom = weapon(malfunction=16)
-        result = self.calculator.resolve(
-            RangedAttackInput(weapon=custom, skill=20, distance_m=1, target_aware=False),
-            attack_roll=16,
-        )
+        attack = RangedAttackInput(weapon=custom, skill=20, distance_m=1, dodge=9)
+        with patch("calculators.ranged_combat.roll_3d6") as roll:
+            result = self.calculator.resolve(attack, attack_roll=16)
+            roll.assert_not_called()
         self.assertTrue(result.malfunction)
+        self.assertIn("malfunction", result.notes)
+        self.assertFalse(result.attack["success"])
+        self.assertEqual(result.attack["roll"], 16)
+        self.assertIsNone(result.defense)
+        self.assertEqual((result.hits_before_defense, result.hits_after_defense), (0, 0))
+        self.assertEqual(result.damages, [])
+        self.assertFalse(self.calculator.resolve(attack, attack_roll=15, defense_roll=10,
+                                                  damage_rolls=[7]).malfunction)
+
+    def test_effective_skill_below_three_never_rolls_or_hits(self):
+        for skill in (0, 1, 2):
+            with self.subTest(skill=skill):
+                attack = RangedAttackInput(weapon=weapon(), skill=skill + 1, cover_modifier=-1)
+                result = self.calculator.resolve(attack, attack_roll=3)
+                self.assertFalse(result.valid)
+                self.assertIn("effective_skill_below_minimum", result.errors)
+                self.assertEqual(result.effective_skill, skill)
+                self.assertEqual((result.attack, result.hits_after_defense, result.probability), (None, 0, 0))
+
+    def test_automatic_critical_success_at_effective_three_keeps_one_hit(self):
+        result = self.calculator.resolve(
+            RangedAttackInput(weapon=weapon(), skill=3, shots_fired=4),
+            attack_roll=4, damage_rolls=[7],
+        )
+        self.assertTrue(result.attack["critical_success"])
+        self.assertEqual((result.hits_before_defense, result.hits_after_defense), (1, 1))
+
 
     def test_half_damage_rounding_is_visible(self):
         result = self.resolve(skill=30, distance_m=501 * 0.9144, supplied_damage=[9, 9, 9])
         self.assertEqual(result.damages[0]["basic_damage"], 4)
         self.assertEqual(result.damages[0]["rounding"], "floor")
+
+    def test_exact_half_damage_boundary_is_not_reduced_during_resolution(self):
+        custom = weapon(damage_modes=[DamageMode("2d", "pi", half_damage_range=7, max_range=100)])
+        exact = self.resolve(weapon=custom, distance_m=6.4008, supplied_damage=[9])
+        self.assertFalse(exact.beyond_half_damage)
+        self.assertEqual(exact.damages[0]["basic_damage"], 9)
+        farther = self.resolve(weapon=custom, map_distance_yards=7 + 1e-9, supplied_damage=[9])
+        self.assertTrue(farther.beyond_half_damage)
+        self.assertEqual(farther.damages[0]["basic_damage"], 4)
 
     def test_armor_divisor_and_wounding_multiplier(self):
         custom = weapon(damage_modes=[DamageMode("2d", "pi+", armor_divisor=2, max_range=1000)])

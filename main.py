@@ -290,6 +290,7 @@ class GURPSCalculator:
         self.ranged_distance = tk.StringVar(value="25")
         self.ranged_map_hint = tk.StringVar()
         self._map_ranged_transfer = None
+        self._map_ranged_manual_distance = None
         self.ranged_distance.trace_add("write", self._refresh_ranged_map_hint)
         self.ranged_speed = tk.StringVar(value="0")
         self.ranged_sm = tk.StringVar(value="0")
@@ -325,6 +326,7 @@ class GURPSCalculator:
 
         # ─── Sessão leve compartilhada ──────────────────────────────
         self.session_actor_key, self.session_target_key = self.combat_session.selected_pair()
+        self.combat_session.active_pair = (self.session_actor_key, self.session_target_key)
         self.session_actor = tk.StringVar()
         self.session_target = tk.StringVar()
         self.session_summary = tk.StringVar()
@@ -1480,7 +1482,7 @@ class GURPSCalculator:
         self.ranged_armor_divisor.set(str(mode.armor_divisor))
         self.ranged_half_damage.set("" if mode.half_damage_range is None else str(mode.half_damage_range))
         self.ranged_max_range.set("" if mode.max_range is None else str(mode.max_range))
-        self.ranged_rof.set(str(max(weapon.rate_of_fire_modes or [1])).rstrip("0").rstrip("."))
+        self.ranged_rof.set(format(max(weapon.rate_of_fire_modes or [1]), ".15g"))
         self.ranged_projectiles.set(str(weapon.projectiles_per_shot))
         self.ranged_shots_stat.set(weapon.shots_raw)
         self.ranged_bulk.set("" if weapon.bulk is None else str(weapon.bulk))
@@ -2780,7 +2782,10 @@ class GURPSCalculator:
             actor, target = target if identifier == actor else actor, identifier
         else:
             raise ValueError("invalid_encounter_role")
-        self.session_actor_key, self.session_target_key = self.combat_session.selected_pair(actor, target)
+        try:
+            self.combat_session.set_active_pair(actor, target)
+        except OSError as exc:
+            messagebox.showerror(t("session_title"), t("local_data_save_error", error=exc))
         self._session_changed()
 
     def _swap_encounter_roles(self):
@@ -2870,20 +2875,23 @@ class GURPSCalculator:
             messagebox.showerror(t("session_title"), t("local_data_save_error", error=exc))
 
     def _replace_active_session(self, candidate):
+        candidate.active_pair = candidate.selected_pair()
         candidate.save()
         self.combat_session = candidate
         self.session_actor_key, self.session_target_key = candidate.selected_pair()
         # Even a reopened snapshot with the same IDs is a new scenario context.
         self._session_reserve_actor = None
-        self._map_ranged_transfer = None
+        if self._map_ranged_transfer is not None:
+            self._map_ranged_transfer = None
+            self.ranged_distance.set(self._map_ranged_manual_distance)
+        self._map_ranged_manual_distance = None
         self._ranged_drafts = {}
         self._clear_ranged_draft()
         self._refresh_handoff_choices()
         self._session_changed()
 
     def _session_changed(self):
-        self.session_actor_key, self.session_target_key = self.combat_session.selected_pair(
-            self.session_actor_key, self.session_target_key)
+        self.session_actor_key, self.session_target_key = self.combat_session.selected_pair()
         self._last_melee_result = None
         self._last_grapple_result = None
         self._last_injury_result = None
@@ -2895,6 +2903,8 @@ class GURPSCalculator:
             box["values"] = tuple(labels)
         self.session_actor.set(names[self.session_actor_key])
         self.session_target.set(names[self.session_target_key])
+        if self._injury_ranged_draft is not None:
+            self._refresh_ranged_draft()
         self._refresh_session_summary()
 
     def _use_session_weapons(self):
@@ -3374,9 +3384,12 @@ class GURPSCalculator:
         )))
 
     def _current_injury_input(self):
-        target = deepcopy(self.combat_session.combatants[self.session_target_key])
-        if self._injury_ranged_draft is not None:
-            draft = self._injury_ranged_draft
+        pair = (self.session_actor_key, self.session_target_key)
+        draft = self._injury_ranged_draft
+        if draft is not None and draft.encounter_pair != pair:
+            raise ValueError(t("handoff_pair_changed"))
+        target = deepcopy(self.combat_session.combatants[pair[1]])
+        if draft is not None:
             return InjuryInput(packet=replace(draft.packet, direction=self.injury_direction_key,
                                               chinks=self.injury_chinks.get()), target=target,
                                profile=draft.profile, optional_rules=self._optional_injury_rules())
@@ -3449,18 +3462,29 @@ class GURPSCalculator:
             messagebox.showerror(t("common_error_title"), str(exc))
 
     def _apply_injury_result(self):
-        if self._last_injury_result is None:
+        draft = self._injury_ranged_draft
+        pair = (self.session_actor_key, self.session_target_key)
+        if draft is not None and draft.encounter_pair != pair:
+            messagebox.showwarning(t("session_title"), t("handoff_pair_changed"))
+            return
+        result = self._last_injury_result
+        session = self.combat_session
+        if result is None:
             messagebox.showinfo(t("session_title"), t("session_nothing_to_apply"))
             return
-        if self._injury_ranged_draft and not self._injury_draft_resolved:
+        if draft and not self._injury_draft_resolved:
             messagebox.showinfo(t("session_title"), t("handoff_resolve_first"))
             return
-        if not confirm_session(self, 'injury', self._last_injury_result.state_delta):
+        if not confirm_session(self, 'injury', result.state_delta):
             return
-        draft = self._injury_ranged_draft
+        if (self.combat_session is not session or self._last_injury_result is not result
+                or self._injury_ranged_draft is not draft
+                or pair != (self.session_actor_key, self.session_target_key)):
+            messagebox.showwarning(t("session_title"), t("ui_session_stale"))
+            return
         try:
-            self.combat_session.apply(
-                self.session_actor_key, self.session_target_key, self._last_injury_result.state_delta,
+            session.apply(
+                *pair, result.state_delta,
                 "ranged_injury" if draft else "manual_injury", advance_action=False,
             )
         except OSError as exc:
@@ -3562,9 +3586,11 @@ class GURPSCalculator:
         measured = model.distance_yards(*geometry[-4:])
         if not math.isclose(measured, yards, rel_tol=1e-10, abs_tol=1e-12):
             raise ValueError("map_settings_stale")
-        self.session_actor_key, self.session_target_key = actor_id, target_id
+        self.combat_session.set_active_pair(actor_id, target_id)
         self._session_changed()
         meters = measured * YARDS_TO_METERS
+        if self._map_ranged_transfer is None:
+            self._map_ranged_manual_distance = self.ranged_distance.get()
         self._map_ranged_transfer = (actor_id, target_id, geometry, measured, meters,
                                      combatants[actor_id].name, combatants[target_id].name)
         self.ranged_distance.set(repr(meters))
@@ -3581,6 +3607,7 @@ class GURPSCalculator:
                 current = None
             if current is None or not math.isclose(current, meters, rel_tol=1e-14, abs_tol=1e-14):
                 transfer = self._map_ranged_transfer = None
+                self._map_ranged_manual_distance = None
         text = ""
         if transfer is not None:
             text = t("ranged_map_distance", actor=actor_name, target=target_name,
@@ -3612,6 +3639,19 @@ class GURPSCalculator:
             max_range=self._optional_number(self.ranged_max_range, float),
         )
         rof = self._optional_number(self.ranged_rof, float, 1.0)
+        shots_raw = self.ranged_shots_stat.get().strip()
+        if base and shots_raw == base.shots_raw.strip():
+            capacity, chamber = base.shots_capacity, base.chamber_capacity
+            reload_seconds, reload_individual = base.reload_seconds, base.reload_individual
+        else:
+            # Accept published capacity notation for manual overrides. Other
+            # notations remain reference text rather than a guessed capacity.
+            shots = re.fullmatch(r"([0-9]{1,9})(?:\+([0-9]{1,9}))?(?:\(([0-9]{1,9})(i)?\))?",
+                                 shots_raw.replace(",", ""), flags=re.IGNORECASE)
+            capacity = int(shots[1]) if shots else None
+            chamber = int(shots[2] or 0) if shots else 0
+            reload_seconds = int(shots[3]) if shots and shots[3] else None
+            reload_individual = bool(shots and shots[4])
         return WeaponRecord(
             identifier=base.identifier if base else "custom.current",
             source=base.source if base else "Custom",
@@ -3626,11 +3666,11 @@ class GURPSCalculator:
             weight_raw=base.weight_raw if base else "",
             rate_of_fire_modes=[rof],
             projectiles_per_shot=self._optional_number(self.ranged_projectiles, int, 1),
-            shots_raw=self.ranged_shots_stat.get().strip(),
-            shots_capacity=base.shots_capacity if base else None,
-            chamber_capacity=base.chamber_capacity if base else 0,
-            reload_seconds=base.reload_seconds if base else None,
-            reload_individual=base.reload_individual if base else False,
+            shots_raw=shots_raw,
+            shots_capacity=capacity,
+            chamber_capacity=chamber,
+            reload_seconds=reload_seconds,
+            reload_individual=reload_individual,
             strength=self._optional_number(self.ranged_required_st, int),
             strength_flags=base.strength_flags if base else "",
             bulk=self._optional_number(self.ranged_bulk, int),
@@ -3700,7 +3740,7 @@ class GURPSCalculator:
             self.ranged_result_text.delete(1.0, tk.END)
             lines = [t("ranged_summary", weapon=attack_input.weapon.name,
                        profile=t("ranged_profile_" + result.profile))]
-            lines.append(t("ranged_range_result", meters=attack_input.distance_m,
+            lines.append(t("ranged_range_result", meters=format(attack_input.distance_m, ".12g"),
                            yards=result.distance_yards, valid=t("common_yes") if result.range_valid else t("common_no")))
             if result.beyond_half_damage:
                 lines.append(t("ranged_half_damage_warning"))
@@ -3721,8 +3761,10 @@ class GURPSCalculator:
                 outcome = ("critical_hit" if result.attack["critical_success"] else
                            "critical_miss" if result.attack["critical_failure"] else
                            "hit" if result.attack["success"] else "miss")
+                outcome_text = (t("ranged_malfunction_outcome") if result.malfunction
+                                else t("combat_outcome_" + outcome, margin=result.attack["margin"]))
                 lines.extend(("", t("ranged_attack_roll", roll=result.attack["roll"],
-                                     outcome=t("combat_outcome_" + outcome, margin=result.attack["margin"]))))
+                                     outcome=outcome_text)))
                 if result.malfunction:
                     lines.append(t("ranged_malfunction"))
                 if operation == "attack":
@@ -3741,7 +3783,8 @@ class GURPSCalculator:
             if operation == "resolve" and result.valid:
                 for index in range(len(result.damages)):
                     try:
-                        draft = RangedHitDraft.from_result(result, attack_input.weapon, index)
+                        draft = RangedHitDraft.from_result(result, attack_input.weapon, index,
+                            encounter_pair=(self.session_actor_key, self.session_target_key))
                     except ValueError:
                         lines.append(t("handoff_special_hit", number=index + 1))
                     else:
@@ -3766,6 +3809,10 @@ class GURPSCalculator:
         if draft is None:
             return
         if self._injury_ranged_draft is not None and not messagebox.askyesno(t("tab_injury"), t("handoff_replace")):
+            return
+        if (self._ranged_drafts.get(draft.number) is not draft
+                or draft.encounter_pair != (self.session_actor_key, self.session_target_key)):
+            messagebox.showwarning(t("tab_ranged"), t("handoff_pair_changed"))
             return
         if self._injury_ranged_draft is None:
             self._injury_manual_form = (
@@ -3818,6 +3865,12 @@ class GURPSCalculator:
             self._injury_handoff_banner.pack_forget()
             return
         message = t("handoff_draft", number=draft.number, weapon=draft.weapon_name)
+        if draft.encounter_pair:
+            target = self.combat_session.combatants.get(draft.encounter_pair[1])
+            if target is not None:
+                message += " " + t("handoff_original_target", target=target.name)
+        if draft.encounter_pair != (self.session_actor_key, self.session_target_key):
+            message += "\n" + t("handoff_pair_changed")
         if draft.half_damage_applied:
             message += " " + t("handoff_half_damage")
         self._injury_handoff_message.configure(text=message)

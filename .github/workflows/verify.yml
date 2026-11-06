@@ -35,7 +35,7 @@ jobs:
         shell: bash
         run: |
           sudo apt-get update
-          sudo apt-get install --no-install-recommends -y xvfb xauth tk
+          sudo apt-get install --no-install-recommends -y binutils xvfb xauth tk
           python -m pip install --no-deps -r packaging/requirements-build.txt
           xvfb-run -a -s '-screen 0 1600x1080x24' python tools/build_archives.py
       - if: runner.os == 'Windows'

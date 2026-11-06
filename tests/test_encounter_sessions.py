@@ -104,6 +104,26 @@ class EncounterSessionTests(unittest.TestCase):
             with self.subTest(order=order), self.assertRaisesRegex(ValueError, "encounter_invalid_order"):
                 CombatSession.from_dict(document)
 
+    def test_active_roles_save_atomically_and_survive_reordering(self):
+        with TemporaryDirectory() as folder:
+            path = Path(folder) / "session.json"
+            session = CombatSession.new(path)
+            session.add_combatant(participant("third"))
+            before = session.to_dict()
+            with patch.object(CombatSession, "save", side_effect=OSError("read only")):
+                with self.assertRaises(OSError):
+                    session.set_active_pair(B, "third")
+            self.assertEqual(session.to_dict(), before)
+            session.set_active_pair(B, "third")
+            self.assertEqual(session.events[-1].label, "encounter_add_combatants")
+            self.assertEqual(CombatSession.load_or_new(path).selected_pair(), (B, "third"))
+            session.move_combatant("third", 0)
+            self.assertEqual(session.selected_pair(), (B, "third"))
+            session.remove_combatant("third")
+            self.assertEqual(session.selected_pair(), (B, A))
+            broken = dict(session.to_dict(), active_pair=[B, "third"])
+            self.assertEqual(CombatSession.from_dict(broken).selected_pair(), (A, B))
+
     def test_roster_limit_and_duplicate_ids_are_atomic(self):
         session = CombatSession.new()
         snapshot = session.to_dict()

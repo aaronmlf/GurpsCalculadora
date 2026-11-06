@@ -6,8 +6,8 @@ GURPS 4e Calculadora — Windows x86-64
 
 O programa não requer instalação de Python nem uso do Prompt de Comando.
 O executável não tem assinatura digital. Baixe somente da página oficial
-do projeto e confira a integridade antes de executar. Consulte o
-release.json para saber se a validação ocorreu em Windows nativo ou Wine.
+do projeto e confira a integridade antes de executar. Consulte as notas
+da versão para saber se a validação ocorreu em Windows nativo ou Wine.
 
 A versão aparece no aplicativo. O menu Exibir permite mudar tema, cores,
 fonte e navegação. O programa tem interfaces em português e inglês e
@@ -18,3 +18,4 @@ dados do usuário.
 English: Extract the complete ZIP and double-click "GurpsCalculadora.exe".
 No Python or command prompt is required. The executable is unsigned;
 download from the official project and check the published checksum.
+See the release notes for the Windows or Wine validation environment.

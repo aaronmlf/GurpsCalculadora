@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from copy import deepcopy
-from dataclasses import asdict, dataclass, field
+from dataclasses import asdict, dataclass, field, replace
 from datetime import datetime
 import json
 import math
@@ -133,6 +133,7 @@ class CombatSession:
     load_warning: Optional[str] = field(default=None, repr=False)
     combatant_order: List[str] = field(default_factory=list)
     battle_map: BattleMap = field(default_factory=BattleMap)
+    active_pair: Optional[tuple[str, str]] = None
 
     def __post_init__(self):
         if not self.combatant_order:
@@ -178,6 +179,13 @@ class CombatSession:
         )
         if battle_map.tokens.keys() - combatants.keys():
             raise ValueError("unknown_combatant")
+        # Optional in v3: snapshots made before role persistence keep their
+        # roster and map, falling back to the first two members.
+        pair = value.get("active_pair")
+        if (not isinstance(pair, list) or len(pair) != 2
+                or any(not isinstance(key, str) or key not in combatants for key in pair)
+                or pair[0] == pair[1]):
+            pair = None
         events = []
         for item in value.get("events", [])[-SESSION_HISTORY_LIMIT:]:
             event = deepcopy(dict(item))
@@ -195,6 +203,7 @@ class CombatSession:
             autosave_path=autosave_path,
             combatant_order=list(order),
             battle_map=battle_map,
+            active_pair=tuple(pair) if pair is not None else None,
         )
 
     def to_dict(self) -> Dict[str, Any]:
@@ -205,12 +214,13 @@ class CombatSession:
             "combatants": {identifier: state.to_dict() for identifier, state in self.combatants.items()},
             "events": [event.to_dict() for event in self.events[-SESSION_HISTORY_LIMIT:]],
             "battle_map": self.battle_map.to_dict(),
+            **({"active_pair": list(self.active_pair)} if self.active_pair is not None else {}),
         }
 
     def _candidate(self) -> "CombatSession":
         return CombatSession(combatants=deepcopy(self.combatants), elapsed_seconds=self.elapsed_seconds,
                              events=deepcopy(self.events), combatant_order=list(self.combatant_order),
-                             battle_map=self.battle_map,
+                             battle_map=self.battle_map, active_pair=self.active_pair,
                              _undo_snapshots=(self._undo_snapshots + [self.to_dict()])[-SESSION_HISTORY_LIMIT:],
                              autosave_path=self.autosave_path)
 
@@ -219,21 +229,33 @@ class CombatSession:
         self.combatants = candidate.combatants
         self.combatant_order = candidate.combatant_order
         self.battle_map = candidate.battle_map
+        self.active_pair = candidate.active_pair
         self.elapsed_seconds = candidate.elapsed_seconds
         self.events = candidate.events
         self._undo_snapshots = candidate._undo_snapshots
 
     def selected_pair(self, actor_id=None, target_id=None):
         """Keep valid distinct UI selections, falling back to the manual roster order."""
+        if actor_id is None and target_id is None and self.active_pair is not None:
+            actor_id, target_id = self.active_pair
         if actor_id not in self.combatants:
             actor_id = next(key for key in self.combatant_order if key != target_id)
         if target_id not in self.combatants or target_id == actor_id:
             target_id = next(key for key in self.combatant_order if key != actor_id)
         return actor_id, target_id
 
+    def set_active_pair(self, actor_id, target_id):
+        """Save the encounter's active roles without spending a turn or adding history."""
+        pair = self.selected_pair(actor_id, target_id)
+        if pair != self.active_pair:
+            candidate = replace(self, active_pair=pair)
+            self._commit(candidate)
+
     def _set_order(self, order):
         self.combatant_order = list(order)
         self.combatants = {key: self.combatants[key] for key in self.combatant_order}
+        if self.active_pair is not None:
+            self.active_pair = self.selected_pair(*self.active_pair)
         for key in self.battle_map.tokens.keys() - self.combatants.keys():
             self.battle_map = self.battle_map.without_token(key)
 
@@ -584,6 +606,8 @@ class CombatSession:
             return False
         snapshot = self._undo_snapshots[-1]
         restored = CombatSession.from_dict(snapshot, self.autosave_path)
+        if self.active_pair is not None and all(key in restored.combatants for key in self.active_pair):
+            restored.active_pair = self.active_pair
         restored._undo_snapshots = self._undo_snapshots[:-1]
         self._commit(restored)
         return True

@@ -9,6 +9,7 @@ import tkinter as tk
 
 from calculators.battle_map import BattleMap, MAX_CELL_INDEX, MAX_WORLD_COORDINATE
 from utils.battle_map_assets import BattleMapAssetError, BattleMapAssetStore
+from utils.i18n import t
 
 
 _DEFAULT_COLOR = "#699bea"
@@ -17,12 +18,40 @@ _MAP_LIMIT = MAX_WORLD_COORDINATE
 _MIN_SCALE = 1e-7
 _MAX_SCALE = 8.0
 _MAX_GRID_CELLS = 3600
+_MIN_GRID_SPACING = 10.0
 _MAX_CROP_PIXELS = 10 * 1024 * 1024
 _IMAGE_SCALES = tuple(1 / step for step in (
     10_000_000, 4_194_304, 2_097_152, 1_048_576, 524_288, 262_144, 131_072,
     65_536, 32_768, 16_384, 8192, 4096, 2048, 1024, 512, 256, 128, 64,
     48, 32, 24, 16, 12, 8, 6, 5, 4, 3, 2, 1,
 )) + (2.0, 3.0, 4.0, 6.0, 8.0)
+
+
+def _viewport_grid_cells(grid, bounds, radius, stride):
+    """Collect visible axial cells row by row (column by column for flat hexes)."""
+    left, top, right, bottom = bounds
+    rx, ry = radius
+    flat = grid == "hex_flat"
+    staggered = grid != "square"
+    if flat:
+        left, top, right, bottom = top, left, bottom, right
+        rx, ry = ry, rx
+    pitch = math.sqrt(3) / 2 if staggered else 1.0
+    limit = MAX_CELL_INDEX // stride
+    cells = []
+    for row in range(max(-limit, math.ceil((top - ry) / pitch)),
+                     min(limit, math.floor((bottom + ry) / pitch)) + 1):
+        shift = row / 2 if staggered else 0
+        start = max(-limit, math.ceil(left - rx - shift))
+        stop = min(limit, math.floor(right + rx - shift))
+        if start > stop:
+            continue
+        if len(cells) + stop - start + 1 > _MAX_GRID_CELLS:
+            return None
+        for col in range(start, stop + 1):
+            q, r = (row, col) if flat else (col, row)
+            cells.append((q * stride, r * stride))
+    return cells
 
 
 @dataclass(frozen=True)
@@ -78,13 +107,14 @@ class MapCanvas(tk.Canvas):
     """Camera, viewport rendering and optional master interaction callbacks."""
 
     def __init__(self, parent, asset_store=None, on_select=None, on_move=None, on_click=None,
-                 **canvas_options):
+                 is_placing=None, **canvas_options):
         canvas_options.setdefault("background", "#262c38")
         canvas_options.setdefault("highlightthickness", 0)
         canvas_options.setdefault("takefocus", True)
         super().__init__(parent, **canvas_options)
         self.asset_store = asset_store if asset_store is not None else BattleMapAssetStore()
         self.on_select, self.on_move, self.on_click = on_select, on_move, on_click
+        self.is_placing = is_placing
         self.scene = None
         self.selected_id = None
         self.background_unavailable = False
@@ -146,12 +176,19 @@ class MapCanvas(tk.Canvas):
         if identifier is not None:
             try:
                 source = self.asset_store.read_png(identifier)
-                photo = tk.PhotoImage(master=self, data=source.data, format="png")
-                if (photo.width(), photo.height()) != (source.width, source.height):
-                    raise BattleMapAssetError("battle_map_image_invalid")
-                self._source_image = photo
-            except (BattleMapAssetError, tk.TclError):
+                self._source_image = self.decode_background(source)
+            except BattleMapAssetError:
                 self.background_unavailable = True
+
+    def decode_background(self, source):
+        """Confirm that the same Tk renderer used on the map can open these bytes."""
+        try:
+            photo = tk.PhotoImage(master=self, data=source.data, format="png")
+        except tk.TclError as exc:
+            raise BattleMapAssetError("battle_map_image_invalid") from exc
+        if (photo.width(), photo.height()) != (source.width, source.height):
+            raise BattleMapAssetError("battle_map_image_invalid")
+        return photo
 
     def _viewport(self):
         return self.winfo_width(), self.winfo_height()
@@ -243,9 +280,11 @@ class MapCanvas(tk.Canvas):
         if min(width, height) <= 1:
             return
         self._draw_image(width, height)
-        self._draw_grid(width, height)
+        grid_stride = self._draw_grid(width, height)
         self._draw_ruler(width, height)
         self._draw_tokens(width, height)
+        if grid_stride > 1:
+            self._draw_grid_overview(width, grid_stride)
 
     def _draw_image(self, width, height):
         if self._source_image is None:
@@ -283,29 +322,41 @@ class MapCanvas(tk.Canvas):
 
     def _draw_grid(self, width, height):
         geometry = self.scene.geometry
-        if not geometry.show_grid or self._scale * geometry.cell_size < 10:
-            return
-        corners = []
-        for cx, cy in ((0, 0), (width, 0), (0, height), (width, height)):
-            x, y = self.map_coords(cx, cy)
-            corners.append(geometry.fractional_cell_at(
-                max(-_MAP_LIMIT, min(_MAP_LIMIT, x)), max(-_MAP_LIMIT, min(_MAP_LIMIT, y)),
-            ))
-        q1 = max(-MAX_CELL_INDEX, math.floor(min(q for q, _ in corners)) - 1)
-        q2 = min(MAX_CELL_INDEX, math.ceil(max(q for q, _ in corners)) + 1)
-        r1 = max(-MAX_CELL_INDEX, math.floor(min(r for _, r in corners)) - 1)
-        r2 = min(MAX_CELL_INDEX, math.ceil(max(r for _, r in corners)) + 1)
-        if q1 > q2 or r1 > r2 or (q2 - q1 + 1) * (r2 - r1 + 1) > _MAX_GRID_CELLS:
-            return
-        for r in range(r1, r2 + 1):
-            for q in range(q1, q2 + 1):
-                vertices = [component for x, y in geometry.cell_polygon(q, r)
-                            for component in self.canvas_coords(x, y)]
-                if (max(vertices[::2]) < 0 or min(vertices[::2]) > width
-                        or max(vertices[1::2]) < 0 or min(vertices[1::2]) > height):
-                    continue
-                self.create_polygon(*vertices, fill="", outline="#77879b", width=1,
-                                    tags=("battle-map", "map-grid"))
+        if not geometry.show_grid:
+            return 1
+        size = geometry.cell_size
+        ox, oy = geometry.cell_center(0, 0)
+        offsets = tuple(((x - ox) / size, (y - oy) / size) for x, y in geometry.cell_polygon(0, 0))
+        radius = (max(abs(dx) for dx, _ in offsets), max(abs(dy) for _, dy in offsets))
+        sx, sy = self.canvas_coords(ox, oy)
+        stride, spacing = 1, self._scale * size
+        # Thin lines below this scale become unreadable. Draw an explicitly
+        # labeled overview anchored at the same origin, without changing the
+        # actual grid, placement, distances, or the allowed camera zoom.
+        while spacing < _MIN_GRID_SPACING:
+            stride, spacing = stride * 2, spacing * 2
+        while True:
+            bounds = (-sx / spacing, -sy / spacing, (width - sx) / spacing, (height - sy) / spacing)
+            cells = _viewport_grid_cells(geometry.grid, bounds, radius, stride)
+            if cells is not None:
+                break
+            stride, spacing = stride * 2, spacing * 2
+        for q, r in cells:
+            cx, cy = self.canvas_coords(*geometry.cell_center(q, r))
+            vertices = [component for dx, dy in offsets for component in (cx + dx * spacing, cy + dy * spacing)]
+            self.create_polygon(*vertices, fill="", outline="#77879b", width=1,
+                                tags=("battle-map", "map-grid"))
+        return stride if cells else 1
+
+    def _draw_grid_overview(self, width, stride):
+        tags = ("battle-map", "map-grid-overview")
+        text = self.create_text(width - 10, 8, anchor="ne", justify="right",
+                                width=max(1, width - 24), fill="#fafbff",
+                                text=t("map_grid_overview", factor=stride), tags=tags)
+        left, top, right, bottom = self.bbox(text)
+        badge = self.create_rectangle(left - 4, top - 2, right + 4, bottom + 2,
+                                      fill="#202735", outline="", tags=tags)
+        self.tag_lower(badge, text)
 
     def _draw_ruler(self, width, height):
         if self._ruler_ids is None:
@@ -326,7 +377,11 @@ class MapCanvas(tk.Canvas):
     def _draw_tokens(self, width, height):
         geometry = self.scene.geometry
         radius = max(8, min(20, self._scale * geometry.cell_size * 0.30))
-        for token in self.scene.tokens:
+        # Close combat can put two tokens in one cell. Picking one in the
+        # roster makes it the top token so either one remains draggable.
+        tokens = self.scene.tokens if self.selected_id is None else sorted(
+            self.scene.tokens, key=lambda token: token.identifier == self.selected_id)
+        for token in tokens:
             world = geometry.cell_center(token.q, token.r)
             if self._drag_world is not None and self._drag_world[0] == token.identifier:
                 world = self._drag_world[1:]
@@ -359,7 +414,8 @@ class MapCanvas(tk.Canvas):
     def _press(self, event, button):
         self.focus_set()
         token = None
-        if button == 1 and any(action is not None for action in (self.on_select, self.on_move, self.on_click)):
+        if (button == 1 and not (self.is_placing is not None and self.is_placing())
+                and any(action is not None for action in (self.on_select, self.on_move, self.on_click))):
             if self._redraw_job is not None:  # Hit-test current positions, not a pending drag preview.
                 self.after_cancel(self._redraw_job)
                 self._draw()

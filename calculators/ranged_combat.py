@@ -25,6 +25,33 @@ from calculators.injury import (
 METERS_TO_YARDS = 1.0 / 0.9144
 
 
+def _same_range_boundary(value: float, boundary: float) -> bool:
+    """Ignore a few units of floating-point roundoff, not a physical interval."""
+    return value == boundary or (
+        math.isfinite(value) and math.isfinite(boundary)
+        and abs(value - boundary) <= 2 * max(math.ulp(value), math.ulp(boundary))
+    )
+
+
+def _above_range_boundary(value: float, boundary: float) -> bool:
+    return value > boundary and not _same_range_boundary(value, boundary)
+
+
+def _at_or_below_range_boundary(value: float, boundary: float) -> bool:
+    return value <= boundary or _same_range_boundary(value, boundary)
+
+
+def _below_range_boundary(value: float, boundary: float) -> bool:
+    return value < boundary and not _same_range_boundary(value, boundary)
+
+
+def _ceil_range(value: float) -> int:
+    # A metric conversion, grid-scale multiplication, or adding target speed
+    # can put a measurement just above an exact integer in binary arithmetic.
+    lower = math.floor(value)
+    return lower + _above_range_boundary(value, lower)
+
+
 @dataclass
 class DamageMode:
     dice: str
@@ -216,25 +243,30 @@ def rapid_fire_bonus(shots: int) -> int:
     return 7 + int(math.log(shots / 100.0, 2))
 
 
-def success_probability(target: int) -> float:
+def success_probability(target: int, malfunction: Optional[int] = None) -> float:
+    """Odds of a successful attack roll that does not trigger Malf. (if set)."""
+    if target < 3:
+        return 0.0
     successes = 0
     for first in range(1, 7):
         for second in range(1, 7):
             for third in range(1, 7):
-                if evaluate_success_roll(target, first + second + third)["success"]:
+                roll = first + second + third
+                if ((malfunction is None or roll < malfunction)
+                        and evaluate_success_roll(target, roll)["success"]):
                     successes += 1
     return round(successes * 100.0 / 216.0, 2)
 
 
 def simplified_range_modifier(distance_yards: float) -> Tuple[int, str]:
     """Gun Fu's optional broad range bands (p. 7)."""
-    if distance_yards <= 5:
+    if _at_or_below_range_boundary(distance_yards, 5):
         return 0, "close"
-    if distance_yards <= 20:
+    if _at_or_below_range_boundary(distance_yards, 20):
         return -3, "short"
-    if distance_yards <= 100:
+    if _at_or_below_range_boundary(distance_yards, 100):
         return -7, "medium"
-    if distance_yards <= 500:
+    if _at_or_below_range_boundary(distance_yards, 500):
         return -11, "long"
     return -15, "extreme"
 
@@ -299,11 +331,41 @@ class RangedCombatCalculator:
         if (not math.isfinite(attack.distance_in_yards) or not math.isfinite(attack.target_speed_mps)
                 or attack.distance_in_yards < 0 or attack.target_speed_mps < 0):
             errors.append("negative_distance_or_speed")
-        if attack.shots_fired < 1:
+        if type(attack.shots_fired) is not int or attack.shots_fired < 1:
             errors.append("invalid_shots")
         if attack.target_dr < 0 or attack.target_hp < 1:
             errors.append("invalid_target")
         return errors
+
+    @staticmethod
+    def _validate_burst(attack: RangedAttackInput) -> List[str]:
+        weapon = attack.weapon
+        rates = weapon.rate_of_fire_modes or (1,)
+        if any(type(rate) not in (int, float) or not math.isfinite(rate) or rate <= 0 for rate in rates):
+            return ["invalid_rof"]
+        maximum_rof = max(rates)
+        # Fractional RoF means more than one turn per shot, not zero shots
+        # in a single resolution. This calculator does not track elapsed turns.
+        maximum_burst = max(1, math.floor(maximum_rof))
+        errors = []
+        if attack.shots_fired > maximum_burst:
+            errors.append("shots_exceed_rof")
+        if (type(weapon.shots_capacity) is int and weapon.shots_capacity >= 0
+                and type(weapon.chamber_capacity) is int and weapon.chamber_capacity >= 0):
+            capacity = weapon.shots_capacity + weapon.chamber_capacity
+            if capacity > 0 and attack.shots_fired > capacity:
+                errors.append("shots_exceed_capacity")
+        if weapon.full_auto_only and attack.shots_fired < max(1, math.ceil(maximum_rof / 4.0)):
+            errors.append("full_auto_minimum")
+        return errors
+
+    @staticmethod
+    def _close_shotgun(attack: RangedAttackInput, mode: DamageMode) -> bool:
+        return (
+            attack.weapon.projectiles_per_shot > 1
+            and mode.half_damage_range is not None
+            and _below_range_boundary(attack.distance_in_yards, mode.half_damage_range * 0.1)
+        )
 
     def calculate(self, attack: RangedAttackInput) -> RangedAttackResult:
         errors = self._validate(attack)
@@ -313,20 +375,22 @@ class RangedCombatCalculator:
         if not math.isfinite(distance) or not math.isfinite(speed) or not math.isfinite(distance + speed):
             return RangedAttackResult(False, list(dict.fromkeys(errors + ["negative_distance_or_speed"])),
                                       attack.profile, False, 0, 0, "standard", False, [], 0, 0, 0)
-        range_valid = distance >= mode.minimum_range and (
-            mode.max_range is None or distance <= mode.max_range
+        range_valid = _at_or_below_range_boundary(mode.minimum_range, distance) and (
+            mode.max_range is None or _at_or_below_range_boundary(distance, mode.max_range)
         )
-        beyond_half = bool(mode.half_damage_range is not None and distance > mode.half_damage_range)
+        beyond_half = mode.half_damage_range is not None and _above_range_boundary(
+            distance, mode.half_damage_range
+        )
 
         modifiers: List[Dict[str, Any]] = []
         if attack.profile == "cinematic" and attack.use_simplified_range:
             range_mod, range_band = simplified_range_modifier(distance)
             modifiers.append(self._modifier("simplified_range", range_mod, "Gun Fu", "7", range_band))
             if speed > 0:
-                speed_mod = get_range_modifier(math.ceil(speed))
+                speed_mod = get_range_modifier(_ceil_range(speed))
                 modifiers.append(self._modifier("target_speed", speed_mod, "Basic Set", "550"))
         else:
-            combined = math.ceil(distance + speed)
+            combined = _ceil_range(distance + speed)
             range_mod = get_range_modifier(combined)
             range_band = "standard"
             modifiers.append(self._modifier("range_and_speed", range_mod, "Basic Set", "550",
@@ -370,17 +434,10 @@ class RangedCombatCalculator:
         elif attack.maneuver == "pop_up":
             modifiers.append(self._modifier("pop_up", -2, "Basic Set", "390"))
 
-        actual_shots = attack.shots_fired
-        if attack.weapon.full_auto_only:
-            maximum_rof = max(attack.weapon.rate_of_fire_modes or [1])
-            minimum = max(1, math.ceil(maximum_rof / 4.0))
-            if actual_shots < minimum:
-                errors.append("full_auto_minimum")
-        close_shotgun = (
-            attack.weapon.projectiles_per_shot > 1
-            and mode.half_damage_range is not None
-            and distance < mode.half_damage_range * 0.1
-        )
+        shot_errors = self._validate_burst(attack) if "invalid_shots" not in errors else []
+        actual_shots = 0 if shot_errors or "invalid_shots" in errors else attack.shots_fired
+        errors.extend(shot_errors)
+        close_shotgun = self._close_shotgun(attack, mode)
         if attack.weapon.projectiles_per_shot > 1 and not close_shotgun:
             actual_projectiles = actual_shots * attack.weapon.projectiles_per_shot
         else:
@@ -440,8 +497,11 @@ class RangedCombatCalculator:
         effective_skill = attack.skill + sum(item["value"] for item in modifiers)
         if attack.cannot_see_target:
             effective_skill = min(9, effective_skill)
+        if effective_skill < 3:
+            errors.append("effective_skill_below_minimum")
+        valid = not errors and range_valid
         return RangedAttackResult(
-            valid=not errors and range_valid,
+            valid=valid,
             errors=errors + ([] if range_valid else ["out_of_range"]),
             profile=attack.profile,
             range_valid=range_valid,
@@ -451,7 +511,7 @@ class RangedCombatCalculator:
             beyond_half_damage=beyond_half,
             modifiers=modifiers,
             effective_skill=effective_skill,
-            probability=success_probability(effective_skill),
+            probability=success_probability(effective_skill, attack.weapon.malfunction) if valid else 0.0,
             rate_of_fire_bonus=rof_bonus,
             notes=(["half_damage"] if beyond_half else []) + (["close_shotgun"] if close_shotgun else []),
         )
@@ -469,7 +529,7 @@ class RangedCombatCalculator:
         expression = mode.dice
         effect_distance_yards = attack.effect_distance_m * METERS_TO_YARDS
         if (mode.effect_shape == "area" and mode.area_radius_yards is not None
-                and effect_distance_yards > mode.area_radius_yards):
+                and _above_range_boundary(effect_distance_yards, mode.area_radius_yards)):
             return {
                 "expression": expression,
                 "original_expression": mode.dice,
@@ -516,7 +576,8 @@ class RangedCombatCalculator:
                 int(muscle_match.group(2) or 0),
             )
         basic, dice = self._damage_total(expression, supplied)
-        if mode.half_damage_range is not None and attack.distance_in_yards > mode.half_damage_range:
+        if (mode.half_damage_range is not None
+                and _above_range_boundary(attack.distance_in_yards, mode.half_damage_range)):
             basic //= 2
 
         dr_multiplier = 1
@@ -627,17 +688,19 @@ class RangedCombatCalculator:
         result.attack = dict(outcome, roll=chosen_attack_roll, dice=attack_dice)
         result.malfunction = chosen_attack_roll >= attack.weapon.malfunction
         if result.malfunction:
+            # B407 replaces the normal attack with the malfunction result.
+            # The table can call for separate adjudication (e.g. a stoppage
+            # after one shot); never apply an ordinary burst automatically.
+            result.attack.update(success=False, critical_success=False, critical_failure=False, margin=0)
             result.notes.append("malfunction")
+            return result
         if not outcome["success"]:
             return result
 
-        close_shotgun = (
-            attack.weapon.projectiles_per_shot > 1
-            and mode.half_damage_range is not None
-            and attack.distance_in_yards < mode.half_damage_range * 0.1
-        )
+        close_shotgun = self._close_shotgun(attack, mode)
         projectiles = attack.shots_fired * (1 if close_shotgun else max(1, attack.weapon.projectiles_per_shot))
-        result.hits_before_defense = min(projectiles, 1 + outcome["margin"] // max(1, attack.weapon.recoil))
+        extra_hits = max(0, outcome["margin"]) // max(1, attack.weapon.recoil)
+        result.hits_before_defense = min(projectiles, 1 + extra_hits)
         result.hits_after_defense = result.hits_before_defense
 
         if (resolve_defense and attack.target_aware and attack.dodge is not None

@@ -268,6 +268,10 @@ Os pacotes de distribuicao ja incluem tudo o que o aplicativo precisa:
 Nao e necessario instalar Python nem usar um terminal. No Linux, talvez seja
 necessario marcar o arquivo como executavel em **Propriedades > Permissoes**.
 
+Na pasta do projeto, `dist/atuais` oferece os executáveis prontos para
+abrir e os ZIPs da entrega. Ela é atualizada quando o par Linux e Windows
+passa pela [verificação de pacotes](packaging/RELEASE.md#atualizar-distatuais).
+
 ### Execucao pelo codigo-fonte
 
 ### Windows
@@ -335,17 +339,22 @@ A grade hexagonal começa com 1 jarda por célula.
 
 - Selecione alguém do elenco, clique em **Colocar** e escolha a célula.
   Arraste o marcador para movê-lo. Use a roda para zoom e o botão do meio
-  para deslocar a vista.
+  para deslocar a vista. Marcadores novos ficam ocultos por padrão: use
+  **Marcador → Visível para jogadores** antes ou depois de colocá-los.
+- Ao afastar muito o zoom, uma grade de referência sinalizada substitui
+  as células pequenas, sem alterar o encaixe dos marcadores nem a régua.
 - Defina agente e alvo no menu **Marcador**. **Enviar a Tiro** preenche
   a distância, sem alterar arma, perícia, velocidade, cobertura ou visibilidade.
   A régua respeita o sistema de unidades escolhido; a regra de alcance recebe
   o valor exato em jardas. Se as posições mudarem, envie a nova distância.
+  Ao trocar de cenário, o campo volta à distância manual anterior.
+  Um acerto enviado a Trauma só pode ser aplicado ao par que originou o tiro.
 - Abra **Visão dos jogadores** para compartilhar só essa janela ou movê-la
   a um segundo monitor. Ela acompanha as alterações do mestre e não exibe
   HP, FP, nomes de grupos, notas do mestre ou marcadores ocultos. A imagem
   do fundo é pública nessa janela; escolha um PNG sem segredos impressos.
 
-O cenário salva a grade, posições, visibilidade e referência do fundo.
+O cenário salva o agente e o alvo, a grade, posições, visibilidade e referência do fundo.
 O PNG fica na pasta de dados local, fora do executável, e o arquivo
 original não é alterado. O mapa é offline e não inclui neblina,
 iluminação dinâmica ou controle remoto pelos jogadores.

@@ -8,8 +8,9 @@ O programa não requer instalação de Python nem uso do terminal.
 Se o gerenciador de arquivos bloquear a execução, abra Propriedades >
 Permissões e permita executar o arquivo como programa.
 
-A versão aparece no aplicativo. A compatibilidade com distribuições mais
-antigas que a usada para a compilação não está garantida.
+A versão aparece no aplicativo. Consulte as notas da versão para saber
+em qual distribuição a build foi validada. O pacote usa a glibc do sistema;
+distribuições mais antigas que a base de compilação não são garantidas.
 
 O menu Exibir permite mudar tema, cores, fonte e navegação. O programa
 tem interfaces em português e inglês e unidades métricas e imperiais.
@@ -19,3 +20,4 @@ Preferências e presets são gravados na pasta de dados do usuário.
 English: Extract the complete ZIP and double-click "GurpsCalculadora".
 If blocked, enable execution in the file's Properties > Permissions.
 Python and terminal use are not required.
+The package uses the system glibc. See the release notes for the tested distribution.

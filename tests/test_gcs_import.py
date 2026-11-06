@@ -139,6 +139,25 @@ class GCSImportTests(unittest.TestCase):
         torso, = record.location_dr
         self.assertEqual((torso.path, torso.base), (('torso',), 6))
 
+    def test_official_pc_export_accepts_weapon_flags_on_best_parry(self):
+        for suffix in (b'F', b'U', b'FU'):
+            with self.subTest(suffix=suffix):
+                raw = xml_fixture().replace(b'>11</parry>', b'>11' + suffix + b'</parry>')
+                self.assertEqual(load_gcs_file(self.file('parry.xml', raw)).parry, 11)
+        raw = xml_fixture().replace(b'>11</parry>', b'>11UNKNOWN</parry>')
+        self.assert_error(self.file('bad-parry.xml', raw), 'gcs_invalid_stat', 'parry')
+        raw = xml_fixture().replace(b'>9</dodge>', b'>9F</dodge>')
+        self.assert_error(self.file('bad-dodge.xml', raw), 'gcs_invalid_stat', 'dodge')
+
+    def test_official_pc_export_preserves_names_in_utf8_and_latin1(self):
+        latin1 = xml_fixture()
+        utf8 = latin1.decode('iso-8859-1').encode('utf-8')
+        for raw in (latin1, utf8, utf8.replace(b'iso-8859-1', b'UTF-8')):
+            with self.subTest(raw_name=raw.split(b'</name>')[0][-14:]):
+                path = self.file('accent.xml', raw)
+                self.assertEqual(load_gcs_file(path).name, 'João de Sá')
+                self.assertEqual(path.read_bytes(), raw)
+
     def test_npc_xml_requires_full_sheet_and_xml_blocks_entities(self):
         self.assert_error(self.file('npc.xml', b'<root version="2.8"><npc/></root>'), 'gcs_missing_current')
         xml = '<!DOCTYPE root [<!ENTITY expand SYSTEM "file:///etc/passwd">]><root>&expand;</root>'

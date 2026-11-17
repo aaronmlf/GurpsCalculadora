@@ -82,7 +82,7 @@ class VehicleState:
 @dataclass
 class VehicleMovementInput:
     vehicle: VehicleState
-    duration_seconds: int = 1
+    duration_seconds: float = 1
     acceleration_fraction: float = 1.0
     environment: str = "road"
     maneuver: str = "straight"
@@ -130,7 +130,7 @@ class VehicleAttackInput:
 @dataclass
 class VehicleSession:
     vehicles: Dict[str, VehicleState]
-    elapsed_seconds: int = 0
+    elapsed_seconds: float = 0
     history: List[Dict[str, Any]] = field(default_factory=list)
     _undo: List[Dict[str, Any]] = field(default_factory=list, repr=False)
     autosave_path: Optional[Path] = field(default=None, repr=False)
@@ -190,6 +190,16 @@ class VehicleSession:
                 "elapsed_seconds": self.elapsed_seconds, "history": deepcopy(self.history[-100:]),
                 "vehicles": {key: asdict(value) for key, value in self.vehicles.items()}}
 
+    def state_for(self, record: VehicleRecord) -> VehicleState:
+        """Use the current catalog definition without changing a saved encounter."""
+        existing = self.vehicles.get(record.identifier)
+        if existing is None:
+            return VehicleState(deepcopy(record))
+        state = deepcopy(existing)
+        # Do not reconstruct VehicleState: its defaults would refill resources.
+        state.record = deepcopy(record)
+        return state
+
     def apply_movement(self, identifier: str, result: VehicleMovementResult,
                        initial_state=None, expected_snapshot=None) -> None:
         if expected_snapshot is not None and self.snapshot() != expected_snapshot:
@@ -200,6 +210,15 @@ class VehicleSession:
         if not result.valid or identifier not in candidate.vehicles:
             raise ValueError("invalid_vehicle_movement")
         state = candidate.vehicles[identifier]
+        if initial_state is not None:
+            rebound = deepcopy(initial_state)
+            if rebound.record.identifier != state.record.identifier:
+                raise ValueError('stale_vehicle_movement')
+            current_record = rebound.record
+            rebound.record = state.record
+            if rebound != state:
+                raise ValueError('stale_vehicle_movement')
+            state.record = current_record
         values = (result.final_speed, result.fuel_used, result.delta_v_used_mps, result.travel_time_seconds)
         if any(not math.isfinite(v) or v < 0 for v in values):
             raise ValueError('invalid_vehicle_movement')

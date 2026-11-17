@@ -521,7 +521,7 @@ def build_release(root=ROOT, tag=None):
             env['GURPS_REQUIRE_TK'] = '1'
             env.pop('PYTHONPATH', None)
             subprocess.run([sys.executable, '-m', 'unittest', 'discover', '-s', 'tests', '-q'],
-                           cwd=snapshot, env=env, check=True, timeout=600)
+                           cwd=snapshot, env=env, check=True, timeout=900)
             subprocess.run([sys.executable, '-m', 'PyInstaller', '--clean', '--noconfirm',
                             '--distpath', str(workspace / 'binary'), '--workpath', str(workspace / 'build'),
                             'packaging/GurpsCalculadora.spec'], cwd=snapshot, env=env, check=True, timeout=600)

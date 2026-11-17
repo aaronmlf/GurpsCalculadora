@@ -5,6 +5,7 @@ import unittest
 from unittest.mock import patch
 
 from tests.tk_support import requires_tk
+from utils.ui_preferences import QUICK_TABLES_TOOL
 
 
 @requires_tk
@@ -56,6 +57,9 @@ class OficinaNavigationTests(unittest.TestCase):
             self.assertEqual([index for index, _ in chooser.filtered], [9])
             chooser.query.set('mass combat')
             self.assertEqual([index for index, _ in chooser.filtered], [14])
+            for query in ('iluminação', 'lighting', 'speed range'):
+                chooser.query.set(query)
+                self.assertEqual([index for index, _ in chooser.filtered], [QUICK_TABLES_TOOL])
             chooser.query.set('sem resultados')
             self.assertFalse(chooser.filtered)
             self.assertTrue(chooser.open_button.instate(['disabled']))
@@ -121,7 +125,7 @@ class OficinaNavigationTests(unittest.TestCase):
         app.root.geometry('1280x840')
         app.root.update()
         cards = app.home_shortcuts.copy()
-        self.assertEqual(set(cards), {6, 7, 8, 15})
+        self.assertEqual(set(cards), {6, 7, 8, 15, QUICK_TABLES_TOOL})
         self.assertEqual({button.master.grid_info()['column'] for button in cards.values()}, {0, 1})
         for index, button in cards.items():
             button.invoke()

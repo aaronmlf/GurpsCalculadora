@@ -11,7 +11,15 @@ import random
 import re
 from typing import Any, Dict, List, Optional, Sequence, Tuple
 
-from utils.dice_roller import evaluate_success_roll, get_damage_dice, get_range_modifier, roll_3d6, roll_dice
+from utils.dice_roller import (
+    ceil_range_distance as _ceil_range,
+    evaluate_success_roll,
+    get_damage_dice,
+    get_range_modifier,
+    roll_3d6,
+    roll_dice,
+    same_range_boundary as _same_range_boundary,
+)
 from calculators.explosions import ExplosionsCalculator
 from calculators.injury import (
     ArmorLoadout,
@@ -25,14 +33,6 @@ from calculators.injury import (
 METERS_TO_YARDS = 1.0 / 0.9144
 
 
-def _same_range_boundary(value: float, boundary: float) -> bool:
-    """Ignore a few units of floating-point roundoff, not a physical interval."""
-    return value == boundary or (
-        math.isfinite(value) and math.isfinite(boundary)
-        and abs(value - boundary) <= 2 * max(math.ulp(value), math.ulp(boundary))
-    )
-
-
 def _above_range_boundary(value: float, boundary: float) -> bool:
     return value > boundary and not _same_range_boundary(value, boundary)
 
@@ -43,13 +43,6 @@ def _at_or_below_range_boundary(value: float, boundary: float) -> bool:
 
 def _below_range_boundary(value: float, boundary: float) -> bool:
     return value < boundary and not _same_range_boundary(value, boundary)
-
-
-def _ceil_range(value: float) -> int:
-    # A metric conversion, grid-scale multiplication, or adding target speed
-    # can put a measurement just above an exact integer in binary arithmetic.
-    lower = math.floor(value)
-    return lower + _above_range_boundary(value, lower)
 
 
 @dataclass
@@ -165,6 +158,8 @@ class RangedAttackInput:
     damage_rolls: Optional[List[int]] = None
     follow_up_damage_rolls: Optional[List[int]] = None
     map_distance_yards: Optional[float] = None
+    illumination_modifier: Optional[int] = None
+    illumination_total_darkness: bool = False
 
     @property
     def distance_in_yards(self) -> float:
@@ -402,10 +397,24 @@ class RangedCombatCalculator:
         location = _HIT_LOCATIONS.get(attack.hit_location, _HIT_LOCATIONS["torso"])
         if location[0]:
             modifiers.append(self._modifier("hit_location", location[0], "Basic Set", "398-400", attack.hit_location))
-        for key, value in (("posture", attack.posture_modifier), ("cover", attack.cover_modifier),
-                           ("visibility", attack.visibility_modifier)):
+        for key, value in (("posture", attack.posture_modifier), ("cover", attack.cover_modifier)):
             if value:
                 modifiers.append(self._modifier(key, value, "Basic Set", "548-549"))
+        illumination = attack.illumination_modifier
+        visibility = attack.visibility_modifier
+        if illumination is not None:
+            if type(illumination) is not int or not -10 <= illumination <= 0:
+                errors.append("invalid_illumination")
+                illumination = 0
+            modifiers.append(self._modifier("illumination", illumination, "Basic Set Revised", "574"))
+            if visibility:
+                modifiers.append(self._modifier("visibility", visibility, "Basic Set", "548"))
+            # The cap is for visibility, not the sum of all attack penalties.
+            if illumination + visibility < -10:
+                modifiers.append(self._modifier("visibility_floor", -10 - illumination - visibility,
+                                                "Basic Set Revised", "548, 574"))
+        elif visibility:
+            modifiers.append(self._modifier("visibility", visibility, "Basic Set", "548-549"))
 
         base_acc = max(0, attack.weapon.accuracy + (
             1 if attack.profile == "realistic" and attack.ammunition == "match" else 0
@@ -495,7 +504,7 @@ class RangedCombatCalculator:
                                                     "Tactical Shooting", "32", str(moa_cap)))
 
         effective_skill = attack.skill + sum(item["value"] for item in modifiers)
-        if attack.cannot_see_target:
+        if attack.cannot_see_target or attack.illumination_total_darkness:
             effective_skill = min(9, effective_skill)
         if effective_skill < 3:
             errors.append("effective_skill_below_minimum")

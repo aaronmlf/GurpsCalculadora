@@ -2,7 +2,7 @@
 import tkinter as tk
 from tkinter import ttk, messagebox, font, colorchooser
 from utils.i18n import t
-from utils.ui_preferences import BATTLE_MAP_TOOL, save_ui_preferences
+from utils.ui_preferences import BATTLE_MAP_TOOL, QUICK_TABLES_TOOL, save_ui_preferences
 from utils.ui_theme import THEME_FIELDS, clean_theme_colors, make_palette
 from calculators.combat_session import CombatSession
 from utils.gui_presets import input_preset
@@ -355,8 +355,8 @@ def install_hub(app):
         quick = ttk.Frame(dashboard)
         quick.pack(fill='x')
         tiles = []
-        for index, glyph, key in ((15, '◇', 'dice'), (8, '◎', 'ranged'),
-                                  (6, '×', 'melee'), (7, '+', 'injury')):
+        for index, glyph, key in ((15, '◇', 'dice'), (QUICK_TABLES_TOOL, '▦', 'quick_tables'),
+                                  (8, '◎', 'ranged'), (6, '×', 'melee'), (7, '+', 'injury')):
             tile = make_card(quick)
             title = f'{glyph}   {short_tool_title(app, index)}   →'
             action = ttk.Button(tile, text=title, style='Oficina.Tile.TButton',
@@ -444,6 +444,8 @@ def install_hub(app):
             app.notebook.pack(fill='both', expand=True)
             if index == BATTLE_MAP_TOOL:
                 app._ensure_battle_map_panel()
+            elif index == QUICK_TABLES_TOOL:
+                app._ensure_quick_tables_panel()
             app.notebook.select(index)
             recent = app.ui_preferences['recent']
             app.ui_preferences['recent'] = [index] + [item for item in recent if item != index]
@@ -495,6 +497,7 @@ def install_hub(app):
     view.add_command(label=t('ui_tool_search'), command=open_tool_chooser, accelerator='Ctrl+K')
     view.add_command(label=t('tab_gm_dice'), command=lambda: choose(15))
     view.add_command(label=t('tab_battle_map'), command=lambda: choose(BATTLE_MAP_TOOL))
+    view.add_command(label=t('tab_quick_tables'), command=lambda: choose(QUICK_TABLES_TOOL))
     view.add_command(label=t('ui_favorite'), command=toggle_favorite)
     favorite_entry = view.index('end')
     view.add_command(label=t('ui_toggle_sidebar'), command=toggle_sidebar)

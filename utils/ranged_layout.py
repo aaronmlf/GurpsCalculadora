@@ -153,17 +153,34 @@ class Disclosure(ttk.Frame):
         self.caption = caption
         self.toggle = ttk.Button(self, command=on_toggle)
         self.toggle.pack(fill='x')
+        self.toggle.bind('<Configure>', self._fit_caption, add='+')
         self.section = ttk.Frame(self, padding=(0, 4))
         self.expanded = False
         self.show(False)
 
     def show(self, visible):
         self.expanded = visible
-        self.toggle.configure(text=('▾ ' if visible else '▸ ') + self.caption)
+        self._fit_caption()
         if visible:
             self.section.pack(fill='x')
         else:
             self.section.pack_forget()
+
+    def _fit_caption(self, _event=None):
+        caption = ('▾ ' if self.expanded else '▸ ') + self.caption
+        width = self.toggle.winfo_width()
+        if width > 45:
+            measure = font.nametofont('TkDefaultFont', root=self).measure
+            lines = ['']
+            for word in caption.split():
+                line = (lines[-1] + ' ' + word).strip()
+                if lines[-1] and measure(line) > width - 32:
+                    lines.append(word)
+                else:
+                    lines[-1] = line
+            caption = '\n'.join(lines)
+        if self.toggle.cget('text') != caption:
+            self.toggle.configure(text=caption)
 
 
 class RangedWorkbench(ttk.Frame):
@@ -179,7 +196,9 @@ class RangedWorkbench(ttk.Frame):
         self.canvas.configure(yscrollcommand=scrollbar.set)
         self._window = self.canvas.create_window(0, 0, anchor='nw', window=self)
         self._viewport_width = 0
+        self._reveal_job = None
         self.bind('<Configure>', self._update_scrollregion)
+        self.bind('<Destroy>', self._cancel_reveal, add='+')
         self.canvas.bind('<Configure>', self._resize)
         tab.bind('<Map>', self._resize, add='+')
         self.canvas.bind('<Map>', self._resize, add='+')
@@ -261,8 +280,29 @@ class RangedWorkbench(ttk.Frame):
             return
         self.canvas.yview_moveto(max(0, offset) / max(1, self.winfo_height()))
 
-    def bind_scrolling(self):
+    def _cancel_reveal(self, _event=None):
+        if self._reveal_job is not None:
+            self.after_cancel(self._reveal_job)
+            self._reveal_job = None
+
+    def reveal_after_layout(self, widget, *, align_top=False):
+        """Keep a pending scroll on this viewport, even across a tab rebuild."""
+        self._cancel_reveal()
+
+        def reveal():
+            self._reveal_job = None
+            if widget.winfo_exists():
+                self.reveal(widget, align_top=align_top)
+
+        self._reveal_job = self.after_idle(reveal)
+
+    def bind_scrolling(self, subtree=None):
         """Keyboard focus follows the form; the wheel scrolls its viewport."""
+        attach = getattr(self, '_attach_scroll', None)
+        if attach is not None:
+            attach(subtree or self.canvas)
+            return
+
         def wheel(event):
             if event.num == 4:
                 direction = -1
@@ -304,4 +344,5 @@ class RangedWorkbench(ttk.Frame):
             for child in widget.winfo_children():
                 visit(child)
 
+        self._attach_scroll = visit
         visit(self.canvas)

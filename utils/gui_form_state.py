@@ -11,13 +11,18 @@ def descendants(parent):
         yield from descendants(child)
 
 
+def parse_number(raw, *, integer=False):
+    number = float(str(raw).strip().replace(',', '.'))
+    if not math.isfinite(number) or (integer and not number.is_integer()):
+        raise ValueError('Invalid number')
+    return int(number) if integer else number
+
+
 def numeric_error(raw, integer=False, optional=False):
     if optional and not raw.strip():
         return ''
     try:
-        number = float(raw.replace(',', '.'))
-        if not math.isfinite(number) or (integer and not number.is_integer()):
-            raise ValueError
+        parse_number(raw, integer=integer)
     except ValueError:
         return t('ui_integer_required' if integer else 'ui_number_required')
     return ''
@@ -54,9 +59,12 @@ class FormState:
         self.traces = []
         self.errors = {}
         self.fields = []
+        self.actions = {}
         self.restoring = False
         variables = {}
         for widget in self.widgets:
+            if getattr(widget, 'presentation_only', False):
+                continue
             if 'textvariable' in widget.keys():
                 name = str(widget.cget('textvariable'))
             elif 'variable' in widget.keys():
@@ -87,21 +95,9 @@ class FormState:
         commands.update(t(key) for key in ('ranged_calculate', 'ranged_roll_attack', 'ranged_resolve',
                                           'melee_roll_attack', 'melee_resolve', 'injury_resolve_checks', 'grapple_resolve'))
         for widget in self.widgets:
-            if isinstance(widget, ttk.Button) and widget.cget('text') in commands:
-                original = widget.cget('command')
-                def invoke(original=original):
-                    if self.validate():
-                        for field, variable, spec in self.fields:
-                            raw = variable.get()
-                            if raw.strip():
-                                normalized = (str(int(float(raw.replace(',', '.')))) if spec['integer']
-                                              else raw.replace(',', '.'))
-                                if normalized != raw:
-                                    variable.set(normalized)
-                        self.tab.tk.call(original)
-                    elif self.errors:
-                        next(iter(self.errors)).focus_set()
-                widget.configure(command=invoke)
+            if isinstance(widget, ttk.Button) and (hasattr(widget, 'validation_fields')
+                                                   or widget.cget('text') in commands):
+                self.register_button(widget, fields=getattr(widget, 'validation_fields', None))
         for variable in variables.values():
             token = variable.trace_add('write', self.edited)
             self.traces.append((variable, token))
@@ -109,16 +105,55 @@ class FormState:
             box.form_state = self
             box.stale = False
             box.origin = ''
-        self.validate()
+        self.validate(reveal=False)
 
-    def validate(self):
+    def register_button(self, button, *, fields=None):
+        if button in self.actions:
+            raise ValueError('Button already registered')
+        self.actions[button] = fields
+        original = button.cget('command')
+
+        def invoke():
+            if self.validate(action=button):
+                for _, variable, spec in self._action_fields(button):
+                    raw = variable.get()
+                    if raw.strip():
+                        normalized = (str(parse_number(raw, integer=True)) if spec['integer']
+                                      else raw.replace(',', '.'))
+                        if normalized != raw:
+                            variable.set(normalized)
+                self.tab.tk.call(original)
+            elif self.errors:
+                widget = next(iter(self.errors))
+                widget.focus_set()
+                layout = getattr(self.tab, 'oficina', None)
+                if layout is not None:
+                    layout.reveal_after_layout(widget)
+
+        button.configure(command=invoke)
+
+    def _action_fields(self, action):
+        selected = self.actions.get(action)
+        if callable(selected):
+            selected = selected()
+        if selected is None:
+            return self.fields
+        names = {str(variable) for variable in selected}
+        names.update(str(binding.display) for binding in self.app._unit_bindings
+                     if str(binding.canonical) in names)
+        return [field for field in self.fields if str(field[1]) in names]
+
+    def validate(self, action=None, *, reveal=True, reveal_variable=None):
         self.errors.clear()
+        required = {widget for widget, _, _ in self._action_fields(action)}
         for widget, variable, spec in self.fields:
             error = numeric_error(variable.get(), **spec)
             widget.state(['invalid'] if error else ['!invalid'])
             widget.validation_label.configure(text=error)
-            if error:
+            if error and widget in required:
                 self.errors[widget] = error
+            if (error and widget in required and reveal
+                    and (reveal_variable is None or str(variable) == reveal_variable)):
                 parent = widget.master
                 while parent is not None and parent is not self.tab:
                     reveal = getattr(parent, 'oficina_reveal', None)
@@ -127,8 +162,10 @@ class FormState:
                     parent = parent.master
         return not self.errors
 
-    def edited(self, *_):
-        self.validate()
+    def edited(self, name, *_):
+        # Only the just-edited field may unfold its section; an unrelated
+        # invalid field must not interrupt editing a different action.
+        self.validate(reveal_variable=name)
         for box in self.boxes:
             if box.get('1.0', 'end-1c').strip():
                 box.stale = True
@@ -147,6 +184,8 @@ class FormState:
 
     def status(self, box):
         message = t('ui_result_stale') if box.stale else ''
+        if box.stale and callable(getattr(box, 'on_stale', None)):
+            box.on_stale()
         current = self.app.i18n.get_language() + ' / ' + self.app.result_units.get()
         if box.origin and box.origin != current:
             message += ('\n' if message else '') + t('ui_result_original', context=box.origin)

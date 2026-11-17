@@ -3,6 +3,7 @@
 from dataclasses import replace
 import tkinter as tk
 from tkinter import filedialog, messagebox, ttk
+from weakref import ref
 from zlib import crc32
 
 from utils.battle_map_assets import BattleMapAssetError, BattleMapAssetStore
@@ -35,8 +36,33 @@ class GridSettingsDialog(tk.Toplevel):
         self.geometry('480x440')
         self.minsize(380, 360)
         self.bind('<Escape>', lambda _event: self.destroy())
-        body = ttk.Frame(self, padding=12)
-        body.pack(fill='both', expand=True)
+        outer = ttk.Frame(self, padding=12)
+        outer.pack(fill='both', expand=True)
+        # Reserve room for the actions before asking the form for space. At
+        # large fonts the fields need more height than this dialog has.
+        footer = ttk.Frame(outer)
+        footer.pack(side='bottom', fill='x')
+        self.error = wrap_label(ttk.Label(footer, width=1, style='Error.TLabel', wraplength=345))
+        self.error.pack(fill='x', pady=(4, 0))
+        actions = ttk.Frame(footer)
+        actions.pack(fill='x')
+        self.apply_button = ttk.Button(actions, text=t('map_apply_grid'), command=self.apply,
+                                       style='Primary.TButton')
+        self.cancel_button = ttk.Button(actions, text=t('ui_cancel'), command=self.destroy)
+        flow_buttons(actions, [self.apply_button, self.cancel_button])
+
+        form = ttk.Frame(outer)
+        form.pack(fill='both', expand=True)
+        self.form_canvas = canvas = tk.Canvas(form, width=1, height=1, highlightthickness=0,
+                                              background=panel.app.colors['bg'])
+        scrollbar = ttk.Scrollbar(form, orient='vertical', command=canvas.yview)
+        scrollbar.pack(side='right', fill='y')
+        canvas.pack(side='left', fill='both', expand=True)
+        canvas.configure(yscrollcommand=scrollbar.set, yscrollincrement=20)
+        body = ttk.Frame(canvas)
+        window = canvas.create_window(0, 0, anchor='nw', window=body)
+        canvas.bind('<Configure>', lambda event: canvas.itemconfigure(window, width=event.width))
+        body.bind('<Configure>', lambda _event: canvas.configure(scrollregion=canvas.bbox(window)))
 
         self.kinds = {t('map_grid_' + key): key for key in ('hex', 'hex_flat', 'square')}
         self.kind = tk.StringVar(self, value=next(label for label, key in self.kinds.items() if key == self.base.grid))
@@ -46,22 +72,46 @@ class GridSettingsDialog(tk.Toplevel):
         fields = FieldGrid(body, columns=2)
         fields.pack(fill='x')
         self.values = {}
+        self.entries = {}
         for name in ('cell_size', 'origin_x', 'origin_y', 'yards_per_cell'):
             cell = ttk.Frame(fields)
             wrap_label(ttk.Label(cell, text=t('map_' + name))).pack(fill='x')
-            variable = tk.StringVar(self, value=f'{getattr(self.base, name):g}')
+            # The default :g loses digits and could move the range boundary
+            # even if the user merely opened the dialog and pressed Apply.
+            variable = tk.StringVar(self, value=str(getattr(self.base, name)))
             self.values[name] = variable
-            ttk.Entry(cell, textvariable=variable, width=1).pack(fill='x', pady=(2, 5))
+            self.entries[name] = ttk.Entry(cell, textvariable=variable, width=1)
+            self.entries[name].pack(fill='x', pady=(2, 5))
             fields.add(cell)
         self.show_grid = tk.BooleanVar(self, value=self.base.show_grid)
         ttk.Checkbutton(body, text=t('map_show_grid'), variable=self.show_grid).pack(anchor='w', pady=(6, 0))
-        self.error = wrap_label(ttk.Label(body, style='Error.TLabel', wraplength=345))
-        self.error.pack(fill='x', pady=4)
-        actions = ttk.Frame(body)
-        actions.pack(side='bottom', fill='x')
-        flow_buttons(actions, [ttk.Button(actions, text=t('map_apply_grid'), command=self.apply,
-                                          style='Primary.TButton'),
-                               ttk.Button(actions, text=t('ui_cancel'), command=self.destroy)])
+
+        def wheel(event):
+            if event.num in (4, 5):
+                canvas.yview_scroll(-2 if event.num == 4 else 2, 'units')
+            elif event.delta:
+                steps = max(1, abs(event.delta) // 120)
+                canvas.yview_scroll(-2 * steps if event.delta > 0 else 2 * steps, 'units')
+            return 'break'
+
+        def reveal_field(event):
+            field = event.widget
+            top = field.winfo_rooty() - body.winfo_rooty()
+            bottom = top + field.winfo_height()
+            current, height = canvas.canvasy(0), canvas.winfo_height()
+            wanted = top if top < current else bottom - height if bottom > current + height else current
+            if wanted != current:
+                canvas.yview_moveto(max(0, wanted) / max(1, body.winfo_height()))
+
+        def bind_form(widget):
+            for event in ('<MouseWheel>', '<Button-4>', '<Button-5>'):
+                widget.bind(event, wheel, add='+')
+            if isinstance(widget, (ttk.Entry, ttk.Combobox, ttk.Checkbutton)):
+                widget.bind('<FocusIn>', reveal_field, add='+')
+            for child in widget.winfo_children():
+                bind_form(child)
+
+        bind_form(canvas)
         self.grab_set()
 
     def apply(self):
@@ -117,16 +167,21 @@ class BattleMapPanel(ttk.Frame):
         self.map_menu.add_checkbutton(label=t('map_show_grid'), variable=self.show_grid,
                                       command=lambda: self._guard(self._toggle_grid))
         self.map_menu.add_separator()
+        self.map_menu.add_command(label=t('tab_quick_tables'),
+                                  command=lambda: self.app.open_quick_tables(from_map=True))
         self.map_menu.add_command(label=t('session_undo'), command=self.app._undo_session)
         self.map_menu.add_command(label=t('ui_help'), command=lambda: messagebox.showinfo(
             t('map_title'), t('map_help'), parent=self.winfo_toplevel()))
         self.player_button = ttk.Button(toolbar, text=t('map_players'), command=self.open_player_view)
+        # Put the two map views together, followed by camera controls. With
+        # large text this lets the camera actions share one row instead of
+        # wrapping both Fit and Player view onto their own rows.
         flow_buttons(toolbar, [
             options,
+            self.player_button,
             ttk.Button(toolbar, text='−', command=lambda: self.canvas.zoom_out()),
             ttk.Button(toolbar, text='+', command=lambda: self.canvas.zoom_in()),
             ttk.Button(toolbar, text=t('map_fit'), command=lambda: self.canvas.fit()),
-            self.player_button,
         ])
 
         picker = ttk.Frame(self)
@@ -202,6 +257,12 @@ class BattleMapPanel(ttk.Frame):
         self.app.combat_session.set_battle_map(candidate)
         self._fit_next = self._fit_next or fit
         self.app._battle_map_changed()
+
+    def capture_camera_for_rebuild(self):
+        """Keep the camera in memory while presentation preferences rebuild the tab."""
+        self.app._battle_map_camera_before_rebuild = (
+            ref(self._session), self._last_image, self.canvas.snapshot_camera(),
+        )
 
     def choose_background(self):
         filename = filedialog.askopenfilename(parent=self.winfo_toplevel(), title=t('map_import_png'),
@@ -327,7 +388,7 @@ class BattleMapPanel(ttk.Frame):
         distance = self.pair_distance()
         units = UnitSystem(self.app.result_units.get())
         self.distance_label.configure(text=t('map_need_pair') if distance is None else
-                                      t('map_pair_distance', distance=units.display(distance, 'yards')))
+                                      t('map_pair_distance', distance=units.display(distance, 'yards', precision=15)))
         self.send_button.configure(state='disabled' if distance is None else 'normal')
 
     def refresh_from_session(self):
@@ -335,6 +396,14 @@ class BattleMapPanel(ttk.Frame):
 
         session = self.app.combat_session
         state = session.battle_map
+        same_rebuilt_scene = False
+        camera = None
+        if self._session is None:
+            previous = getattr(self.app, '_battle_map_camera_before_rebuild', None)
+            self.app._battle_map_camera_before_rebuild = None
+            if previous is not None and previous[0]() is session and previous[1] == state.image_id:
+                same_rebuilt_scene = True
+                camera = previous[2]
         if self._session is not session:
             self._session = session
             self.cancel_placement()
@@ -366,13 +435,17 @@ class BattleMapPanel(ttk.Frame):
         self._fit_next = False
         self._scene = MapScene.from_map(state, self._labels, self._colors)
         self.canvas.render(self._scene, selected_id=self._selected_id, fit=fit)
+        if camera is not None:
+            self.canvas.restore_camera(camera)
         self.canvas.set_ruler_ids(self.app.session_actor_key, self.app.session_target_key)
         self._refresh_controls()
         if self.canvas.background_unavailable and self._placing_id is None:
             self._message(t('map_background_missing'))
         elif self._placing_id is None:
             self._message()
-        self._refresh_player(fit=fit)
+        # The player's toplevel was not rebuilt, so its live camera already
+        # belongs to this scene and must not be replaced by the initial fit.
+        self._refresh_player(fit=fit and not same_rebuilt_scene)
 
     def _refresh_player(self, *, fit=False):
         from utils.battle_map_view import MapScene
@@ -385,7 +458,7 @@ class BattleMapPanel(ttk.Frame):
             # an earlier player window or any token data kept by the renderer.
             # Avoid the master's roster numbers: gaps could disclose hidden entries.
             labels = {key: self.app.combat_session.combatants[key].name for key in self.state.public_tokens()}
-            scene = MapScene.from_map(self.state, labels, self._colors, player=True)
+            scene = MapScene.from_map(self.state, labels, player=True)
             player.render(scene, fit=fit)
 
     def open_player_view(self):

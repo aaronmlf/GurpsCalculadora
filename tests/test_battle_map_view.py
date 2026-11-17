@@ -100,7 +100,9 @@ class SceneProjectionTests(unittest.TestCase):
         self.assertIsNot(master.geometry, battle_map)
         self.assertEqual(tuple(token.identifier for token in public.tokens), ("visible-0", "visible-1"))
         self.assertEqual(tuple(token.label for token in public.tokens), ("Aliado Um", "Aliado Dois"))
-        self.assertEqual(public.tokens[0].color, "#3311aa")
+        self.assertEqual(master.tokens[0].color, "#3311aa")
+        self.assertNotEqual(public.tokens[0].color, master.tokens[0].color)
+        self.assertEqual(public.tokens[0].color, public.tokens[1].color)
         self.assertNotIn("Secret", repr(public))
         self.assertNotIn("hidden-id", repr(public))
 
@@ -159,6 +161,45 @@ class MapCanvasTests(unittest.TestCase):
                                 for item in indicators))
         else:
             self.assertFalse(indicators)
+
+    def test_adjacent_player_names_do_not_overlap_or_depend_on_hidden_tokens(self):
+        from tkinter import font
+
+        font.nametofont('TkDefaultFont', root=self.root).configure(size=18)
+        player = PlayerMapWindow(self.root, title='Jogador')
+        canvas = player.canvas
+        names = {'side_a': 'Ardent Sentinel', 'side_b': 'Nimble Pathfinder', 'hidden': 'Secret information'}
+        state = BattleMap().with_token('side_a', 0, 0).with_token('side_b', 1, 0)
+
+        def reject_overlap(a, b):
+            x_overlap = min(a[2], b[2]) - max(a[0], b[0])
+            y_overlap = min(a[3], b[3]) - max(a[1], b[1])
+            self.assertFalse(x_overlap > 0 and y_overlap > 0, (a, b))
+
+        def drawn():
+            items = canvas.find_withtag('map-token')
+            labels = {canvas.itemcget(item, 'text'): canvas.bbox(item) for item in items if canvas.type(item) == 'text'}
+            self.assertEqual(set(labels), {names['side_a'], names['side_b']})
+            plaques = [canvas.bbox(item) for item in items if canvas.type(item) == 'rectangle']
+            markers = [canvas.bbox(item) for item in items if canvas.type(item) == 'oval']
+            self.assertEqual(len(plaques), 2)
+            reject_overlap(*plaques)
+            for plaque in plaques:
+                for marker in markers:
+                    reject_overlap(plaque, marker)
+            return labels, plaques, markers
+
+        player.render(MapScene.from_map(state, names))
+        self.root.update()
+        drawn()
+        for _ in range(3):
+            canvas.zoom_out()
+        self.root.update()
+        visible = drawn()
+        player.render(MapScene.from_map(state.with_token('hidden', 0, -1, visible=False), names))
+        self.root.update()
+        self.assertEqual(drawn(), visible)
+        self.assertEqual(self.callback_errors, [])
 
     def test_large_viewport_and_tiny_cells_keep_a_bounded_grid_at_every_orientation(self):
         clicked = []
@@ -241,6 +282,139 @@ class MapCanvasTests(unittest.TestCase):
         self._assert_grid(player.canvas, overview=True, vertex_count=6)
         self.assertEqual([token.label for token in player.canvas.scene.tokens], ["Vigia"])
         self.assertEqual(self.callback_errors, [])
+
+    def test_grid_budget_does_not_change_detail_when_panning(self):
+        canvas = MapCanvas(self.root)
+        canvas.place(x=0, y=0, width=756, height=755)
+        canvas.render(MapScene.from_map(BattleMap(grid="square")))
+        self.root.update()
+        self.assertEqual((canvas.winfo_width(), canvas.winfo_height()), (756, 755))
+        canvas._scale = .2
+        # At this spacing one pan phase intersects 3,599 exact cells while
+        # the next intersects 3,660. The selected level must not blink.
+        for center in ((0, 0), (0, 32), (0, 0), (32, 32), (0, 0)):
+            with self.subTest(center=center):
+                canvas._set_center(*center)
+                self.root.update()
+                self._assert_grid(canvas, overview=True, vertex_count=4)
+        canvas.zoom_in()
+        self.root.update()
+        self._assert_grid(canvas, overview=False, vertex_count=4)
+        self.assertEqual(self.callback_errors, [])
+
+    def test_ruler_clips_crossing_segments_with_offscreen_endpoints(self):
+        canvas = MapCanvas(self.root)
+        canvas.pack(fill="both", expand=True)
+        state = BattleMap(grid="square", cell_size=2048,
+                          tokens={"left": MapToken(-100000, 0), "right": MapToken(100000, 0)})
+        canvas.render(MapScene.from_map(state))
+        canvas.set_ruler_ids("left", "right")
+        self.root.update()
+        canvas._scale = 8
+        canvas._set_center(0, 0)
+        self.root.update()
+        width, height = canvas.winfo_width(), canvas.winfo_height()
+        line, = canvas.find_withtag("map-ruler")
+        for actual, expected in zip(canvas.coords(line), (0, height / 2, width, height / 2)):
+            self.assertAlmostEqual(actual, expected, places=5)
+
+        canvas.render(MapScene.from_map(state.with_token("left", 0, 0)))
+        self.root.update()
+        line, = canvas.find_withtag("map-ruler")
+        for actual, expected in zip(canvas.coords(line), (width / 2, height / 2, width, height / 2)):
+            self.assertAlmostEqual(actual, expected, places=5)
+
+        canvas.render(MapScene.from_map(state.with_token("left", -100000, 1).with_token("right", 100000, 1)))
+        self.root.update()
+        self.assertEqual(canvas.find_withtag("map-ruler"), ())
+        self.assertEqual(self.callback_errors, [])
+
+    def test_returning_pan_does_not_trigger_placement_click(self):
+        clicked = []
+        canvas = MapCanvas(self.root, on_click=lambda *v: clicked.append(v), is_placing=lambda: True)
+        canvas.pack(fill="both", expand=True)
+        canvas.render(MapScene.from_map(BattleMap(tokens={"hero": MapToken(0, 0)})))
+        self.root.update()
+        x, y = map(round, canvas.canvas_coords(0, 0))
+        center = canvas._center
+        for button, return_motion in ((1, True), (1, False), (2, True), (2, False)):
+            with self.subTest(button=button, return_motion=return_motion):
+                canvas.event_generate(f"<ButtonPress-{button}>", x=x, y=y)
+                canvas.event_generate(f"<B{button}-Motion>", x=x + 56, y=y + 19)
+                self.assertNotEqual(canvas._center, center)
+                if return_motion:
+                    canvas.event_generate(f"<B{button}-Motion>", x=x, y=y)
+                    self.assertEqual(canvas._center, center)
+                canvas.event_generate(f"<ButtonRelease-{button}>", x=x, y=y)
+                self.root.update()
+                self.assertEqual(canvas._center, center)
+                self.assertEqual(clicked, [])
+
+        canvas.event_generate("<ButtonPress-1>", x=x, y=y)
+        canvas.event_generate("<ButtonRelease-1>", x=x, y=y)
+        self.assertEqual(clicked, [canvas.map_coords(x, y)])
+        self.assertEqual(self.callback_errors, [])
+
+    def test_returning_marker_drag_clears_preview_without_a_move(self):
+        moves, clicks = [], []
+        canvas = MapCanvas(self.root, on_move=lambda *v: moves.append(v), on_click=lambda *v: clicks.append(v))
+        canvas.pack(fill="both", expand=True)
+        state = BattleMap(tokens={"hero": MapToken(0, 0)})
+        canvas.render(MapScene.from_map(state, {"hero": "Vigia"}))
+        self.root.update()
+        x, y = map(round, canvas.canvas_coords(0, 0))
+        start = canvas.map_coords(x, y)
+        canvas.event_generate("<ButtonPress-1>", x=x, y=y)
+        canvas.event_generate("<B1-Motion>", x=x + 72, y=y + 12)
+        self.assertNotEqual(canvas._drag_world, ("hero", *start))
+        canvas.event_generate("<B1-Motion>", x=x, y=y)
+        self.assertEqual(canvas._drag_world, ("hero", *start))
+        canvas.event_generate("<ButtonRelease-1>", x=x, y=y)
+        self.root.update()
+        self.assertIsNone(canvas._drag_world)
+        self.assertEqual((moves, clicks), ([], []))
+        self.assertEqual(canvas.token_at(x, y), "hero")
+        self.assertEqual(self.callback_errors, [])
+
+    def test_png_remains_visible_at_5k_and_4k_pan_reuses_bounded_tiles(self):
+        with TemporaryDirectory() as directory:
+            asset_store = BattleMapAssetStore(directory)
+            source = Path(directory) / "map.png"
+            source.write_bytes(png(2800, 1600))
+            state = BattleMap(image_id=asset_store.import_png(source), show_grid=False)
+            canvas = MapCanvas(self.root, asset_store)
+            canvas.place(x=0, y=0, width=5120, height=2880)
+            canvas.render(MapScene.from_map(state))
+            self.root.update()
+            self.assertEqual((canvas.winfo_width(), canvas.winfo_height(), canvas._scale), (5120, 2880, 1))
+            self.assertTrue(canvas.find_withtag("map-image"))
+            canvas.zoom_in()
+            self.root.update()
+            self.assertEqual(canvas._scale, 2)
+
+            def check_tiles():
+                images = set(canvas.find_withtag("map-image"))
+                self.assertGreater(len(images), 1)
+                for x, y in ((2, 2), (canvas.winfo_width() - 2, 2), (2, canvas.winfo_height() - 2),
+                             (canvas.winfo_width() - 2, canvas.winfo_height() - 2)):
+                    self.assertTrue(images.intersection(canvas.find_overlapping(x, y, x, y)))
+                pixels = sum(tile.width() * tile.height() for tile in canvas._image_tiles.values())
+                self.assertLessEqual(pixels, 24 * 1024 * 1024)
+
+            check_tiles()
+            canvas.place_configure(width=3840, height=2160)
+            self.root.update()
+            check_tiles()
+            before = dict(canvas._image_tiles)
+            x, y = canvas._center
+            canvas._set_center(x + 20, y + 13)
+            self.root.update()
+            check_tiles()
+            reusable = before.keys() & canvas._image_tiles.keys()
+            self.assertGreaterEqual(len(reusable), len(before) * .8)
+            for key in reusable:
+                self.assertIs(canvas._image_tiles[key], before[key])
+            self.assertEqual(self.callback_errors, [])
 
     def test_png_photo_fit_crop_cache_and_missing_image(self):
         with TemporaryDirectory() as directory:

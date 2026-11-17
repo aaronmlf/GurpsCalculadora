@@ -1,5 +1,6 @@
 """Integration checks for the Mapa → Cenários / Tiro workflow."""
 
+from dataclasses import replace
 from pathlib import Path
 import tempfile
 import unittest
@@ -10,7 +11,7 @@ from calculators.injury import CombatantState
 from tests.tk_support import requires_tk
 from utils.dice_roller import get_range_modifier
 from utils.i18n import t
-from utils.ui_preferences import BATTLE_MAP_TOOL, clean_preferences
+from utils.ui_preferences import BATTLE_MAP_TOOL, QUICK_TABLES_TOOL, clean_preferences
 
 
 class BattleMapPreferencesTests(unittest.TestCase):
@@ -94,12 +95,108 @@ class BattleMapIntegrationTests(unittest.TestCase):
         app.combat_session.set_battle_map(model.with_token(target, 8, 0))
         app._battle_map_changed()
         self.assertIn(t("ranged_map_distance_stale"), app.ranged_map_hint.get())
-        self.assertEqual(app._current_ranged_input().distance_in_yards, 7)
+        with self.assertRaises(ValueError) as error:
+            app._current_ranged_input()
+        self.assertEqual(str(error.exception), t("ranged_map_distance_stale"))
         with self.assertRaisesRegex(ValueError, "map_settings_stale"):
             app._send_map_distance_to_ranged(actor, target, 7)
         app.ranged_distance.set("1.8288")
         self.assertEqual(app.ranged_map_hint.get(), "")
         self.assertIsNone(app._current_ranged_input().map_distance_yards)
+
+    def test_transfers_reveal_the_new_distance_at_narrow_width(self):
+        app = self.app
+        app.root.geometry('800x600')
+        app.ui_preferences['font_size'] = 18
+        app._change_language('pt_BR')
+        app.choose_tool(8)
+        app.root.update()
+        ranged = app.ranged_layout
+        ranged.canvas.yview_moveto(1)
+        app.root.update()
+
+        def assert_within_view(widget, canvas):
+            self.assertTrue(widget.winfo_ismapped())
+            y = widget.winfo_rooty() - canvas.winfo_rooty()
+            self.assertGreaterEqual(y, -1)
+            self.assertLessEqual(y + widget.winfo_height(), canvas.winfo_height())
+
+        self.assertLess(app._ranged_distance_field.winfo_rooty(), ranged.canvas.winfo_rooty())
+        app.choose_tool(BATTLE_MAP_TOOL)
+        self._place_pair()
+        app.battle_map_panel.send_button.invoke()
+        app.root.update()
+        self.assertEqual(app._current_tool, 8)
+        assert_within_view(app._ranged_distance_field, ranged.canvas)
+        assert_within_view(app.ranged_map_hint_label, ranged.canvas)
+
+        ranged.canvas.yview_moveto(1)
+        app.choose_tool(BATTLE_MAP_TOOL)
+        app.open_quick_tables(from_map=True)
+        app.root.update()
+        self.assertEqual(app._current_tool, QUICK_TABLES_TOOL)
+        tables = app.quick_tables_panel
+        self.assertEqual(float(tables.distance_var.get()), 7)
+        assert_within_view(tables.range_distance_entry, tables.canvas)
+        tables.send_range_button.invoke()
+        app.root.update()
+        self.assertEqual(app._current_tool, 8)
+        assert_within_view(app._ranged_distance_field, ranged.canvas)
+        self.assertEqual(app._current_ranged_input().distance_in_yards, 7)
+
+    def test_stale_measurement_blocks_all_shot_actions_for_a_new_target(self):
+        app = self.app
+        actor, target, model = self._place_pair()
+        third = app.combat_session.add_combatant(CombatantState(identifier="vigia", name="Vigia"))
+        app.combat_session.set_battle_map(model.with_token(third, 120, 0))
+        app.ranged_max_range.set("7")
+        app.ranged_skill.set("16")
+        app._send_map_distance_to_ranged(actor, target, 7)
+        app._select_encounter_role("target", third)
+        with (patch("main.messagebox.showerror") as error,
+              patch.object(app.ranged_calc, "calculate") as calculate,
+              patch.object(app.ranged_calc, "resolve") as resolve):
+            for action in ("calculate", "attack", "resolve"):
+                app._run_ranged(action)
+            calculate.assert_not_called()
+            resolve.assert_not_called()
+            self.assertEqual(error.call_count, 3)
+            self.assertEqual(error.call_args.args[1], t("ranged_map_distance_stale"))
+        self.assertEqual(app._ranged_drafts, {})
+        self.assertEqual(app.combat_session.combatants[third].current_hp, 10)
+        app._send_map_distance_to_ranged(actor, third, 120)
+        data = app._current_ranged_input()
+        self.assertEqual(data.distance_in_yards, 120)
+        self.assertFalse(app.ranged_calc.calculate(data).range_valid)
+
+    def test_visual_grid_changes_do_not_invalidate_a_ranged_result(self):
+        app = self.app
+        actor, target, model = self._place_pair()
+        app._send_map_distance_to_ranged(actor, target, 7)
+        app._run_ranged("calculate")
+        app.root.update()
+        self.assertFalse(app.ranged_result_text.stale)
+        hint = app.ranged_map_hint.get()
+        app.combat_session.set_battle_map(replace(model, show_grid=False, cell_size=96, origin_x=5))
+        app._battle_map_changed()
+        app.root.update()
+        self.assertEqual(app.ranged_map_hint.get(), hint)
+        self.assertFalse(app.ranged_result_text.stale)
+        self.assertEqual(app._current_ranged_input().distance_in_yards, 7)
+
+    def test_ranged_result_displays_distances_just_outside_the_limit(self):
+        app = self.app
+        actor, target, model = self._place_pair()
+        model = replace(model.with_token(target, 50, 0), yards_per_cell=0.14000002)
+        app.combat_session.set_battle_map(model)
+        app.ranged_max_range.set("7")
+        app.result_units.set("imperial")
+        app._send_map_distance_to_ranged(actor, target, model.distance_yards(0, 0, 50, 0))
+        app._run_ranged("calculate")
+        self.assertIn("7.000001 yd", app.ranged_map_hint.get())
+        result = app.ranged_result_text.get("1.0", "end")
+        self.assertIn(t("ranged_range_result", meters="6.4008009144", yards="7.000001",
+                        valid=t("common_no")), result)
 
     def test_named_scenario_restores_map_and_resets_transfer_context(self):
         app = self.app

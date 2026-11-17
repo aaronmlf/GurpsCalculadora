@@ -11,7 +11,7 @@ class UnitSystem:
         if self.name not in {"metric", "imperial"}:
             raise ValueError("invalid_unit_system")
 
-    def display(self, value: float, quantity: str) -> str:
+    def display(self, value: float, quantity: str, *, precision: int = 6) -> str:
         # Source units are those used by the rules engines, never inferred from text.
         definitions = {
             "yards": (0.9144, "m", "yd"),
@@ -24,7 +24,7 @@ class UnitSystem:
             raise ValueError("invalid_quantity")
         factor, metric, imperial = definitions[quantity]
         result = value * factor if self.name == "metric" else value
-        return f"{result:.6g} {metric if self.name == 'metric' else imperial}"
+        return f"{result:.{precision}g} {metric if self.name == 'metric' else imperial}"
 
     def to_rules(self, value: float, quantity: str) -> float:
         factors = {"yards": 0.9144, "yards_per_second": 0.9144,

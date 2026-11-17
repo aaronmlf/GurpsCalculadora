@@ -4,21 +4,24 @@ import os
 from pathlib import Path
 import tempfile
 from utils.ui_theme import clean_theme_colors
+from utils.quick_tables_packages import normalize_packages
 
 
 BATTLE_MAP_TOOL = 16  # Append tools; existing saved indices stay valid.
-TOOL_COUNT = BATTLE_MAP_TOOL + 1
+QUICK_TABLES_TOOL = 17
+TOOL_COUNT = QUICK_TABLES_TOOL + 1
 
 
 def clean_preferences(value):
     result = {'schema': 1, 'theme': 'dark', 'font_size': 10, 'favorites': [], 'recent': [],
               'last_tool': 'home', 'window': '1024x768', 'sidebar_hidden': False,
-              'catalog_favorites': [], 'theme_colors': {}}
+              'catalog_favorites': [], 'theme_colors': {}, 'quick_tables_packs': []}
     if not isinstance(value, dict):
         return result
     if value.get('theme') in ('light', 'dark'):
         result['theme'] = value['theme']
     result['theme_colors'] = clean_theme_colors(value.get('theme_colors'))
+    result['quick_tables_packs'] = list(normalize_packages(value.get('quick_tables_packs')))
     if type(value.get('sidebar_hidden')) is bool:
         result['sidebar_hidden'] = value['sidebar_hidden']
     if type(value.get('font_size')) is int and 9 <= value['font_size'] <= 18:

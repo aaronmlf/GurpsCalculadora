@@ -8,38 +8,44 @@ from calculators.vehicles import VehicleRecord
 from calculators.magic import CeremonialAssistant, CeremonialCasting
 from calculators.campaign import OrganizationRecord, RelationshipRecord
 from utils.i18n import t
+from utils.gui_workspace import fit_dialog
+from utils.ranged_layout import FieldGrid, checkbutton, wrap_label
 from utils.editor_records import (VEHICLE_FIELDS, number, validate_vehicle, vehicle_document,
                                   load_vehicle_document, ability_document, load_ability_document,
                                   read_document, write_document)
 
 
 class EditorWindow(tk.Toplevel):
-    def __init__(self, app, title):
+    def __init__(self, app, title, *, responsive=False):
         super().__init__(app.root)
         self.app = app
         self.title(t(title))
-        self.geometry('850x680')
-        self.minsize(600, 400)
         self.transient(app.root)
+        fit_dialog(self, app.root, (850, 680), (510 if responsive else 600, 400))
         self.footer = ttk.Frame(self, padding=8)
         self.footer.pack(side='bottom', fill='x')
-        canvas = tk.Canvas(self, highlightthickness=0, background=app.colors['bg'])
-        scroll = ttk.Scrollbar(self, command=canvas.yview)
+        self.canvas = tk.Canvas(self, highlightthickness=0, background=app.colors['bg'])
+        scroll = ttk.Scrollbar(self, command=self.canvas.yview)
         scroll.pack(side='right', fill='y')
-        canvas.pack(fill='both', expand=True)
-        horizontal = ttk.Scrollbar(self, orient='horizontal', command=canvas.xview)
-        horizontal.pack(side='bottom', fill='x', before=canvas)
-        canvas.configure(yscrollcommand=scroll.set, xscrollcommand=horizontal.set)
-        self.form = ttk.Frame(canvas, padding=12)
-        window = canvas.create_window(0, 0, window=self.form, anchor='nw')
-        self.form.bind('<Configure>', lambda event: canvas.configure(scrollregion=canvas.bbox('all')))
-        canvas.bind('<Configure>', lambda event: canvas.itemconfigure(window, width=max(event.width, self.form.winfo_reqwidth())))
-        self.form.columnconfigure(1, weight=1)
-        self.error = ttk.Label(self.footer, text='', wraplength=780, foreground='#b42318' if app.ui_preferences['theme'] == 'light' else '#ff8585')
+        self.canvas.pack(fill='both', expand=True)
+        self.canvas.configure(yscrollcommand=scroll.set)
+        if not responsive:
+            horizontal = ttk.Scrollbar(self, orient='horizontal', command=self.canvas.xview)
+            horizontal.pack(side='bottom', fill='x', before=self.canvas)
+            self.canvas.configure(xscrollcommand=horizontal.set)
+        self.form = ttk.Frame(self.canvas, padding=12)
+        window = self.canvas.create_window(0, 0, window=self.form, anchor='nw')
+        self.form.bind('<Configure>', lambda _event: self.canvas.configure(scrollregion=self.canvas.bbox('all')))
+        self.canvas.bind('<Configure>', lambda event: self.canvas.itemconfigure(
+            window, width=event.width if responsive else max(event.width, self.form.winfo_reqwidth())))
+        self.form.columnconfigure(0 if responsive else 1, weight=1)
+        self.error = wrap_label(ttk.Label(self.footer, text='', width=1, style='Error.TLabel'))
         self.error.pack(fill='x')
         self.actions = ttk.Frame(self.footer)
         self.actions.pack(fill='x', pady=4)
-        self._action_count = 0
+        self._action_buttons = []
+        self._action_layout = None
+        self.actions.bind('<Configure>', self._fit_actions)
 
     def action(self, key, callback):
         def guarded():
@@ -49,10 +55,25 @@ class EditorWindow(tk.Toplevel):
             except (OSError, ValueError, TypeError, tk.TclError) as exc:
                 translated = t(str(exc))
                 self.error.configure(text=translated if translated != str(exc) else t('ui_editor_error', error=str(exc)))
-        index = self._action_count
-        self._action_count += 1
-        ttk.Button(self.actions, text=t(key), command=guarded).grid(row=index // 3, column=index % 3, sticky='ew', padx=3, pady=3)
-        self.actions.columnconfigure(index % 3, weight=1)
+        button = ttk.Button(self.actions, text=t(key), command=guarded)
+        self._action_buttons.append(button)
+        self._fit_actions()
+        return button
+
+    def _fit_actions(self, _event=None):
+        if not self._action_buttons:
+            return
+        largest = max(button.winfo_reqwidth() + 6 for button in self._action_buttons)
+        columns = max(1, min(3, self.actions.winfo_width() // largest))
+        layout = (columns, len(self._action_buttons))
+        if layout == self._action_layout:
+            return
+        self._action_layout = layout
+        for column in range(3):
+            self.actions.columnconfigure(column, weight=int(column < columns))
+        for index, button in enumerate(self._action_buttons):
+            row, column = divmod(index, columns)
+            button.grid(row=row, column=column, sticky='ew', padx=3, pady=3)
 
     def entry(self, row, label, variable):
         ttk.Label(self.form, text=label, wraplength=360).grid(row=row, column=0, sticky='w', pady=4)
@@ -61,7 +82,7 @@ class EditorWindow(tk.Toplevel):
 
 class CeremonialEditor(EditorWindow):
     def __init__(self, app):
-        super().__init__(app, 'ui_ceremony_title')
+        super().__init__(app, 'ui_ceremony_title', responsive=True)
         current = deepcopy(getattr(app, '_magic_ceremony', None) or CeremonialCasting())
         self.assistants = current.assistants
         self.caster = tk.StringVar(self, value=str(current.caster_energy))
@@ -70,16 +91,21 @@ class CeremonialEditor(EditorWindow):
         self.skill = tk.StringVar(self, value='15')
         self.energy = tk.StringVar(self, value='1')
         self.mage = tk.BooleanVar(self, value=True)
-        ttk.Label(self.form, text=t('ui_ceremony_help'), wraplength=730).grid(row=0, column=0, columnspan=2)
-        for row, key, var in ((1, 'ui_ceremony_caster', self.caster),
-                              (2, 'ui_ceremony_supporters', self.supporters),
-                              (3, 'ui_ceremony_opponents', self.opponents),
-                              (4, 'ui_ceremony_skill', self.skill),
-                              (5, 'ui_ceremony_energy', self.energy)):
-            self.entry(row, t(key), var)
-        ttk.Checkbutton(self.form, text=t('ui_ceremony_mage'), variable=self.mage).grid(row=6, column=0)
-        self.listbox = tk.Listbox(self.form, height=8)
-        self.listbox.grid(row=7, column=0, columnspan=2, sticky='ew', pady=8)
+        wrap_label(ttk.Label(self.form, width=1, text=t('ui_ceremony_help'))).pack(fill='x')
+        fields = FieldGrid(self.form, columns=2)
+        fields.pack(fill='x', pady=6)
+        for key, var in (('ui_ceremony_caster', self.caster),
+                         ('ui_ceremony_supporters', self.supporters),
+                         ('ui_ceremony_opponents', self.opponents),
+                         ('ui_ceremony_skill', self.skill),
+                         ('ui_ceremony_energy', self.energy)):
+            cell = ttk.Frame(fields)
+            fields.add(cell)
+            wrap_label(ttk.Label(cell, width=1, text=t(key))).pack(fill='x')
+            ttk.Entry(cell, width=1, textvariable=var).pack(fill='x')
+        fields.add(checkbutton(fields, t('ui_ceremony_mage'), self.mage))
+        self.listbox = tk.Listbox(self.form, height=6)
+        self.listbox.pack(fill='x', pady=6)
         self.refresh()
         self.action('ui_ceremony_add', self.add)
         self.action('ui_ceremony_remove', self.remove)
@@ -248,7 +274,11 @@ class VehicleEditor(EditorWindow):
         record.original = {'based_on': f'{self.base.name} — {self.base.source} p.{self.base.page}'}
         record.source, record.page = 'Custom', '-'
         self.app.vehicle_catalog.save_custom(record)
-        self.app.vehicle_selected.set(f'{record.name} — {record.source} p.{record.page}')
+        self.app._pending_vehicle_movement = None
+        box = self.app.vehicles_result_text
+        if box.get('1.0', 'end-1c').strip():
+            box.stale = True
+        self.app._vehicle_selection_override = record.identifier
         self.destroy()
         self.app._rebuild_ui()
 

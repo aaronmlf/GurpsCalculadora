@@ -53,6 +53,11 @@ class SuccessRollTests(unittest.TestCase):
     def test_complete_critical_failure_rules(self):
         self.assertTrue(evaluate_success_roll(15, 17)["critical_failure"])
         self.assertFalse(evaluate_success_roll(16, 17)["critical_failure"])
+        for skill in (16, 17, 18, 30):
+            outcome = evaluate_success_roll(skill, 17)
+            self.assertFalse(outcome["success"])
+            self.assertFalse(outcome["critical_failure"])
+            self.assertEqual(outcome["margin"], max(0, 17 - skill))
         self.assertTrue(evaluate_success_roll(5, 15)["critical_failure"])
 
 

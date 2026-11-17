@@ -117,6 +117,37 @@ class RangedLayoutTests(unittest.TestCase):
                 self.assertEqual(layout.canvas.winfo_width(), width)
                 assert_workbench_reflow(self, layout, wide=wide)
 
+    def test_editing_attack_hides_previous_metrics_even_after_a_language_rebuild(self):
+        app = self.app
+        app.choose_tool(8)
+        self.resize('1140x690')
+        app.ranged_skill.set('16')
+        app.ranged_distance.set('2')
+        self.button('ranged_calculate').invoke()
+        app.root.update()
+        old_result = app.ranged_result_text.get('1.0', 'end-1c')
+        old_metrics = tuple(l.cget('text') for l in app.ranged_layout.metric_values)
+        self.assertTrue(old_result)
+        self.assertTrue(all(metric != '—' for metric in old_metrics))
+
+        app.ranged_skill.set('4')
+        app.root.update()
+        self.assertTrue(app.ranged_result_text.stale)
+        self.assertEqual(app.ranged_result_text.get('1.0', 'end-1c'), old_result)
+        self.assertEqual(tuple(l.cget('text') for l in app.ranged_layout.metric_values), ('—', '—'))
+
+        app._change_language('en_US')
+        app.root.update()
+        self.assertTrue(app.ranged_result_text.stale)
+        self.assertEqual(tuple(l.cget('text') for l in app.ranged_layout.metric_values), ('—', '—'))
+        self.button('ranged_calculate').invoke()
+        app.root.update()
+        self.assertFalse(app.ranged_result_text.stale)
+        new_metrics = tuple(l.cget('text') for l in app.ranged_layout.metric_values)
+        self.assertTrue(all(metric != '—' for metric in new_metrics))
+        self.assertNotEqual(new_metrics, old_metrics)
+        self.show_error.assert_not_called()
+
     def test_invalid_hidden_field_reveals_its_disclosure(self):
         app = self.app
         app.choose_tool(8)

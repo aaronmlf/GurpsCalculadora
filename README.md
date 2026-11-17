@@ -11,7 +11,7 @@ cartões de acesso direto a Dados, Tiro, Corpo a corpo e Trauma, além de favori
 recentes e um resumo da sessão. Use **Ctrl+K** ou **Buscar ferramentas** para ir
 direto a um módulo pelo nome em português ou inglês.
 
-Em **Tiro**, **Impactos**, **Força**, **Magia**, **Poderes e Psi**, **Veículos**,
+Em **Corpo a corpo**, **Trauma**, **Tiro**, **Impactos**, **Força**, **Magia**, **Poderes e Psi**, **Veículos**,
 **Social** e **Batalhas**, os parâmetros ficam ao lado do resultado quando há
 espaço. Em janelas estreitas, os painéis ficam empilhados. O resultado tem resumo
 e memória de cálculo recolhível. Opções de combate, resistência e logística
@@ -146,6 +146,7 @@ de idioma e unidades são salvas na pasta de dados do usuário.
 - Basic Lift, carga, empurrar, puxar, Lifting ST, Striking ST e Arm ST
 - Extra Effort e Super-Effort, com separação entre Powers e a extensão cinematográfica de Supers
 - Ataque Total (Forte), Mighty Blows, Weapon Master e conversão de bônus por dado
+- Ao calcular um golpe, o resumo destaca o dano; para levantamentos, destaca a capacidade.
 - Integração com o dano do combate corpo a corpo e custos em FP por `StateDelta`
 
 ### 12. Magia, Poderes e Psi
@@ -155,6 +156,7 @@ de idioma e unidades são salvas na pasta de dados do usuário.
 - Magias variáveis podem exigir parâmetros do mestre; sistemas alternativos sem motor próprio são marcados **Só referência**
 - Psi: **Emotion Sense** e **Mental Surgery** têm níveis publicados calculáveis. Outras entradas psi são referências; efeitos narrativos ficam com o mestre.
 - Consulte o status e a fonte no catálogo. Magia/Psi podem usar FP da sessão e só o aplicam após confirmação; ER e energia externa são controladas pelo mestre.
+- O filtro da lista não troca a seleção atual. **Pesquisar** abre o catálogo completo, mesmo com o filtro da lista ativo.
 
 ### 13. Veículos e Naves
 
@@ -162,6 +164,7 @@ de idioma e unidades são salvas na pasta de dados do usuário.
 - Painel **Colisões e combate veicular**: colisão entre veículos com DR de ambos, cálculo e resolução de disparos usando o motor de Tiro; os resultados não alteram a sessão
 - Catálogo de veículos e suporte a veículos personalizados na pasta do usuário
 - Sessão veicular com aplicação explícita e desfazer
+- Editar um veículo personalizado atualiza a definição usada em novos cálculos, sem reiniciar velocidade, combustível ou danos da sessão.
 
 ### 14. Social e Batalhas
 
@@ -181,6 +184,35 @@ de idioma e unidades são salvas na pasta de dados do usuário.
 - Cópia da página atual e exportação de **todos** os dados em arquivo `.txt`
 - Cópia só do total, até 12 favoritas e 12 expressões recentes com seus totais, e atalhos **Teste 3d6** e **Disputa Rápida**
 - Troca de idioma preserva os dados e traduz a apresentação sem nova rolagem
+
+### 16. Tabelas Rápidas (Quick Tables)
+
+- Abra **Mestre → Tabelas Rápidas**, use **Ctrl+K** ou o atalho em **Mapa** e **Tiro**.
+- **Iluminação:** compare luz ambiente e uma fonte pontual pela distância entre fonte e alvo.
+  Confira os ajustes opcionais de nuvens, sombras móveis e adaptação (Basic Set Revised, p. 574).
+  Envie só a iluminação ao Tiro; o campo de outros modificadores de visibilidade é separado.
+- **Distância/Velocidade:** consulte Tiro ou Detecção e escolha se a velocidade entra no teste
+  (pp. 550–551). **Usar distância do Mapa** lê o par atual sem alterá-lo. Uma medida importada
+  precisa ser atualizada se o par, as posições ou a escala mudarem.
+- **Enviar a Tiro** preenche distância e velocidade, sem somar a penalidade como bônus manual.
+  Tiro continua usando seu próprio perfil e a distância física para os limites da arma.
+- **Exploração e preparo:** filtre por categoria, nome ou página. Consulte sentidos, marcha e
+  terreno, ferimentos e primeiros socorros, riscos ambientais, cobertura e veículos,
+  ou preparativos de magia e de cenário. As consultas identificam a página da regra e
+  encaminham para a calculadora relacionada quando a resolução vai além da tabela.
+- As consultas funcionam em PT-BR e inglês, nas unidades métricas ou imperiais. Resultados manuais
+  e rolagens opcionais não são aplicados ao cenário. Enviar uma expressão para **Dados** só
+  preenche o campo. O Mapa não ganha iluminação dinâmica.
+- **Suplementos:** em **Exploração e preparo**, abra **Suplementos (0)** e marque os pacotes que
+  usa. O **Basic Set Revised** é a única fonte habilitada por padrão. **Fonte** permite
+  mostrar só o Basic ou só um pacote; **Desligar todos os suplementos** volta à seleção padrão.
+  As escolhas são salvas como preferência da interface, não no cenário.
+- Pacotes de consulta: *Tactical Shooting* e *Extreme Conditions*, *Martial Arts*, *Action 2*,
+  magia alternativa, *Powers* e *Psionic Powers*, *Social Engineering* e *Pulling Rank*,
+  *Mass Combat*, *Spaceships*, *Wilderness Adventures*, *Treasure Tables* e *Horror*.
+  Cada cartão identifica livro, página e condições. Habilitar um pacote não muda o perfil de
+  Tiro, Corpo a corpo, Trauma nem outro motor. Quando a regra exige escolher uma consequência
+  narrativa ou consultar uma tabela extensa, o cartão orienta sem reproduzir o livro.
 
 ---
 
@@ -343,16 +375,24 @@ A grade hexagonal começa com 1 jarda por célula.
   **Marcador → Visível para jogadores** antes ou depois de colocá-los.
 - Ao afastar muito o zoom, uma grade de referência sinalizada substitui
   as células pequenas, sem alterar o encaixe dos marcadores nem a régua.
+  Deslocar a vista no mesmo zoom não muda o nível da grade. A régua
+  mostra o trecho visível mesmo que seus marcadores estejam fora da tela.
 - Defina agente e alvo no menu **Marcador**. **Enviar a Tiro** preenche
   a distância, sem alterar arma, perícia, velocidade, cobertura ou visibilidade.
   A régua respeita o sistema de unidades escolhido; a regra de alcance recebe
-  o valor exato em jardas. Se as posições mudarem, envie a nova distância.
+  o valor exato em jardas. Se o par, as posições ou a escala mudarem,
+  Tiro bloqueia a medida antiga até que você reenvie ou edite a distância.
   Ao trocar de cenário, o campo volta à distância manual anterior.
   Um acerto enviado a Trauma só pode ser aplicado ao par que originou o tiro.
+- Abra **Mapa → Tabelas Rápidas** no menu da própria ferramenta para consultar a medida antes de enviá-la.
 - Abra **Visão dos jogadores** para compartilhar só essa janela ou movê-la
   a um segundo monitor. Ela acompanha as alterações do mestre e não exibe
   HP, FP, nomes de grupos, notas do mestre ou marcadores ocultos. A imagem
   do fundo é pública nessa janela; escolha um PNG sem segredos impressos.
+  Marcadores públicos na mesma célula aparecem juntos, sem cores associadas a
+  grupos privados. Quando não há espaço para os nomes sem sobreposição, amplie
+  a vista para lê-los. Trocar idioma ou unidades
+  mantém o zoom e o enquadramento de cada janela.
 
 O cenário salva o agente e o alvo, a grade, posições, visibilidade e referência do fundo.
 O PNG fica na pasta de dados local, fora do executável, e o arquivo
@@ -397,6 +437,7 @@ Todos os cálculos são baseados no **GURPS 4th Edition Basic Set Revised**:
 | Falling Objects/Dropping | p. 189, 431 |
 | Combat | p. 368-370, 374-376, 377-379, 381 |
 | Ranged Combat | p. 364, 372-374, 407-410, 548-550 |
+| Quick Tables: Lighting and Speed/Range | pp. 394, 548, 550–551, 574 |
 | Injury/Trauma | p. 377-424; Martial Arts p. 136-139 |
 | Melee Combat/Grappling | p. 364-371, 374-377; Martial Arts p. 96-129 |
 | Strength/Super-Effort | p. 15-17, 353-357, 365; Powers p. 58; Supers p. 24-25 |

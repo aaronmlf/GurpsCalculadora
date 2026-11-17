@@ -1,14 +1,30 @@
 """Vehicle-on-vehicle previews backed by the existing GURPS engines."""
 
-from dataclasses import replace
+from collections import Counter
 import math
 import tkinter as tk
 from tkinter import ttk
 
-from calculators.vehicles import VehicleAttackInput, VehicleCollisionInput, VehicleState
+from calculators.vehicles import VehicleAttackInput, VehicleCollisionInput
 from utils.i18n import t
 from utils.ranged_layout import FieldGrid, wrap_label
 from utils.units import UnitSystem
+
+
+def vehicle_choices(records):
+    """Preserve old labels for unambiguous records; distinguish copies by ID."""
+    records = {record.identifier: record for record in records}.values()
+    labels = [(f"{record.name} — {record.source} p.{record.page}", record) for record in records]
+    counts = Counter(label for label, _ in labels)
+    ordinary = {label for label, _ in labels if counts[label] == 1}
+    choices = {}
+    for label, record in labels:
+        if counts[label] > 1:
+            label = f"{label} [{record.identifier}]"
+            while label in ordinary or label in choices:
+                label += f" [{record.identifier}]"
+        choices[label] = record
+    return choices
 
 
 class VehicleCombatPanel:
@@ -54,8 +70,13 @@ class VehicleCombatPanel:
         self._entry(shooting, "ranged_skill", app.vehicle_combat_skill)
         self._entry(shooting, "ranged_aim_seconds", app.vehicle_combat_aim)
         self._entry(shooting, "ranged_shots_fired", app.vehicle_combat_shots)
-        app._extended_actions(frame, (("ranged_calculate", lambda: self.attack(False)),
-                                      ("ranged_resolve", lambda: self.attack(True))))
+        actions = app._extended_actions(frame, (("ranged_calculate", lambda: self.attack(False)),
+                                                ("ranged_resolve", lambda: self.attack(True))))
+        # Combat parses its optional speeds and other fields in its own
+        # handler; the movement duration is irrelevant to a shot preview.
+        for button in actions.winfo_children():
+            if isinstance(button, ttk.Button):
+                button.validation_fields = ()
         ttk.Label(frame, text=t("vehicle_combat_hint"), wraplength=380).pack(fill="x", padx=5, pady=(0, 6))
 
     @staticmethod
@@ -100,9 +121,9 @@ class VehicleCombatPanel:
         units = UnitSystem(app.result_units.get())
         result = []
         for item, var in ((first, app.vehicle_combat_speed_first), (second, app.vehicle_combat_speed_second)):
-            state = app.vehicle_session.vehicles.get(item.identifier, VehicleState(item))
+            state = app.vehicle_session.state_for(item)
             if var.get().strip():
-                state = replace(state, speed_yards_per_second=self._number(var.get()))
+                state.speed_yards_per_second = self._number(var.get())
             result.append(state)
         return result[0], result[1], units
 

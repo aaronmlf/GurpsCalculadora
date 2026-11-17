@@ -6,25 +6,26 @@ from dataclasses import asdict, is_dataclass
 import unicodedata
 
 from utils.i18n import t
+from utils.ranged_layout import flow_buttons, wrap_label
 from utils.rules_catalog import catalog_status
-from utils.ui_preferences import BATTLE_MAP_TOOL
+from utils.ui_preferences import BATTLE_MAP_TOOL, QUICK_TABLES_TOOL
 
 
 _TOOL_KEYS = (
     'tab_knockback', 'tab_slam', 'tab_falls', 'tab_collisions', 'tab_explosions',
     'tab_falling_objects', 'tab_combat', 'tab_injury', 'tab_ranged', 'tab_strength',
     'tab_magic', 'tab_powers', 'tab_vehicles', 'tab_social', 'tab_mass_combat',
-    'tab_gm_dice', 'tab_battle_map',
+    'tab_gm_dice', 'tab_battle_map', 'tab_quick_tables',
 )
 _WORKSPACE_GROUPS = (
     ('ui_combat', (BATTLE_MAP_TOOL, 6, 8, 7, 9)), ('ui_powers', (10, 11)),
     ('ui_impacts', (0, 1, 2, 3, 4, 5)), ('ui_vehicles', (12,)),
-    ('ui_campaign', (13, 14)),
+    ('ui_campaign', (13, 14)), ('ui_game_master', (QUICK_TABLES_TOOL,)),
 )
 _TOOL_GROUPS = {index: group for group, indices in _WORKSPACE_GROUPS for index in indices}
 _TOOL_GROUPS[15] = 'ui_game_master'
 _DOMAIN_GLYPHS = {'ui_combat': '×', 'ui_powers': '✦', 'ui_impacts': '↘',
-                  'ui_vehicles': '▰', 'ui_campaign': '▦'}
+                  'ui_vehicles': '▰', 'ui_campaign': '▦', 'ui_game_master': '◇'}
 
 
 def _fold_text(value):
@@ -34,7 +35,32 @@ def _fold_text(value):
 
 def search_values(values, query):
     words = _fold_text(query).split()
-    return [value for value in values if all(word in _fold_text(value) for word in words)]
+    if not words:
+        return list(values)
+    indexed = ((value, _fold_text(value)) for value in values)
+    return [value for value, folded in indexed if all(word in folded for word in words)]
+
+
+def trace_while_alive(widget, variable, callback):
+    """Attach a model-to-view Tk trace without retaining a destroyed widget."""
+    token = variable.trace_add('write', callback)
+    widget.bind('<Destroy>', lambda event: variable.trace_remove('write', token)
+                if event.widget is widget else None, add='+')
+
+
+def fit_dialog(window, parent, preferred, minimum):
+    """Keep a secondary window and its footer inside the available screen."""
+    max_width, max_height = window.maxsize()
+    screen_width = min(parent.winfo_screenwidth(), max_width)
+    screen_height = min(parent.winfo_screenheight(), max_height)
+    width = min(preferred[0], max(1, screen_width - 24))
+    height = min(preferred[1], max(1, screen_height - 60))
+    window.minsize(min(width, minimum[0]), min(height, minimum[1]))
+    x = max(0, min(parent.winfo_rootx() + (parent.winfo_width() - width) // 2,
+                   parent.winfo_screenwidth() - width - 16))
+    y = max(0, min(parent.winfo_rooty() + (parent.winfo_height() - height) // 2,
+                   parent.winfo_screenheight() - height - 44))
+    window.geometry(f'{width}x{height}+{x}+{y}')
 
 
 class ToolChooser(tk.Toplevel):
@@ -64,7 +90,10 @@ class ToolChooser(tk.Toplevel):
             name_text = ' '.join(names)
             domain_text = _fold_text(' '.join((domain, *(table.get(group, '') for table in translations))))
             display = label if label == domain else f'{label}  ·  {domain}'
-            self.entries.append((index, display, names, name_text, f'{name_text} {domain_text}'))
+            aliases = (' luminosidade iluminacao escuridao distancia alcance velocidade deteccao'
+                       ' lighting illumination darkness distance range speed sensing'
+                       if index == QUICK_TABLES_TOOL else '')
+            self.entries.append((index, display, names, name_text, f'{name_text} {domain_text}{aliases}'))
 
         frame = ttk.Frame(self, padding=14)
         frame.pack(fill='both', expand=True)
@@ -181,89 +210,140 @@ class CatalogDialog(tk.Toplevel):
         super().__init__(combo.winfo_toplevel())
         self.combo = combo
         self.title(t('ui_catalog'))
-        self.geometry('800x620')
-        self.minsize(640, 560)
         self.configure(background=combo.winfo_toplevel().cget('background'))
         self.transient(combo.winfo_toplevel())
-        self.values = list(combo.cget('values'))
+        fit_dialog(self, combo.winfo_toplevel(), (800, 620), (520, 400))
+        self.values = list(getattr(combo, 'catalog_values', combo.cget('values')))
         self.records = getattr(combo, 'catalog_records', lambda: {})()
         self.app = getattr(combo, 'catalog_app', None)
+        catalog_key = getattr(combo, 'catalog_key', None)
+        if self.app is not None and catalog_key is not None:
+            if not hasattr(self.app, '_catalog_dialog_state'):
+                self.app._catalog_dialog_state = {}
+            self.draft = self.app._catalog_dialog_state.setdefault(catalog_key, {})
+        else:
+            self.draft = {}
         self.favorites = self.app.ui_preferences['catalog_favorites'] if self.app else []
-        self.only_favorites = tk.BooleanVar(self, value=False)
-        self.query = tk.StringVar(self)
-        ttk.Label(self, text=t('ui_search_hint')).pack(anchor='w', padx=12, pady=(12, 4))
+        self.only_favorites = tk.BooleanVar(self, value=self.draft.get('favorites_only', False))
+        self.query = tk.StringVar(self, value=self.draft.get('query', ''))
+        wrap_label(ttk.Label(self, text=t('ui_search_hint'), width=1)).pack(fill='x', padx=12, pady=(12, 4))
         entry = ttk.Entry(self, textvariable=self.query)
         entry.pack(fill='x', padx=12)
         self.filters = {}
-        filters = ttk.Frame(self)
-        filters.pack(fill='x', padx=12, pady=6)
-        for field in ('catalog_status', 'source', 'college', 'spell_class', 'vehicle_type', 'tech_level', 'power', 'category', 'profile'):
-            options = sorted({self._filter_value(record, field) for record in self.records.values()
-                              if self._filter_value(record, field)})
+        filter_bar = ttk.Frame(self)
+        filter_bar.pack(fill='x', padx=12, pady=4)
+        filters_popup = ttk.Menubutton(filter_bar, text=t('ui_catalog_filters'))
+        filter_menu = tk.Menu(filters_popup, tearoff=False)
+        filters_popup.configure(menu=filter_menu)
+        for field in ('catalog_status', 'source', 'college', 'spell_class', 'vehicle_type',
+                      'tech_level', 'power', 'category', 'profile'):
+            options = sorted({value for record in self.records.values()
+                              if (value := self._filter_value(record, field))},
+                             key=lambda value: self._filter_label(field, value).casefold())
             if len(options) < 2:
                 continue
-            index = len(self.filters)
-            ttk.Label(filters, text=t('ui_field_' + field)).grid(row=index // 3 * 2, column=index % 3, sticky='w')
-            variable = tk.StringVar(self, value=t('ui_all'))
-            selector = ttk.Combobox(filters, textvariable=variable,
-                                    values=[t('ui_all')] + options, state='readonly', width=22)
-            selector.grid(row=index // 3 * 2 + 1, column=index % 3, sticky='ew', padx=(0, 6))
+            menu = tk.Menu(filter_menu, tearoff=False)
+            filter_menu.add_cascade(label=t('ui_field_' + field), menu=menu)
+            previous = self.draft.get('filters', {}).get(field, '')
+            variable = tk.StringVar(self, value=previous if previous in options else '')
+            menu.add_radiobutton(label=t('ui_all'), value='', variable=variable)
+            for option in options:
+                menu.add_radiobutton(label=self._filter_label(field, option), value=option,
+                                     variable=variable)
             self.filters[field] = variable
-            variable.trace_add('write', self.refresh)
-        self.count = ttk.Label(self)
-        self.count.pack(anchor='w', padx=12, pady=4)
-        ttk.Checkbutton(self, text=t('ui_only_favorites'), variable=self.only_favorites,
-                        command=self.refresh).pack(anchor='w', padx=12)
+        if self.filters:
+            filter_menu.add_separator()
+            filter_menu.add_command(label=t('ui_clear_catalog_filters'), command=self.clear_filters)
+        actions = [ttk.Checkbutton(filter_bar, text=t('ui_only_favorites'), variable=self.only_favorites,
+                                   command=self.refresh)]
+        if self.filters:
+            actions.insert(0, filters_popup)
+        flow_buttons(filter_bar, actions)
+        self.count = wrap_label(ttk.Label(self, width=1))
+        self.count.pack(fill='x', padx=12, pady=4)
         footer = ttk.Frame(self, padding=8)
         footer.pack(side='bottom', fill='x')
-        frame = ttk.Frame(self)
-        frame.pack(fill='both', expand=True, padx=12)
-        self.list = tk.Listbox(frame, exportselection=False, height=7)
+        panes = ttk.Panedwindow(self, orient='vertical')
+        panes.pack(fill='both', expand=True, padx=12)
+        frame = ttk.Frame(panes)
+        panes.add(frame, weight=3)
+        self.list = tk.Listbox(frame, exportselection=False, height=2)
         scrollbar = ttk.Scrollbar(frame, command=self.list.yview)
         self.list.configure(yscrollcommand=scrollbar.set)
         scrollbar.pack(side='right', fill='y')
         self.list.pack(fill='both', expand=True)
-        details = ttk.Frame(self)
-        details.pack(fill='x', padx=12, pady=8)
-        self.detail = tk.Text(details, height=7, wrap='word', state='disabled')
+        details = ttk.Frame(panes, padding=(0, 4, 0, 0))
+        panes.add(details, weight=2)
+        self.detail = tk.Text(details, width=1, height=2, wrap='word', state='disabled')
         detail_scroll = ttk.Scrollbar(details, command=self.detail.yview)
         self.detail.configure(yscrollcommand=detail_scroll.set)
         detail_scroll.pack(side='right', fill='y')
-        self.detail.pack(fill='x')
+        self.detail.pack(fill='both', expand=True)
         self.use = ttk.Button(footer, text=t('ui_use'), command=self.confirm, state='disabled')
-        self.use.grid(row=0, column=3, padx=4)
-        ttk.Button(footer, text=t('ui_cancel'), command=self.destroy).grid(row=0, column=2, padx=4)
-        ttk.Button(footer, text=t('ui_catalog_star'), command=self.toggle_favorite).grid(row=0, column=0, padx=4)
-        ttk.Button(footer, text=t('ui_full_record'), command=self.full_record).grid(row=0, column=1, padx=4)
+        flow_buttons(footer, [self.use, ttk.Button(footer, text=t('ui_full_record'), command=self.full_record),
+                     ttk.Button(footer, text=t('ui_catalog_star'), command=self.toggle_favorite),
+                     ttk.Button(footer, text=t('ui_cancel'), command=self.destroy)])
         self.list.bind('<<ListboxSelect>>', self.select)
         self.list.bind('<Double-1>', self.confirm)
         self.bind('<Escape>', lambda event: self.destroy())
-        self.query.trace_add('write', self.refresh)
+        trace_while_alive(self, self.query, self.refresh)
+        for variable in self.filters.values():
+            trace_while_alive(self, variable, self.refresh)
+        self._owner_binding = self.combo.bind('<Destroy>', self._close_with_combo, add='+')
         self.refresh()
         entry.focus_set()
 
+    def _close_with_combo(self, event):
+        if event.widget is self.combo and self.winfo_exists():
+            self.destroy()
+
+    def destroy(self):
+        if getattr(self, '_owner_binding', None) and self.combo.winfo_exists():
+            self.combo.unbind('<Destroy>', self._owner_binding)
+        self._owner_binding = None
+        super().destroy()
+
+    def clear_filters(self):
+        for variable in self.filters.values():
+            if variable.get():
+                variable.set('')
+
     def refresh(self, *_):
-        self.filtered = [label for label in self.values if search_values(
-            [label + ' ' + ' '.join(getattr(self.records.get(label), 'aliases', []) or [])], self.query.get())]
+        query = self.query.get()
+        selected_filters = {key: variable.get() for key, variable in self.filters.items() if variable.get()}
+        self.draft.update(query=query, filters=selected_filters, favorites_only=self.only_favorites.get())
+        words = _fold_text(query).split()
+        self.filtered = [title for title in self.values if self._matches(title, words)]
         self.filtered = [label for label in self.filtered if all(
-            variable.get() == t('ui_all') or
-            self._filter_value(self.records.get(label), field) == variable.get()
-            for field, variable in self.filters.items())]
+            self._filter_value(self.records.get(label), field) == value
+            for field, value in selected_filters.items())]
         if self.only_favorites.get():
             self.filtered = [label for label in self.filtered if self.favorite_key(label) in self.favorites]
         self.list.delete(0, 'end')
         for value in self.filtered:
             self.list.insert('end', ('★ ' if self.favorite_key(value) in self.favorites else '') + value)
-        self.count.configure(text=t('ui_count', count=len(self.filtered)))
+        active = len(selected_filters)
+        count = t('ui_count', count=len(self.filtered))
+        self.count.configure(text=f"{count} · {t('ui_catalog_active_filters', count=active)}" if active else count)
         self.set_detail('' if self.filtered else t('ui_no_matches'))
         self.use.configure(state='disabled')
 
     @staticmethod
     def _filter_value(record, field):
         if field == 'catalog_status':
-            status = catalog_status(record)
-            return t('catalog_status_' + status) if status else ''
+            return catalog_status(record) or ''
         return str(getattr(record, field, '') or '')
+
+    @staticmethod
+    def _filter_label(field, value):
+        return t('catalog_status_' + value) if field == 'catalog_status' else value
+
+    def _matches(self, title, words):
+        if not words:
+            return True
+        aliases = getattr(self.records.get(title), 'aliases', ()) or ()
+        text = _fold_text(' '.join((title, *aliases)))
+        return all(word in text for word in words)
 
     def select(self, *_):
         selected = self.list.curselection()
@@ -357,7 +437,7 @@ def record_details(label, record):
 
 
 def catalog_records(app, combo):
-    labels = set(combo.cget('values'))
+    labels = set(getattr(combo, 'catalog_values', combo.cget('values')))
     records = {}
     for name in ('_magic_map', '_advantage_map', '_psi_map', '_vehicle_map', '_melee_weapon_labels'):
         records.update({label: record for label, record in getattr(app, name, {}).items()
@@ -401,7 +481,8 @@ def install_workspace(app, active=0):
     }
     domain_font = font.Font(root=app.root, family='Arial', size=size, weight='bold')
     widest_domain = max(domain_font.measure(label) for label in domain_labels.values())
-    tree.column('#0', width=min(262, max(154, int(16.5 * size), widest_domain + 26)), stretch=True)
+    style.configure('Workspace.Treeview', rowheight=max(25, domain_font.metrics('linespace') + 4))
+    tree.column('#0', width=max(154, min(262, int(16.5 * size)), widest_domain + 36), stretch=True)
     tree.tag_configure('domain', font=('Arial', size, 'bold'))
     scroll = ttk.Scrollbar(sidebar, command=tree.yview)
     def update_scroll(first, last):
@@ -437,12 +518,13 @@ def install_workspace(app, active=0):
     search_columns = {}
     def visit(parent):
         for widget in list(parent.winfo_children()):
-            if isinstance(widget, ttk.Combobox) and len(widget.cget('values')) >= 30:
+            if isinstance(widget, ttk.Combobox) and len(getattr(widget, 'catalog_values', widget.cget('values'))) >= 30:
                 widget.catalog_records = lambda box=widget: catalog_records(app, box)
                 widget.catalog_app = app
                 widget.bind('<Control-f>', lambda event, box=widget: CatalogDialog(box))
                 info = widget.grid_info()
-                if info:
+                if (info and getattr(widget, 'catalog_action_inline', True)
+                        and not getattr(widget, 'catalog_search_managed', False)):
                     row = int(info['row'])
                     column = search_columns.setdefault(widget.master, widget.master.grid_size()[0])
                     ttk.Button(widget.master, text=t('ui_search'),
@@ -572,7 +654,7 @@ def organize_result(box):
         box.edit_modified(False)
         layout = getattr(box, 'oficina_layout', None)
         if layout is not None and not layout.wide and text.strip() and toolbar.winfo_ismapped():
-            layout.after_idle(lambda: layout.reveal(toolbar, align_top=True))
+            layout.reveal_after_layout(toolbar, align_top=True)
     box.bind('<<Modified>>', changed, add='+')
     # Users can select and copy, but cannot accidentally edit calculated output.
     box.bind('<Key>', lambda event: None if event.keysym in ('Left', 'Right', 'Up', 'Down', 'Home', 'End', 'Prior', 'Next') or (event.state & 4 and event.keysym.lower() in ('c', 'a')) else 'break')

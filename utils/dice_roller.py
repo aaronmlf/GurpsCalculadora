@@ -158,26 +158,48 @@ def calculate_collision_damage(hp: int, velocity: int) -> Tuple[int, str]:
     return collision_damage_expression((hp * velocity) / 100)
 
 
-def get_range_modifier(distance_yards: int) -> int:
-    """Return the Size and Speed/Range Table range modifier (p. 550)."""
+def same_range_boundary(value: float, boundary: float) -> bool:
+    """Ignore a few units of floating-point roundoff, not a physical interval."""
+    return value == boundary or (
+        math.isfinite(value) and math.isfinite(boundary)
+        and abs(value - boundary) <= 2 * max(math.ulp(value), math.ulp(boundary))
+    )
+
+
+def ceil_range_distance(value: float) -> int:
+    """Round up an effective range without promoting an exact converted boundary."""
+    lower = math.floor(value)
+    return lower + (value > lower and not same_range_boundary(value, lower))
+
+
+def get_range_band(distance_yards: int | float) -> Tuple[int, int]:
+    """Return ``(modifier, upper_limit_yards)`` from the range table (p. 550)."""
+    if isinstance(distance_yards, float) and not math.isfinite(distance_yards):
+        raise ValueError("Range distance must be finite.")
     if distance_yards <= 2:
-        return 0
+        return 0, 2
     thresholds = (3, 5, 7, 10, 15, 20, 30, 50, 70, 100,
                   150, 200, 300, 500, 700, 1000, 1500, 2000,
                   3000, 5000, 7000, 10000, 15000, 20000, 30000,
                   50000, 70000, 100000, 150000, 200000)
     for penalty, maximum in enumerate(thresholds, start=1):
         if distance_yards <= maximum:
-            return -penalty
+            return -penalty, maximum
     penalty = len(thresholds)
     progression = (3, 5, 7, 10, 15, 20)
     scale = 100000
     while True:
         for factor in progression:
             penalty += 1
-            if distance_yards <= factor * scale:
-                return -penalty
+            maximum = factor * scale
+            if distance_yards <= maximum:
+                return -penalty, maximum
         scale *= 10
+
+
+def get_range_modifier(distance_yards: int) -> int:
+    """Return the Size and Speed/Range Table range modifier (p. 550)."""
+    return get_range_band(distance_yards)[0]
 
 
 def evaluate_success_roll(target: int, roll: int) -> Dict[str, object]:
@@ -187,10 +209,11 @@ def evaluate_success_roll(target: int, roll: int) -> Dict[str, object]:
 
     critical_success = roll <= 4 or (roll == 5 and target >= 15) or (roll == 6 and target >= 16)
     critical_failure = roll == 18 or (roll == 17 and target <= 15) or roll >= target + 10
-    success = critical_success or (roll <= target and not critical_failure)
+    # B348: a natural 17 always fails, even when effective skill is higher.
+    success = critical_success or (roll < 17 and roll <= target and not critical_failure)
     return {
         "success": success,
         "critical_success": critical_success,
         "critical_failure": critical_failure,
-        "margin": target - roll if success else roll - target,
+        "margin": target - roll if success else max(0, roll - target),
     }
